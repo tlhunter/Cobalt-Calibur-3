@@ -1,0 +1,43 @@
+<html>
+    <head>
+        <title>Thomas Hunter's Cobalt Calibur 3.x Proof of Concept</title>
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+<style>
+#messages {
+    background-color: black;
+    color: white;
+    display: block;
+    height: 200px;
+}
+</style>
+    </head>
+    <body>
+        <div id="page">
+            <div id="left-column">
+                <canvas></canvas>
+                <div id="message-box">
+                    <div id="messages"></div>
+                    <input id="message-input" />
+                    <input id="message-send" type="submit" />
+                </div>
+                <div id="movement">WASD</div>
+            </div>
+            <div id="right-column">
+                <input id="player-name" /><br />
+                <input id="no-clip" type="checkbox" /> No Clip<br />
+                <div id="terraform">
+
+                </div>
+            </div>
+        </div>
+    </body>
+<script>
+var $messages = $('#messages');
+var socket = io.connect('http://localhost:81');
+socket.on('message', function (data) {
+    $messages.append("<div class='message'><span class='username'>" + data.username + "</span><span class='message'>" + data.message + "</span></div>");
+    socket.emit('my other event', { my: 'data' });
+});
+</script>
+</html>
