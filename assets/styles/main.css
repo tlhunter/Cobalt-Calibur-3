@@ -1,0 +1,50 @@
+body {
+    font-family: arial;
+    font-size: 13px;
+}
+#page {
+    width: 972px;
+    margin: 0 auto;
+}
+#left-column {
+    width: 672px;
+    float: left;
+}
+#right-column {
+    width: 200px;
+    float: left;
+}
+#message-box {
+    width: 472px;
+    height: 140px;
+    float: left;
+}
+#movement {
+    width: 200px;
+    height: 140px;
+    float: left;
+}
+#messages {
+    background-color: black;
+    color: white;
+    display: block;
+    height: 120px;
+    font-family: Consolas;
+    padding: 4px;
+    overflow: auto;
+}
+#messages .username {
+    color: #eee;
+}
+#messages .server .username {
+    color: #ee2c2c;
+}
+#messages .client .username {
+    color: #ee9e2c;
+}
+#messages .user .username {
+    color: #2c83ee;
+}
+#message-input {
+    width: 400px;
+}
