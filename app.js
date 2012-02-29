@@ -8,8 +8,9 @@ app.get('/', function (req, res) {
 });
 
 io.sockets.on('connection', function (socket) {
-  socket.emit('message', { username: 'System', message: 'Initialized' });
-  socket.on('my other event', function (data) {
+  socket.emit('chat', { username: 'System', message: 'Initialized' });
+  socket.on('chat', function (data) {
     console.log(data);
+    socket.broadcast.emit('chat', data);
   });
 });

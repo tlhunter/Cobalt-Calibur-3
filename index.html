@@ -4,27 +4,64 @@
         <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
         <script src="/socket.io/socket.io.js"></script>
 <style>
+body {
+    font-family: arial;
+    font-size: 13px;
+}
+#page {
+    width: 972px;
+    margin: 0 auto;
+}
+#left-column {
+    width: 672px;
+    float: left;
+}
+#right-column {
+    width: 200px;
+    float: left;
+}
+#message-box {
+    width: 472px;
+    height: 140px;
+    float: left;
+}
+#movement {
+    width: 200px;
+    height: 140px;
+    float: left;
+}
 #messages {
     background-color: black;
     color: white;
     display: block;
-    height: 200px;
+    height: 120px;
+    font-family: Consolas;
+    padding: 4px;
+    overflow: auto;
+}
+#messages .username {
+    color: #ff6f00;
+}
+#message-input {
+    width: 400px;
 }
 </style>
     </head>
     <body>
         <div id="page">
             <div id="left-column">
-                <canvas></canvas>
+                <canvas id='map' width='672' height='480'></canvas>
                 <div id="message-box">
-                    <div id="messages"></div>
-                    <input id="message-input" />
-                    <input id="message-send" type="submit" />
+                    <form>
+                        <div id="messages"></div>
+                        <input id="message-input" />
+                        <input id="message-send" type="submit" value="Speak" />
+                    </form>
                 </div>
                 <div id="movement">WASD</div>
             </div>
             <div id="right-column">
-                <input id="player-name" /><br />
+                <input id="player-name" value="Anonymous" /><br />
                 <input id="no-clip" type="checkbox" /> No Clip<br />
                 <div id="terraform">
 
@@ -34,10 +71,27 @@
     </body>
 <script>
 var $messages = $('#messages');
-var socket = io.connect('http://localhost:81');
-socket.on('message', function (data) {
-    $messages.append("<div class='message'><span class='username'>" + data.username + "</span><span class='message'>" + data.message + "</span></div>");
-    socket.emit('my other event', { my: 'data' });
+var $newMessage = $('#message-input');
+var $playerName = $('#player-name');
+$playerName.val('Anon' + Math.floor(Math.random()*8999+1000));
+
+function displayMessage(label, message) {
+    $messages.append("<div class='message'><span class='username'>" + label + ": </span><span class='message'>" + message + "</span></div>");
+    $messages.scrollTop($messages.height());
+}
+
+var socket = io.connect(window.document.location.protocol + "//" + window.document.location.host);
+
+$('#message-box form').submit(function(event) {
+    event.preventDefault();
+    var message = $newMessage.val();
+    $newMessage.val('');
+    displayMessage($playerName.val(), message);
+    socket.emit('chat', {username: $playerName.val(), message: message});
+});
+
+socket.on('chat', function (data) {
+    displayMessage(data.username, data.message);
 });
 </script>
 </html>
