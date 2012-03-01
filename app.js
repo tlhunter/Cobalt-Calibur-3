@@ -17,4 +17,7 @@ io.sockets.on('connection', function (socket) {
     socket.on('chat', function (data) {
         socket.broadcast.emit('chat', data);
     });
+    socket.on('move', function(data) {
+        socket.broadcast.emit('move', {user: this.id, loc: data});
+    });
 });

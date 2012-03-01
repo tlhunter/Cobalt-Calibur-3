@@ -180,23 +180,42 @@ $(function() {
         app.engine.start(window.mapData, 100, 100);
     });
 
+    //app.engine.keyPressTimer = setInterval(function() {
+        //app.engine.canPlayerMove = true;
+    //}, 100);
+    //app.engine.canPlayerMove = true;
+
     $(document).keypress(function(e) {
         var direction = '';
         if (e.which == 119) { // W
+            if (app.engine.viewport.y <= -15) {
+                return;
+            }
             app.engine.viewport.y--;
             direction = 'n';
         } else if (e.which == 97) { // A
+            if (app.engine.viewport.x <= -21) {
+                return;
+            }
             app.engine.viewport.x--;
             direction = 'w';
         } else if (e.which == 115) { // S
+            if (app.engine.viewport.y >= 184) {
+                return;
+            }
             app.engine.viewport.y++;
             direction = 's';
         } else if (e.which == 100) { // D
+            if (app.engine.viewport.x >= 178) {
+                return;
+            }
             app.engine.viewport.x++;
             direction = 'e';
         } else {
             return;
         }
+        //app.engine.canPlayerMove = false;
+        app.socket.emit('move', {x: app.engine.viewport.x + 21, y: app.engine.viewport.y + 15});
         app.engine.map.draw(window.mapData, direction);
     });
 });
