@@ -122,7 +122,7 @@ $(function() {
 
                 app.socket.on('chat', function (data) {
                     console.log("Chat", data);
-                    app.displayMessage(data.username, data.message, data.priority);
+                    app.displayMessage(data.name, data.message, data.priority);
                 });
 
                 app.socket.on('move', function(data) {

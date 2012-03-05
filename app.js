@@ -1,3 +1,5 @@
+'use strict';
+
 var app = require('express').createServer(),
     io = require('socket.io').listen(app),
     Db = require('mongodb').Db,
@@ -67,7 +69,7 @@ db.open(function(err, db) {
         setTimeout(
             function() {
                 socket.emit('chat', {
-                    username: 'Server',
+                    name: 'Server',
                     message: 'Socket Connection Established',
                     priority: 'server'
                 });
