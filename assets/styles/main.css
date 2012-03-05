@@ -39,6 +39,10 @@ body {
 #messages .server .username {
     color: #ee2c2c;
 }
+#messages .self .username,
+#messages .self .content {
+    color: #999;
+}
 #messages .client .username {
     color: #ee9e2c;
 }
