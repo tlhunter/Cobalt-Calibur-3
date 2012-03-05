@@ -1,0 +1,9 @@
+{ "name"          : "mongo",
+  "description"   : "A thin wrapper for the mongodb library",
+  "version"       : "0.1.0",
+  "author"        : "Chris O'Hara <cohara87@gmail.com>",
+  "main"          : "index",
+  "dependencies": { "mongodb": "*" },
+  "engines": { "node": ">= 0.4.0" },
+  "licenses": [{ "type": "MIT" }]
+}
