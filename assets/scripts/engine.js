@@ -28,6 +28,30 @@ $(function() {
                 x: 0,
                 y: 0,
             },
+            players: {
+                locations: [],
+                update: function(session, x, y, direction) {
+                    var found = false;
+                    var len=app.engine.players.locations.length;
+                    for(var i=0; i<len; i++) {
+                        var player = app.engine.players.locations[i];
+                        if (player.session == session) {
+                            player.x = x;
+                            player.y = y;
+                            player.direction = direction;
+                            found = true;
+                        }
+                    }
+                    if (!found) {
+                        app.engine.players.locations.push({
+                            session: session,
+                            x: x,
+                            y: y,
+                            direction: direction
+                        });
+                    }
+                }
+            },
             map: {
                 draw: function(mapData, direction) {
                     var i, j;
@@ -41,6 +65,23 @@ $(function() {
                             mapY = j + app.engine.viewport.y;
                             tile = (mapData[mapY] && mapData[mapY][mapX]) ? mapData[mapY][mapX] : {g: 0};
                             app.engine.tile.draw(i, j, tile);
+                            var len = app.engine.players.locations.length;
+                            for (var k = 0; k < len; k++) {
+                                var player = app.engine.players.locations[k];
+                                if (player.x == mapX && player.y == mapY) {
+                                    var id = 32;
+                                    if (player.direction == 'n') {
+                                        id = 30;
+                                    } else if (player.direction == 'e') {
+                                        id = 31;
+                                    } else if (player.direction == 's') {
+                                        id = 32;
+                                    } else if (player.direction == 'w') {
+                                        id = 33;
+                                    }
+                                    app.engine.tile.draw(i, j, {b:0,g:id});
+                                }
+                            }
                         }
                     }
 
@@ -127,6 +168,8 @@ $(function() {
 
                 app.socket.on('move', function(data) {
                     console.log("Move", data);
+                    app.engine.players.update(data.session, data.x, data.y, data.direction);
+                    app.engine.map.draw(mapData);
                 });
 
                 app.$playerName.val('Anon' + Math.floor(Math.random()*8999+1000));

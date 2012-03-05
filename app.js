@@ -15,6 +15,11 @@ console.log("MongoDB: Connecting to " + host + ":" + port);
 var db = new Db('terraformia', new Server(host, port, {}), {native_parser:true});
 
 db.open(function(err, db) {
+    // Delete previous location entries... Fix this when we no longer use session id's as user identifiable data
+    db.collection('locations', function(err, collection) {
+        collection.remove();
+    });
+
     console.log("Express: Attempting to listen on port 81");
     app.listen(81);
 
