@@ -121,6 +121,7 @@ $(function() {
                 });
 
                 app.socket.on('chat', function (data) {
+                    console.log("Chat", data);
                     app.displayMessage(data.username, data.message, data.priority);
                 });
 
@@ -174,16 +175,11 @@ $(function() {
     };
 
     app.displayMessage('Client', 'Downloading Map Data...', 'client');
-    $.get('/assets/map.json', function(data) {
+    $.get('/map', function(data) {
         app.displayMessage('Client', 'Initializing Map...', 'client');
         window.mapData = data;
         app.engine.start(window.mapData, 100, 100);
     });
-
-    //app.engine.keyPressTimer = setInterval(function() {
-        //app.engine.canPlayerMove = true;
-    //}, 100);
-    //app.engine.canPlayerMove = true;
 
     $(document).keypress(function(e) {
         var direction = '';
@@ -214,7 +210,7 @@ $(function() {
         } else {
             return;
         }
-        //app.engine.canPlayerMove = false;
+
         app.socket.emit('move', {x: app.engine.viewport.x + 21, y: app.engine.viewport.y + 15});
         app.engine.map.draw(window.mapData, direction);
     });

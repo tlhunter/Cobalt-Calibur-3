@@ -1,6 +1,7 @@
 var app = require('express').createServer(),
     io = require('socket.io').listen(app),
     Db = require('mongodb').Db,
+    fs = require('fs'),
     Connection = require('mongodb').Connection,
     Server = require('mongodb').Server;
 
@@ -21,12 +22,35 @@ db.open(function(err, db) {
 
     // Returns the entire map object, terraforming changes will be sent via websocket
     app.get('/map', function(req, res) {
-
+        db.collection('maps', function(err, collection) {
+            if (err) {
+                res.send(err);
+                throw err;
+            }
+            collection.findOne({}, {}, function(err, item) {
+                res.send(item.map);
+            });
+        });
     });
 
     // Builds the map from the json file, should only need to be run once
     app.get('/build-map', function(req, res) {
-
+        var fileContents = fs.readFileSync('map.json','utf8');
+        var mapData = JSON.parse(fileContents);
+        db.collection('maps', function(err, collection) {
+            if (err) {
+                res.send(err);
+                throw err;
+            }
+            collection.remove({}, function(err, result) {
+                collection.insert({map: mapData});
+                collection.count(function(err, count) {
+                    if (count == 1) {
+                        res.send('ok');
+                    }
+                });
+            });
+        });
     });
 
     app.get('/assets/*', function (req, res) {
@@ -36,7 +60,16 @@ db.open(function(err, db) {
 
     io.sockets.on('connection', function (socket) {
 
-        socket.emit('chat', { username: 'Server', message: 'Socket Connection Established', priority: 'server' });
+        setTimeout(
+            function() {
+                socket.emit('chat', {
+                    username: 'Server',
+                    message: 'Socket Connection Established',
+                    priority: 'server'
+                });
+            },
+            10
+        );
 
         socket.on('chat', function (data) {
             socket.broadcast.emit('chat', data);
