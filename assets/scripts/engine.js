@@ -125,6 +125,10 @@ $(function() {
                     app.displayMessage(data.username, data.message, data.priority);
                 });
 
+                app.socket.on('move', function(data) {
+                    console.log("Move", data);
+                });
+
                 app.$playerName.val('Anon' + Math.floor(Math.random()*8999+1000));
 
                 app.engine.screen.width  = window.app.$canvas.width();

@@ -53,6 +53,9 @@ db.open(function(err, db) {
         });
     });
 
+    // Returns all of the known player locations
+
+    // Generic pass through for grabbing files inside of the assets folder
     app.get('/assets/*', function (req, res) {
         // is this secure? in PHP land it would be pretty bad
         res.sendfile(__dirname + '/assets/' + req.params[0]);
@@ -70,17 +73,39 @@ db.open(function(err, db) {
             },
             10
         );
+        setTimeout(
+            function() {
+                db.collection('locations', function(err, collection) {
+                    collection.find({}, {}, function(err, cursor) {
+                        cursor.each(function(err, player) {
+                            if (player == null) {
+                                return;
+                            }
+                            socket.emit('move', {
+                                session: player.session,
+                                x: player.x,
+                                y: player.y
+                            });
+                        });
+                    });
+                });
+            },
+            50
+        );
 
         socket.on('chat', function (data) {
             socket.broadcast.emit('chat', data);
+            console.log("Chat", this.id, data);
         });
 
         socket.on('move', function(data) {
             socket.broadcast.emit('move', {user: this.id, loc: data});
+            console.log("Move", this.id, data);
         });
 
         socket.on('terraform', function(data) {
             //broadcast, and update map
+            console.log("Terraform", this.id, data);
         });
 
     });
