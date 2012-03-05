@@ -117,7 +117,7 @@ $(function() {
                     var message = app.$newMessage.val();
                     app.$newMessage.val('');
                     app.displayMessage(app.$playerName.val(), message, 'self');
-                    app.socket.emit('chat', {username: app.$playerName.val(), message: message, priority: 0});
+                    app.socket.emit('chat', {name: app.$playerName.val(), message: message, priority: 0});
                 });
 
                 app.socket.on('chat', function (data) {
@@ -141,6 +141,7 @@ $(function() {
 
                 app.displayMessage("Client", "Downloading Tiles...", 'client');
 
+                // Generic Terrain
                 app.engine.tile.store(0, '/assets/tiles/water.png');
                 app.engine.tile.store(1, '/assets/tiles/grass.png');
                 app.engine.tile.store(2, '/assets/tiles/sand.png');
@@ -150,6 +151,7 @@ $(function() {
                 app.engine.tile.store(6, '/assets/tiles/temple.png');
                 app.engine.tile.store(7, '/assets/tiles/tree.png');
 
+                // Mountains Only
                 app.engine.tile.store(20, '/assets/tiles/mountain.png');
                 app.engine.tile.store(21, '/assets/tiles/mountain_nw.png');
                 app.engine.tile.store(22, '/assets/tiles/mountain_n.png');
@@ -161,6 +163,7 @@ $(function() {
                 app.engine.tile.store(28, '/assets/tiles/mountain_s.png');
                 app.engine.tile.store(29, '/assets/tiles/mountain_se.png');
 
+                // Character Graphics
                 app.engine.tile.store(30, '/assets/tiles/character_n.png');
                 app.engine.tile.store(31, '/assets/tiles/character_e.png');
                 app.engine.tile.store(32, '/assets/tiles/character_s.png');
@@ -215,7 +218,11 @@ $(function() {
             return;
         }
 
-        app.socket.emit('move', {x: app.engine.viewport.x + 21, y: app.engine.viewport.y + 15});
+        app.socket.emit('move', {
+            x: app.engine.viewport.x + 21,
+            y: app.engine.viewport.y + 15,
+            direction: direction
+        });
         app.engine.map.draw(window.mapData, direction);
     });
 });

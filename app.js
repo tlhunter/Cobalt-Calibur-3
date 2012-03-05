@@ -63,6 +63,7 @@ db.open(function(err, db) {
 
     io.sockets.on('connection', function (socket) {
 
+        // Let the client know they're not alone
         setTimeout(
             function() {
                 socket.emit('chat', {
@@ -73,6 +74,8 @@ db.open(function(err, db) {
             },
             10
         );
+
+        // Send the list of known locations, one per message
         setTimeout(
             function() {
                 db.collection('locations', function(err, collection) {
@@ -93,20 +96,64 @@ db.open(function(err, db) {
             50
         );
 
+        // Receive chat, send chats to all users
         socket.on('chat', function (data) {
-            socket.broadcast.emit('chat', data);
+            socket.broadcast.emit('chat', {
+                session: this.id,
+                name: data.name,
+                message: data.message
+            });
             console.log("Chat", this.id, data);
         });
 
+        // Receive movement, send to all users
         socket.on('move', function(data) {
-            socket.broadcast.emit('move', {user: this.id, loc: data});
+            var session = this.id;
+            socket.broadcast.emit('move', {
+                session: session,
+                x: data.x,
+                y: data.y,
+                direction: data.direction
+            });
+            // update locations table
+            db.collection('locations', function(err, collection) {
+                collection.update(
+                    {
+                        session: session
+                    },
+                    {
+                        x: data.x,
+                        y: data.y,
+                        direction: data.direction,
+                        session: session
+                    },
+                    {
+                        upsert: true
+                    }
+                );
+            });
             console.log("Move", this.id, data);
         });
 
+        // Receive terraform, sent to ALL USERZ!!1
         socket.on('terraform', function(data) {
-            //broadcast, and update map
+            socket.broadcast.emit('terraform', {
+                session: this.id,
+                x: data.x,
+                y: data.y,
+                g: data.g,
+                b: data.b
+            });
+            // update map
             console.log("Terraform", this.id, data);
         });
 
+        socket.onclose = function(event) {
+            db.collection('locations', function(err, collection) {
+                collection.remove({
+                    session: this.id
+                });
+            });
+        };
     });
 });
