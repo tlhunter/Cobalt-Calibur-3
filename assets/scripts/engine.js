@@ -172,6 +172,10 @@ $(function() {
                     app.engine.map.draw(mapData);
                 });
 
+                app.socket.on('terraform', function (data) {
+                    console.log("Terraform", data);
+                });
+
                 app.$playerName.val('Anon' + Math.floor(Math.random()*8999+1000));
 
                 app.engine.screen.width  = window.app.$canvas.width();
@@ -184,10 +188,12 @@ $(function() {
 
                 app.displayMessage("Client", "Downloading Tiles...", 'client');
 
-                // Generic Terrain
+                // Terrain
                 app.engine.tile.store(0, '/assets/tiles/water.png');
                 app.engine.tile.store(1, '/assets/tiles/grass.png');
                 app.engine.tile.store(2, '/assets/tiles/sand.png');
+
+                // Foreground
                 app.engine.tile.store(3, '/assets/tiles/house.png');
                 app.engine.tile.store(4, '/assets/tiles/town.png');
                 app.engine.tile.store(5, '/assets/tiles/village.png');
@@ -215,6 +221,40 @@ $(function() {
                 app.displayMessage('Client', 'Done Downloading Tiles.', 'client');
 
                 app.engine.initialDraw(mapData);
+
+                var $background = $('#terraform .background');
+                for (var i = 0; i <= 2; i++) {
+                    var tile = app.engine.tile.images[i];
+                    var $graphic = $(tile[1]);
+                    $graphic.attr('data-id', tile[0]).attr('data-type', 'background');
+                    $background.append($graphic);
+                }
+
+                var $foreground = $('#terraform .foreground');
+                for (var i = 3; i <= 17; i++) {
+                    var tile = app.engine.tile.images[i];
+                    var $graphic = $(tile[1]);
+                    $graphic.attr('data-id', tile[0]).attr('data-type', 'foreground');
+                    $foreground.append($graphic);
+                }
+
+                $('#terraform img, #terraform span').click(function() {
+                    var g = null, b = null;
+                    var $el = $(this);
+                    if ($el.attr('data-type') == 'foreground') {
+                        g = $(this).attr('data-id');
+                    } else {
+                        b = $(this).attr('data-id');
+                    }
+
+                    app.socket.emit('terraform', {
+                        x: app.engine.viewport.x + 21,
+                        y: app.engine.viewport.y + 15,
+                        g: g,
+                        b: b
+                    });
+                });
+
             },
         },
 

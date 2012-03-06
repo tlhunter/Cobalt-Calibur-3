@@ -3,7 +3,7 @@ body {
     font-size: 13px;
 }
 #page {
-    width: 972px;
+    width: 872px;
     margin: 0 auto;
 }
 #left-column {
@@ -11,8 +11,8 @@ body {
     float: left;
 }
 #right-column {
-    width: 200px;
-    float: left;
+    width: 190px;
+    float: right;
 }
 #message-box {
     width: 472px;
@@ -51,4 +51,17 @@ body {
 }
 #message-input {
     width: 400px;
+}
+#terraform img {
+    cursor: pointer;
+    width: 48px;
+    height: 48px;
+}
+#terraform .foreground span {
+    cursor: pointer;
+    color: red;
+}
+#terraform .foreground,
+#terraform .background {
+    width: 144px;
 }

@@ -2,6 +2,7 @@
     <head>
         <title>Thomas Hunter's Cobalt Calibur 3.x Proof of Concept</title>
         <script src="/assets/scripts/jquery-1.7.1.js"></script>
+        <script src="/assets/scripts/underscore.js"></script>
         <script src="/socket.io/socket.io.js"></script>
         <script src="/assets/scripts/engine.js"></script>
         <link rel="stylesheet" href="/assets/styles/main.css" type="text/css" media="screen" />
@@ -21,9 +22,12 @@
             </div>
             <div id="right-column">
                 <input id="player-name" value="Anonymous" /><br />
-                <input id="no-clip" type="checkbox" /> No Clip<br />
+                <!--<input id="no-clip" type="checkbox" /> No Clip<br />-->
                 <div id="terraform">
-
+                    <h3>Terrain</h3>
+                    <div class="background"></div>
+                    <h3>Foreground</h3>
+                    <div class="foreground"><span data-id="0" data-type="foreground">Remove</span><br /></div>
                 </div>
             </div>
         </div>
