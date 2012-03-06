@@ -232,6 +232,7 @@ $(function() {
     });
 
     $(document).keypress(function(e) {
+        if( $(e.target).is(":input") ) return;
         var direction = '';
         if (e.which == 119) { // W
             if (app.engine.viewport.y <= -15) {
