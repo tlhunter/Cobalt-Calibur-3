@@ -18,6 +18,7 @@ $(function() {
             handle: document.getElementById('map').getContext('2d'),
             TILEWIDTH: 16,
             TILEHEIGHT: 16,
+            lastDirection: 's',
             screen: {
                 width: 0,
                 height: 0,
@@ -86,6 +87,8 @@ $(function() {
                     }
 
                     var id = 32;
+                    if (!direction) direction = app.engine.lastDirection;
+
                     if (direction == 'n') {
                         id = 30;
                     } else if (direction == 'e') {
@@ -100,10 +103,20 @@ $(function() {
             },
             tile: {
                 draw: function(x, y, tile) {
-                   app.engine.handle.drawImage(app.engine.tile.retrieve(tile.g), x * app.engine.TILEWIDTH, y * app.engine.TILEHEIGHT);
+                    var x_pixel = x * app.engine.TILEWIDTH;
+                    var y_pixel = y * app.engine.TILEHEIGHT;
+                   app.engine.handle.drawImage(
+                       app.engine.tile.retrieve(tile.g),
+                       x_pixel,
+                       y_pixel
+                   );
 
                    if (tile.b) {
-                      app.engine.handle.drawImage(app.engine.tile.retrieve(tile.b), x * app.engine.TILEWIDTH, y * app.engine.TILEHEIGHT);
+                      app.engine.handle.drawImage(
+                          app.engine.tile.retrieve(tile.b),
+                          x_pixel,
+                          y_pixel
+                      );
                    }
                 },
                 images: [],
@@ -173,7 +186,17 @@ $(function() {
                 });
 
                 app.socket.on('terraform', function (data) {
-                    console.log("Terraform", data);
+                    var node = window.mapData[data.y][data.x];
+                    if (data.g !== null) {
+                        node.g = data.g;
+                        console.log('change background');
+                    }
+                    if (data.b !== null) {
+                        node.b = data.b;
+                        console.log('change foreground');
+                    }
+                    console.log("Terraform", data, node);
+                    app.engine.map.draw(window.mapData);
                 });
 
                 app.$playerName.val('Anon' + Math.floor(Math.random()*8999+1000));
@@ -242,10 +265,13 @@ $(function() {
                     var g = null, b = null;
                     var $el = $(this);
                     if ($el.attr('data-type') == 'foreground') {
-                        g = $(this).attr('data-id');
-                    } else {
                         b = $(this).attr('data-id');
+                        window.mapData[app.engine.viewport.y + 15][app.engine.viewport.x + 21].b = b;
+                    } else {
+                        g = $(this).attr('data-id');
+                        window.mapData[app.engine.viewport.y + 15][app.engine.viewport.x + 21].g = g;
                     }
+                    app.engine.map.draw(window.mapData);
 
                     app.socket.emit('terraform', {
                         x: app.engine.viewport.x + 21,
@@ -255,13 +281,77 @@ $(function() {
                     });
                 });
 
+                $(document).keypress(function(e) {
+                    if( $(e.target).is(":input") ) return;
+                    if (e.which == 119) { // W
+                        app.engine.move('n');
+                    } else if (e.which == 97) { // A
+                        app.engine.move('w');
+                    } else if (e.which == 115) { // S
+                        app.engine.move('s');
+                    } else if (e.which == 100) { // D
+                        app.engine.move('e');
+                    }
+                });
+
+                $('#movement .north').click(function() { app.engine.move('n'); });
+                $('#movement .west').click(function() { app.engine.move('w'); });
+                $('#movement .east').click(function() { app.engine.move('e'); });
+                $('#movement .south').click(function() { app.engine.move('s'); });
+
             },
+
+            // Moves a character in the cardinal direction provided
+            move: function(direction) {
+                switch(direction) {
+                    case 'n':
+                        if (app.engine.viewport.y <= -15) {
+                            return false;
+                        }
+                        app.engine.viewport.y--;
+                        break;
+                    case 'w':
+                        if (app.engine.viewport.x <= -21) {
+                            return false;
+                        }
+                        app.engine.viewport.x--;
+                        break;
+                    case 's':
+                        if (app.engine.viewport.y >= 184) {
+                            return false;
+                        }
+                        app.engine.viewport.y++;
+                        break;
+                    case 'e':
+                        if (app.engine.viewport.x >= 178) {
+                            return false;
+                        }
+                        app.engine.viewport.x++;
+                        break;
+                    default:
+                        return false;
+                        break;
+                }
+
+                app.engine.lastDirection = direction;
+
+                app.socket.emit('move', {
+                    x: app.engine.viewport.x + 21,
+                    y: app.engine.viewport.y + 15,
+                    direction: direction
+                });
+
+                app.engine.map.draw(window.mapData, direction);
+
+                return true;
+            }
         },
 
         displayMessage: function(label, message, priority) {
             this.$messages.append("<div class='message " + priority + "'><span class='username'>" + label + ": </span><span class='content'>" + message + "</span></div>");
             this.$messages.scrollTop(this.$messages.height());
-        }
+        },
+
     };
 
     app.displayMessage('Client', 'Downloading Map Data...', 'client');
@@ -271,42 +361,4 @@ $(function() {
         app.engine.start(window.mapData, 100, 100);
     });
 
-    $(document).keypress(function(e) {
-        if( $(e.target).is(":input") ) return;
-        var direction = '';
-        if (e.which == 119) { // W
-            if (app.engine.viewport.y <= -15) {
-                return;
-            }
-            app.engine.viewport.y--;
-            direction = 'n';
-        } else if (e.which == 97) { // A
-            if (app.engine.viewport.x <= -21) {
-                return;
-            }
-            app.engine.viewport.x--;
-            direction = 'w';
-        } else if (e.which == 115) { // S
-            if (app.engine.viewport.y >= 184) {
-                return;
-            }
-            app.engine.viewport.y++;
-            direction = 's';
-        } else if (e.which == 100) { // D
-            if (app.engine.viewport.x >= 178) {
-                return;
-            }
-            app.engine.viewport.x++;
-            direction = 'e';
-        } else {
-            return;
-        }
-
-        app.socket.emit('move', {
-            x: app.engine.viewport.x + 21,
-            y: app.engine.viewport.y + 15,
-            direction: direction
-        });
-        app.engine.map.draw(window.mapData, direction);
-    });
 });

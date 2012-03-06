@@ -14,6 +14,8 @@ console.log("MongoDB: Connecting to " + host + ":" + port);
 
 var db = new Db('terraformia', new Server(host, port, {}), {native_parser:true});
 
+var map = [];
+
 db.open(function(err, db) {
     // Delete previous location entries... Fix this when we no longer use session id's as user identifiable data
     db.collection('locations', function(err, collection) {
@@ -27,17 +29,21 @@ db.open(function(err, db) {
         res.sendfile(__dirname + '/index.html');
     });
 
+    // Builds the map object with data from the mongo db
+    db.collection('maps', function(err, collection) {
+        if (err) {
+            console.log("Error getting map", err);
+            throw err;
+        }
+        collection.findOne({}, {}, function(err, item) {
+            map = item.map;
+        });
+    });
+
+
     // Returns the entire map object, terraforming changes will be sent via websocket
     app.get('/map', function(req, res) {
-        db.collection('maps', function(err, collection) {
-            if (err) {
-                res.send(err);
-                throw err;
-            }
-            collection.findOne({}, {}, function(err, item) {
-                res.send(item.map);
-            });
-        });
+        res.send(map);
     });
 
     // Builds the map from the json file, should only need to be run once
@@ -103,6 +109,28 @@ db.open(function(err, db) {
             50
         );
 
+        setInterval(function() {
+            db.collection('maps', function(err, collection) {
+                if (err) {
+                    console.log("Error Saving Map to MongoDB", err);
+                }
+                collection.remove({}, function(err, result) {
+                    collection.insert({map: map});
+                    collection.count(function(err, count) {
+                        if (count == 1) {
+                            socket.emit('chat', {
+                                name: 'Server',
+                                message: 'Map saved to database',
+                                priority: 'server'
+                            });
+                        } else {
+                            console.log("Error Saving Map!");
+                        }
+                    });
+                });
+            });
+        }, 60000);
+
         // Receive chat, send chats to all users
         socket.on('chat', function (data) {
             socket.broadcast.emit('chat', {
@@ -151,7 +179,11 @@ db.open(function(err, db) {
                 g: data.g,
                 b: data.b
             });
+
             // update map
+            if (data.g !== null) map[data.y][data.x].g = data.g;
+            if (data.b !== null) map[data.y][data.x].b = data.b;
+
             console.log("Terraform", this.id, data);
         });
 

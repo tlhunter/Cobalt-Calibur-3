@@ -1,10 +1,16 @@
+html {
+    user-select: none;
+    -webkit-user-select: none;
+}
 body {
     font-family: arial;
     font-size: 13px;
+    background: black url("/assets/images/background.jpg") no-repeat center top;
 }
 #page {
     width: 872px;
     margin: 0 auto;
+    color: #fff;
 }
 #left-column {
     width: 672px;
@@ -21,8 +27,38 @@ body {
 }
 #movement {
     width: 200px;
-    height: 140px;
+    height: 150px;
     float: left;
+    background-image: url("/assets/images/compass.jpg");
+}
+#movement .direction {
+    position: absolute;
+    color: #fff;
+    text-shadow: 0 3px 3px #000;
+    font-size: 20px;
+    text-align: center;
+    width: 30px;
+    cursor: pointer;
+    font-weight: bold;
+}
+#movement .direction:hover {
+    color: #654827;
+}
+#movement .direction.west {
+    margin-top: 63px;
+    margin-left: 27px;
+}
+#movement .direction.east {
+    margin-top: 63px;
+    margin-left: 148px;
+}
+#movement .direction.south {
+    margin-top: 125px;
+    margin-left: 86px;
+}
+#movement .direction.north {
+    margin-top: 2px;
+    margin-left: 86px;
 }
 #messages {
     background-color: black;
@@ -32,6 +68,10 @@ body {
     font-family: Consolas;
     padding: 4px;
     overflow: auto;
+}
+#messages, input {
+    user-select: auto;
+    -webkit-user-select: auto;
 }
 #messages .username {
     color: #eee;
