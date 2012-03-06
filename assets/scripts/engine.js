@@ -265,10 +265,10 @@ $(function() {
                     var g = null, b = null;
                     var $el = $(this);
                     if ($el.attr('data-type') == 'foreground') {
-                        b = $(this).attr('data-id');
+                        b = parseInt($(this).attr('data-id'), 10);
                         window.mapData[app.engine.viewport.y + 15][app.engine.viewport.x + 21].b = b;
                     } else {
-                        g = $(this).attr('data-id');
+                        g = parseInt($(this).attr('data-id'), 10);
                         window.mapData[app.engine.viewport.y + 15][app.engine.viewport.x + 21].g = g;
                     }
                     app.engine.map.draw(window.mapData);
