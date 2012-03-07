@@ -222,6 +222,15 @@ $(function() {
                 app.engine.tile.store(5, '/assets/tiles/village.png');
                 app.engine.tile.store(6, '/assets/tiles/temple.png');
                 app.engine.tile.store(7, '/assets/tiles/tree.png');
+                app.engine.tile.store(8, '/assets/tiles/wood.png');
+                app.engine.tile.store(9, '/assets/tiles/stone.png');
+                app.engine.tile.store(10, '/assets/tiles/rock.png');
+                app.engine.tile.store(11, '/assets/tiles/sign.png');
+                app.engine.tile.store(12, '/assets/tiles/bush.png');
+                app.engine.tile.store(13, '/assets/tiles/grave.png');
+                app.engine.tile.store(14, '/assets/tiles/tile.png');
+                app.engine.tile.store(15, '/assets/tiles/forest.png');
+                app.engine.tile.store(16, '/assets/tiles/well.png');
 
                 // Mountains Only
                 app.engine.tile.store(20, '/assets/tiles/mountain.png');
@@ -254,7 +263,7 @@ $(function() {
                 }
 
                 var $foreground = $('#terraform .foreground');
-                for (var i = 3; i <= 17; i++) {
+                for (var i = 3; i <= 26; i++) {
                     var tile = app.engine.tile.images[i];
                     var $graphic = $(tile[1]);
                     $graphic.attr('data-id', tile[0]).attr('data-type', 'foreground');
