@@ -11,29 +11,27 @@
         <div id="page">
             <div id="left-column">
                 <canvas id='map' width='672' height='480'></canvas>
-                <div id="message-box">
-                    <form>
-                        <div id="messages"></div>
-                        <input id="message-input" />
-                        <input id="message-send" type="submit" value="Speak" />
-                    </form>
+                <div id="terraform">
+                    <img src="/assets/tilesets/Hakurei_Shrine.png" />
+                    <span>Remove Foreground</span>
                 </div>
+            </div>
+            <div id="right-column">
                 <div id="movement">
                     <div class="north direction" title="North (W)">N</div>
                     <div class="west direction" title="West (A)">W</div>
                     <div class="east direction" title="East (D)">E</div>
                     <div class="south direction" title="South (S)">S</div>
                 </div>
-            </div>
-            <div id="right-column">
-                <h3>Player Name</h3>
-                <input id="player-name" value="Anonymous" /><br />
-                <!--<input id="no-clip" type="checkbox" /> No Clip<br />-->
-                <div id="terraform">
-                    <h3>Terrain</h3>
-                    <div class="background"></div>
-                    <h3>Foreground</h3>
-                    <div class="foreground"><span data-id="0" data-type="foreground">Remove</span><br /></div>
+                <div>
+                    Name: <input id="player-name" value="Anonymous" /><br />
+                </div>
+                <div id="message-box">
+                    <form>
+                        <div id="messages"></div>
+                        <input id="message-input" placeholder="Message <Enter>" />
+                        <input id="message-send" type="submit" value="Speak" />
+                    </form>
                 </div>
             </div>
         </div>

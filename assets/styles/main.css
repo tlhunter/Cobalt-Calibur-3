@@ -6,9 +6,10 @@ body {
     font-family: arial;
     font-size: 13px;
     background: black url("/assets/images/background.jpg") no-repeat center top;
+    margin: 10px 0 0 0;
 }
 #page {
-    width: 872px;
+    width: 882px;
     margin: 0 auto;
     color: #fff;
 }
@@ -17,18 +18,15 @@ body {
     float: left;
 }
 #right-column {
-    width: 190px;
-    float: right;
+    width: 200px;
+    float: left;
+    margin-left: 10px;
 }
 #message-box {
-    width: 472px;
-    height: 140px;
-    float: left;
 }
 #movement {
     width: 200px;
     height: 150px;
-    float: left;
     background-image: url("/assets/images/compass.jpg");
 }
 #movement .direction {
@@ -64,10 +62,10 @@ body {
     background-color: black;
     color: white;
     display: block;
-    height: 120px;
+    height: 286px;
     font-family: Consolas;
-    padding: 4px;
     overflow: auto;
+    font-size: 11px;
 }
 #messages, input {
     user-select: auto;
@@ -96,18 +94,19 @@ body {
     color: #2c83ee;
 }
 #message-input {
-    width: 400px;
+    width: 200px;
+}
+#message-send {
+    display: none;
 }
 #terraform img {
-    cursor: pointer;
-    width: 48px;
-    height: 48px;
+    cursor: crosshair;
+    margin: 10px 0;
 }
-#terraform .foreground span {
+#terraform span {
     cursor: pointer;
     color: red;
-}
-#terraform .foreground,
-#terraform .background {
-    width: 144px;
+    position: absolute;
+    margin-top: 10px;
+    margin-left: 10px;
 }
