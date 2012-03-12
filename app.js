@@ -32,11 +32,21 @@ db.open(function(err, db) {
     // Builds the map object with data from the mongo db
     db.collection('maps', function(err, collection) {
         if (err) {
-            console.log("Error getting map", err);
+            console.log("MongoDB: Map collection doesn't exist", err);
             throw err;
         }
         collection.findOne({}, {}, function(err, item) {
-            map = item.map;
+            if (err) {
+                console.log("MongoDB: Map collection is empty", err);
+                throw err;
+            }
+            if (item != null) {
+                map = item.map;
+                return;
+            } else {
+                console.log("MongoDB: The map in Mongo is null");
+                return;
+            }
         });
     });
 
@@ -59,6 +69,7 @@ db.open(function(err, db) {
                 collection.insert({map: mapData});
                 collection.count(function(err, count) {
                     if (count == 1) {
+                        console.log("Map was rebuilt from map.json file");
                         res.send('ok');
                     }
                 });
@@ -81,7 +92,7 @@ db.open(function(err, db) {
             function() {
                 socket.emit('chat', {
                     name: 'Server',
-                    message: 'Socket Connection Established',
+                    message: 'Socket Established',
                     priority: 'server'
                 });
             },
