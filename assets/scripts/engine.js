@@ -419,8 +419,9 @@ $(function() {
         },
 
         displayMessage: function(label, message, priority) {
-            this.$messages.append("<div class='message " + priority + "'><span class='username'>" + label + ": </span><span class='content'>" + message + "</span></div>");
-            this.$messages.animate({scrollTop: this.$messages[0].scrollHeight});
+            this.$messages
+                .append("<div class='message " + priority + "'><span class='username'>" + label + ": </span><span class='content'>" + message + "</span></div>")
+                .animate({scrollTop: this.$messages[0].scrollHeight});
         },
 
     };
