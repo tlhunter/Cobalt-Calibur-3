@@ -99,9 +99,8 @@ body {
 #message-send {
     display: none;
 }
-#terraform img {
-    cursor: crosshair;
-    margin: 10px 0;
+#terraform {
+    position: relative;
 }
 #terraform span {
     cursor: pointer;
@@ -109,4 +108,21 @@ body {
     position: absolute;
     margin-top: 10px;
     margin-left: 10px;
+}
+#terraform .selector {
+    pointer-events: none;
+    width: 16px;
+    height: 16px;
+    outline: 1px solid white;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    background-color: rgba(255, 255, 255, 0.25);
+}
+#tileset {
+    width: 480px;
+    height: 256px;
+    cursor: crosshair;
+    margin: 10px 0;
+    background: transparent url("/assets/tilesets/Hakurei_Shrine.png") no-repeat top left;
 }

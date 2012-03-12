@@ -177,14 +177,15 @@ $(function() {
                         app.engine.map.draw(window.mapData);
                         return;
                     } else if (message === '/help') {
-                        app.displayMessage('Help', '-{Keys}--------------------------------', 'help');
-                        app.displayMessage('Help', 'Use the WASD keys to move around the screen', 'help');
-                        app.displayMessage('Help', 'Press T to go to chat, and Esc to leave chat', 'help');
-                        app.displayMessage('Help', '-{Commands}----------------------------', 'help');
+                        app.displayMessage('Help', '-{Keys}--------------------', 'help');
+                        app.displayMessage('Help', 'Use the WASD keys to move', 'help');
+                        app.displayMessage('Help', 'Press T to go to chat mode', 'help');
+                        app.displayMessage('Help', 'Press Esc go to leave chat', 'help');
+                        app.displayMessage('Help', '-{Commands}----------------', 'help');
                         app.displayMessage('Help', '/clear: reset message area', 'help');
                         app.displayMessage('Help', '/redraw: re draws map', 'help');
-                        app.displayMessage('Help', '/help: displays this help listing', 'help');
-                        app.displayMessage('Help', '/spawn: reset location to spawn point', 'help');
+                        app.displayMessage('Help', '/help: displays this help', 'help');
+                        app.displayMessage('Help', '/spawn: reset location', 'help');
                         return;
                     } else if (message === '/spawn') {
                         app.engine.moveToSpawn();
@@ -310,6 +311,18 @@ $(function() {
                     });
                 });
 
+                var $tilesetSelector = $('#tileset .selector');
+                $('#tileset').mousemove(function(e) {
+                    var x = Math.floor(e.offsetX / app.engine.TILEWIDTH);
+                    var y = Math.floor(e.offsetY / app.engine.TILEHEIGHT);
+                    $tilesetSelector.css({top: y * app.engine.TILEHEIGHT, left: x * app.engine.TILEWIDTH});
+                });
+                $('#tileset').click(function(e) {
+                    var x = Math.floor(e.offsetX / app.engine.TILEWIDTH);
+                    var y = Math.floor(e.offsetY / app.engine.TILEHEIGHT);
+                    console.log(x, y);
+                });
+
                 // Pres Esc inside of text box, leave the text box
                 $(document).keyup(function(e) {
                     if ($(e.target).is(":input") && e.which == 27) {
@@ -343,7 +356,7 @@ $(function() {
                 $('#movement .east').click(function() { app.engine.move('e'); });
                 $('#movement .south').click(function() { app.engine.move('s'); });
 
-                app.displayMessage('Help', 'Type /help for a list of extra commands.', 'help');
+                app.displayMessage('Help', 'Type /help for some help', 'help');
             },
 
             // Moves a character in the cardinal direction provided
