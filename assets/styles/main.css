@@ -79,6 +79,12 @@ body {
 #messages .server .username {
     color: #ee2c2c;
 }
+#messages .help .username {
+    color: #2c2cee;
+}
+#messages .help .content {
+    color: #999;
+}
 #messages .self .username,
 #messages .self .content {
     color: #999;

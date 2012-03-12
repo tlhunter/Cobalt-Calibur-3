@@ -170,6 +170,26 @@ $(function() {
                     event.preventDefault();
                     var message = app.$newMessage.val();
                     app.$newMessage.val('');
+                    if (message === '/clear') {
+                        window.app.$messages.empty();
+                        return;
+                    } else if (message === '/redraw') {
+                        app.engine.map.draw(window.mapData);
+                        return;
+                    } else if (message === '/help') {
+                        app.displayMessage('Help', '-{Keys}--------------------------------', 'help');
+                        app.displayMessage('Help', 'Use the WASD keys to move around the screen', 'help');
+                        app.displayMessage('Help', 'Press T to go to chat, and Esc to leave chat', 'help');
+                        app.displayMessage('Help', '-{Commands}----------------------------', 'help');
+                        app.displayMessage('Help', '/clear: reset message area', 'help');
+                        app.displayMessage('Help', '/redraw: re draws map', 'help');
+                        app.displayMessage('Help', '/help: displays this help listing', 'help');
+                        app.displayMessage('Help', '/spawn: reset location to spawn point', 'help');
+                        return;
+                    } else if (message === '/spawn') {
+                        app.engine.moveToSpawn();
+                        return;
+                    }
                     app.displayMessage(app.$playerName.val(), message, 'self');
                     app.socket.emit('chat', {name: app.$playerName.val(), message: message, priority: 0});
                 });
@@ -290,8 +310,20 @@ $(function() {
                     });
                 });
 
+                // Pres Esc inside of text box, leave the text box
+                $(document).keyup(function(e) {
+                    if ($(e.target).is(":input") && e.which == 27) {
+                        e.preventDefault();
+                        $('#message-input').blur();
+                    };
+                });
+
+                // Character keypress
                 $(document).keypress(function(e) {
-                    if( $(e.target).is(":input") ) return;
+                    if ($(e.target).is(":input")) {
+                        return;
+                    }
+
                     if (e.which == 119) { // W
                         app.engine.move('n');
                     } else if (e.which == 97) { // A
@@ -300,6 +332,9 @@ $(function() {
                         app.engine.move('s');
                     } else if (e.which == 100) { // D
                         app.engine.move('e');
+                    } else if (e.which == 116) { // T
+                        e.preventDefault();
+                        $('#message-input').focus();
                     }
                 });
 
@@ -308,6 +343,7 @@ $(function() {
                 $('#movement .east').click(function() { app.engine.move('e'); });
                 $('#movement .south').click(function() { app.engine.move('s'); });
 
+                app.displayMessage('Help', 'Type /help for a list of extra commands.', 'help');
             },
 
             // Moves a character in the cardinal direction provided
@@ -353,6 +389,19 @@ $(function() {
                 app.engine.map.draw(window.mapData, direction);
 
                 return true;
+            },
+
+            moveToSpawn: function() {
+                app.engine.viewport.y = 100;
+                app.engine.viewport.x = 100;
+                app.engine.lastDirection = 's';
+                app.socket.emit('move', {
+                    x: app.engine.viewport.x + 21,
+                    y: app.engine.viewport.y + 15,
+                    direction: 's'
+                });
+
+                app.engine.map.draw(window.mapData, 's');
             }
         },
 
