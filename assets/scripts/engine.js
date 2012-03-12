@@ -346,9 +346,12 @@ $(function() {
                     } else if (e.which == 100) { // D
                         app.engine.move('e');
                     } else if (e.which == 116) { // T
-                        e.preventDefault();
+                        e.preventDefault(); // keeps us from getting a t in the box
+                        $('#message-input').focus();
+                    } else if (e.which == 47) { // /
                         $('#message-input').focus();
                     }
+
                 });
 
                 $('#movement .north').click(function() { app.engine.move('n'); });
