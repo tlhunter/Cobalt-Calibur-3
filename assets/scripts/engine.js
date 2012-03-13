@@ -15,26 +15,42 @@ $(function() {
 
         // Build main Engine object
         engine: {
+
+            // Stores our canvas context object
             handle: document.getElementById('map').getContext('2d'),
+
+            // Dimensions of a single tile
             TILEWIDTH: 16,
             TILEHEIGHT: 16,
+
+            // Last direction this player was facing
             lastDirection: 's',
+
+            // Data regarding the canvas tag
             screen: {
-                width: 0,
-                height: 0,
-                tilesX: 0,
-                tilesY: 0,
+                width: 0,       // The pixel width of the canvas
+                height: 0,      // The pixel height of the canvas
+                tilesX: 0,      // The number of X tiles
+                tilesY: 0,      // The number of Y tiles
             },
+
+            // Data regarding the viewport (window into the map)
             viewport: {
-                x: 0,
-                y: 0,
+                x: 0,           // The viewport left tile
+                y: 0,           // The viewport top tile
             },
+
+            // Functions and data regarding the other players
             players: {
+
+                // Locations of all the different players (except for this player)
                 locations: [],
+
+                // Updates a player location, adding if it's a new entry
                 update: function(session, x, y, direction) {
                     var found = false;
-                    var len=app.engine.players.locations.length;
-                    for(var i=0; i<len; i++) {
+                    var len = app.engine.players.locations.length;
+                    for (var i=0; i<len; i++) {
                         var player = app.engine.players.locations[i];
                         if (player.session == session) {
                             player.x = x;
@@ -53,6 +69,8 @@ $(function() {
                     }
                 }
             },
+
+            // Functions and data regarding the map
             map: {
                 draw: function(mapData, direction) {
                     var i, j;
@@ -105,19 +123,19 @@ $(function() {
                 draw: function(x, y, tile) {
                     var x_pixel = x * app.engine.TILEWIDTH;
                     var y_pixel = y * app.engine.TILEHEIGHT;
-                   app.engine.handle.drawImage(
-                       app.engine.tile.retrieve(tile.g),
-                       x_pixel,
-                       y_pixel
-                   );
+                    app.engine.handle.drawImage(
+                        app.engine.tile.retrieve(tile.g),
+                        x_pixel,
+                        y_pixel
+                    );
 
-                   if (tile.b) {
-                      app.engine.handle.drawImage(
-                          app.engine.tile.retrieve(tile.b),
-                          x_pixel,
-                          y_pixel
-                      );
-                   }
+                    if (tile.b) {
+                       app.engine.handle.drawImage(
+                           app.engine.tile.retrieve(tile.b),
+                           x_pixel,
+                           y_pixel
+                       );
+                    }
                 },
                 images: [],
                 store: function(id, imgSrc) {
@@ -414,6 +432,7 @@ $(function() {
                 return true;
             },
 
+            // Resets the player to the spawn location
             moveToSpawn: function() {
                 app.engine.viewport.y = 100;
                 app.engine.viewport.x = 100;
@@ -428,6 +447,7 @@ $(function() {
             }
         },
 
+        // Displays a message in the message box, and scrolls to the bottom
         displayMessage: function(label, message, priority) {
             this.$messages
                 .append("<div class='message " + priority + "'><span class='username'>" + label + ": </span><span class='content'>" + message + "</span></div>")
@@ -437,6 +457,7 @@ $(function() {
     };
 
     app.displayMessage('Client', 'Downloading Map Data...', 'client');
+
     $.get('/map', function(data) {
         app.displayMessage('Client', 'Initializing Map...', 'client');
         window.mapData = data;
