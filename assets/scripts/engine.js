@@ -320,7 +320,14 @@ $(function() {
                 $('#tileset').click(function(e) {
                     var x = Math.floor(e.offsetX / app.engine.TILEWIDTH);
                     var y = Math.floor(e.offsetY / app.engine.TILEHEIGHT);
-                    console.log(x, y);
+
+                    // The tileset uses a weird shape for foreground and background imagery, this if statement emulates that
+                    var z = 1;
+                    if (x <= 17 || (x <= 23 && y <= 7)) {
+                        z = 0;
+                    }
+
+                    console.log(x, y, z);
                 });
 
                 // Pres Esc inside of text box, leave the text box
