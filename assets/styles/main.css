@@ -125,7 +125,7 @@ body {
 #tileset {
     width: 480px;
     height: 256px;
-    cursor: crosshair;
+    cursor: none;
     background: transparent url("/assets/tilesets/Hakurei_Shrine.png") no-repeat top left;
     float: left;
 }
