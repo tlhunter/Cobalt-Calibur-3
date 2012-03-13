@@ -1,12 +1,11 @@
 <?php
 $map = array();
-for($y = 0; $y < 200; $y++) {
-    for($x = 0; $x < 200; $x++) {
-        $b = null;
-        if (rand(1, 100) <= 2) {
-            $b = 7;
-        }
-        $map[$x][$y] = array('g' => 1, 'b' => $b);
+for($y = 0; $y < 160; $y++) {
+    for($x = 0; $x < 160; $x++) {
+        $map[$x][$y] = array(
+            array(1,8),             // background is [0]
+            null                    // foreground is [1]
+        );
     }
 }
 echo json_encode($map);

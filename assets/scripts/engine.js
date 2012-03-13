@@ -16,12 +16,17 @@ $(function() {
         // Build main Engine object
         engine: {
 
+            tileset: new Image(),
+            tilesetCharacters: new Image(),
+
             // Stores our canvas context object
             handle: document.getElementById('map').getContext('2d'),
 
             // Dimensions of a single tile
             TILEWIDTH: 16,
             TILEHEIGHT: 16,
+            TOTALTILES_X: 160,
+            TOTALTILES_Y: 160,
 
             // Last direction this player was facing
             lastDirection: 's',
@@ -72,7 +77,7 @@ $(function() {
 
             // Functions and data regarding the map
             map: {
-                draw: function(mapData, direction) {
+                draw: function(mapData) {
                     var i, j;
                     var mapX = 0;
                     var mapY = 0;
@@ -82,107 +87,116 @@ $(function() {
                         for (i=0; i < app.engine.screen.tilesX; i++) {
                             mapX = i + app.engine.viewport.x;
                             mapY = j + app.engine.viewport.y;
-                            tile = (mapData[mapY] && mapData[mapY][mapX]) ? mapData[mapY][mapX] : {g: 0};
+                            tile = (mapData[mapY] && mapData[mapY][mapX]) ? mapData[mapY][mapX] : null;
                             app.engine.tile.draw(i, j, tile);
                             var len = app.engine.players.locations.length;
                             for (var k = 0; k < len; k++) {
                                 var player = app.engine.players.locations[k];
                                 if (player.x == mapX && player.y == mapY) {
-                                    var id = 32;
+                                    var index = 0;
                                     if (player.direction == 'n') {
-                                        id = 30;
+                                        index = 4;
                                     } else if (player.direction == 'e') {
-                                        id = 31;
+                                        index = 2;
                                     } else if (player.direction == 's') {
-                                        id = 32;
+                                        index = 0;
                                     } else if (player.direction == 'w') {
-                                        id = 33;
+                                        index = 6;
                                     }
-                                    app.engine.tile.draw(i, j, {b:0,g:id});
+                                    app.engine.tile.drawPlayer(i, j, index, 0);
                                 }
                             }
                         }
                     }
 
-                    var id = 32;
-                    if (!direction) direction = app.engine.lastDirection;
-
-                    if (direction == 'n') {
-                        id = 30;
-                    } else if (direction == 'e') {
-                        id = 31;
-                    } else if (direction == 's') {
-                        id = 32;
-                    } else if (direction == 'w') {
-                        id = 33;
+                    var index = 0;
+                    if (app.engine.lastDirection == 'n') {
+                        index = 4;
+                    } else if (app.engine.lastDirection == 'e') {
+                        index = 2;
+                    } else if (app.engine.lastDirection == 's') {
+                        index = 0;
+                    } else if (app.engine.lastDirection == 'w') {
+                        index = 6;
                     }
-                    app.engine.tile.draw(21, 15, {b:0, g:id});
+                    app.engine.tile.drawPlayer(21, 15, index, 9);
                 }
             },
             tile: {
                 draw: function(x, y, tile) {
                     var x_pixel = x * app.engine.TILEWIDTH;
                     var y_pixel = y * app.engine.TILEHEIGHT;
+
+                    if (!tile) {
+                        app.engine.handle.fillRect(x_pixel, y_pixel, app.engine.TILEWIDTH, app.engine.TILEHEIGHT);  
+                        return;
+                    }
+
                     app.engine.handle.drawImage(
-                        app.engine.tile.retrieve(tile.g),
+                        window.app.engine.tileset,
+                        tile[0][0] * app.engine.TILEWIDTH,
+                        tile[0][1] * app.engine.TILEHEIGHT,
+                        app.engine.TILEWIDTH,
+                        app.engine.TILEHEIGHT,
                         x_pixel,
-                        y_pixel
+                        y_pixel,
+                        app.engine.TILEWIDTH,
+                        app.engine.TILEHEIGHT
                     );
 
-                    if (tile.b) {
+                    if (tile[1]) {
                        app.engine.handle.drawImage(
-                           app.engine.tile.retrieve(tile.b),
-                           x_pixel,
-                           y_pixel
-                       );
+                            window.app.engine.tileset,
+                            tile[1][0] * app.engine.TILEWIDTH,
+                            tile[1][1] * app.engine.TILEHEIGHT,
+                            app.engine.TILEWIDTH,
+                            app.engine.TILEHEIGHT,
+                            x_pixel,
+                            y_pixel,
+                            app.engine.TILEWIDTH,
+                            app.engine.TILEHEIGHT
+                           );
                     }
                 },
-                images: [],
-                store: function(id, imgSrc) {
-                    var newid = app.engine.tile.images.length;
-                    var tile  = [id, new Image(), false];   // format as explained: [id, Image, loaded]
-
-                    tile[1].src    = imgSrc;
-                    tile[1].onload = function() {
-                        tile[2] = true;
-                    }
-                    app.engine.tile.images[newid] = tile;   // store this tile
-                },
-                retrieve: function(id) {
-                    var i, len = app.engine.tile.images.length;
-
-                    for (i=0; i<len; i++) {
-                        if (app.engine.tile.images[i][0] == id) {
-                            return app.engine.tile.images[i][1];   // return the image object
-                        }
-                    }
-                },
-                allLoaded: function() {
-                    var i, len = app.engine.tile.images.length;
-
-                    for (i=0; i<len; i++) {
-                        if (app.engine.tile.images[i][2] === false) {
-                            return false;
-                        }
-                    }
-                    return true;
+                drawPlayer: function(x, y, tile_x, tile_y) {
+                    var x_pixel = x * app.engine.TILEWIDTH;
+                    var y_pixel = y * app.engine.TILEHEIGHT;
+                    app.engine.handle.drawImage(
+                        window.app.engine.tilesetCharacters,
+                        tile_x * app.engine.TILEWIDTH,
+                        tile_y * app.engine.TILEHEIGHT,
+                        app.engine.TILEWIDTH,
+                        app.engine.TILEHEIGHT,
+                        x_pixel,
+                        y_pixel,
+                        app.engine.TILEWIDTH,
+                        app.engine.TILEHEIGHT
+                    );
                 }
             },
             initialDraw: function(mapData) {
-                if (app.engine.tile.allLoaded() === false) {
-                    setTimeout(function(md) {
-                        return function() {
-                            app.engine.initialDraw(md);
-                        }
-                    }(mapData), 50);   // wait 100 ms
-                } else {
-                    app.displayMessage('Client', 'Drawing Map...', 'client');
-                    app.engine.map.draw(mapData);
-                    app.displayMessage('Client', 'Done Drawing Map.', 'client');
-                }
+                setTimeout(function(md) {
+                    return function() {
+                        app.displayMessage('Client', 'Drawing Map...', 'client');
+                        app.engine.map.draw(mapData);
+                        app.displayMessage('Client', 'Done Drawing Map.', 'client');
+                    }
+                }(mapData), 50);   // wait 100 ms
             },
 
             start: function(mapData, x, y) {
+                // load background image
+                window.app.engine.tileset.src = '/assets/tilesets/Hakurei_Shrine.png';
+                window.app.engine.tileset.onload = function() {
+                    app.displayMessage('Client', 'Tileset Loaded', 'client');
+                }
+                // load characters image
+                window.app.engine.tilesetCharacters.src = '/assets/tilesets/characters.png';
+                window.app.engine.tilesetCharacters.onload = function() {
+                    app.displayMessage('Client', 'Character Tileset Loaded', 'client');
+                }
+
+                app.engine.handle.fillStyle = "rgb(0,0,0)";  
 
                 $('#message-box form').submit(function(event) {
                     event.preventDefault();
@@ -225,20 +239,13 @@ $(function() {
                 });
 
                 app.socket.on('terraform', function (data) {
-                    var node = window.mapData[data.y][data.x];
-                    if (data.g !== null) {
-                        node.g = data.g;
-                        console.log('change background');
-                    }
-                    if (data.b !== null) {
-                        node.b = data.b;
-                        console.log('change foreground');
-                    }
                     console.log("Terraform", data, node);
+                    var node = window.mapData[data.y][data.x];
+                    node[data.layer] = data.tile;
                     app.engine.map.draw(window.mapData);
                 });
 
-                app.$playerName.val('Anon' + Math.floor(Math.random()*8999+1000));
+                app.$playerName.val('Anon' + Math.floor(Math.random() * 8999 + 1000));
 
                 app.engine.screen.width  = window.app.$canvas.width();
                 app.engine.screen.height = window.app.$canvas.height();
@@ -248,104 +255,35 @@ $(function() {
                 app.engine.viewport.x = x;
                 app.engine.viewport.y = y;
 
-                app.displayMessage("Client", "Downloading Tiles...", 'client');
-
-                // Terrain
-                app.engine.tile.store(0, '/assets/tiles/water.png');
-                app.engine.tile.store(1, '/assets/tiles/grass.png');
-                app.engine.tile.store(2, '/assets/tiles/sand.png');
-
-                // Foreground
-                app.engine.tile.store(3, '/assets/tiles/house.png');
-                app.engine.tile.store(4, '/assets/tiles/town.png');
-                app.engine.tile.store(5, '/assets/tiles/village.png');
-                app.engine.tile.store(6, '/assets/tiles/temple.png');
-                app.engine.tile.store(7, '/assets/tiles/tree.png');
-                app.engine.tile.store(8, '/assets/tiles/wood.png');
-                app.engine.tile.store(9, '/assets/tiles/stone.png');
-                app.engine.tile.store(10, '/assets/tiles/rock.png');
-                app.engine.tile.store(11, '/assets/tiles/sign.png');
-                app.engine.tile.store(12, '/assets/tiles/bush.png');
-                app.engine.tile.store(13, '/assets/tiles/grave.png');
-                app.engine.tile.store(14, '/assets/tiles/tile.png');
-                app.engine.tile.store(15, '/assets/tiles/forest.png');
-                app.engine.tile.store(16, '/assets/tiles/well.png');
-
-                // Mountains Only
-                app.engine.tile.store(20, '/assets/tiles/mountain.png');
-                app.engine.tile.store(21, '/assets/tiles/mountain_nw.png');
-                app.engine.tile.store(22, '/assets/tiles/mountain_n.png');
-                app.engine.tile.store(23, '/assets/tiles/mountain_ne.png');
-                app.engine.tile.store(24, '/assets/tiles/mountain_w.png');
-                app.engine.tile.store(25, '/assets/tiles/mountain_c.png');
-                app.engine.tile.store(26, '/assets/tiles/mountain_e.png');
-                app.engine.tile.store(27, '/assets/tiles/mountain_sw.png');
-                app.engine.tile.store(28, '/assets/tiles/mountain_s.png');
-                app.engine.tile.store(29, '/assets/tiles/mountain_se.png');
-
-                // Character Graphics
-                app.engine.tile.store(30, '/assets/tiles/character_n.png');
-                app.engine.tile.store(31, '/assets/tiles/character_e.png');
-                app.engine.tile.store(32, '/assets/tiles/character_s.png');
-                app.engine.tile.store(33, '/assets/tiles/character_w.png');
-
-                app.displayMessage('Client', 'Done Downloading Tiles.', 'client');
-
                 app.engine.initialDraw(mapData);
 
-                var $background = $('#terraform .background');
-                for (var i = 0; i <= 2; i++) {
-                    var tile = app.engine.tile.images[i];
-                    var $graphic = $(tile[1]);
-                    $graphic.attr('data-id', tile[0]).attr('data-type', 'background');
-                    $background.append($graphic);
-                }
+                var $tilesetSelector = $('#tileset .selector');
+                $('#tileset').mousemove(function(e) {
+                    var tile_x = Math.floor(e.offsetX / app.engine.TILEWIDTH);
+                    var tile_y = Math.floor(e.offsetY / app.engine.TILEHEIGHT);
+                    $tilesetSelector.css({top: tile_y * app.engine.TILEHEIGHT, left: tile_x * app.engine.TILEWIDTH});
+                });
+                $('#tileset').click(function(e) {
+                    var tile_x = Math.floor(e.offsetX / app.engine.TILEWIDTH);
+                    var tile_y = Math.floor(e.offsetY / app.engine.TILEHEIGHT);
 
-                var $foreground = $('#terraform .foreground');
-                for (var i = 3; i <= 26; i++) {
-                    var tile = app.engine.tile.images[i];
-                    var $graphic = $(tile[1]);
-                    $graphic.attr('data-id', tile[0]).attr('data-type', 'foreground');
-                    $foreground.append($graphic);
-                }
-
-                $('#terraform img, #terraform span').click(function() {
-                    var g = null, b = null;
-                    var $el = $(this);
-                    if ($el.attr('data-type') == 'foreground') {
-                        b = parseInt($(this).attr('data-id'), 10);
-                        window.mapData[app.engine.viewport.y + 15][app.engine.viewport.x + 21].b = b;
-                    } else {
-                        g = parseInt($(this).attr('data-id'), 10);
-                        window.mapData[app.engine.viewport.y + 15][app.engine.viewport.x + 21].g = g;
+                    // The tileset uses a weird shape for foreground and background imagery, this if statement emulates that
+                    var layer = 1;
+                    if (tile_x <= 17 || (tile_x <= 23 && tile_y <= 7)) {
+                        layer = 0;
                     }
+
+                    window.mapData[app.engine.viewport.y + 15][app.engine.viewport.x + 21][layer] = [tile_x, tile_y];
+
                     app.engine.map.draw(window.mapData);
 
                     app.socket.emit('terraform', {
                         x: app.engine.viewport.x + 21,
                         y: app.engine.viewport.y + 15,
-                        g: g,
-                        b: b
+                        tile: [tile_x, tile_y],
+                        layer: layer
                     });
-                });
 
-                var $tilesetSelector = $('#tileset .selector');
-                $('#tileset').mousemove(function(e) {
-                    var x = Math.floor(e.offsetX / app.engine.TILEWIDTH);
-                    var y = Math.floor(e.offsetY / app.engine.TILEHEIGHT);
-                    $tilesetSelector.css({top: y * app.engine.TILEHEIGHT, left: x * app.engine.TILEWIDTH});
-                });
-                $('#tileset').click(function(e) {
-                    var x = Math.floor(e.offsetX / app.engine.TILEWIDTH);
-                    var y = Math.floor(e.offsetY / app.engine.TILEHEIGHT);
-
-                    // The tileset uses a weird shape for foreground and background imagery, this if statement emulates that
-                    var z = 1;
-                    if (x <= 17 || (x <= 23 && y <= 7)) {
-                        z = 0;
-                    }
-
-                    console.log(x, y, z);
                 });
 
                 // Pres Esc inside of text box, leave the text box
@@ -403,13 +341,13 @@ $(function() {
                         app.engine.viewport.x--;
                         break;
                     case 's':
-                        if (app.engine.viewport.y >= 184) {
+                        if (app.engine.viewport.y >= app.engine.TOTALTILES_X - 16) {
                             return false;
                         }
                         app.engine.viewport.y++;
                         break;
                     case 'e':
-                        if (app.engine.viewport.x >= 178) {
+                        if (app.engine.viewport.x >= app.engine.TOTALTILES_Y - 22) {
                             return false;
                         }
                         app.engine.viewport.x++;
@@ -427,15 +365,15 @@ $(function() {
                     direction: direction
                 });
 
-                app.engine.map.draw(window.mapData, direction);
+                app.engine.map.draw(window.mapData);
 
                 return true;
             },
 
             // Resets the player to the spawn location
             moveToSpawn: function() {
-                app.engine.viewport.y = 100;
-                app.engine.viewport.x = 100;
+                app.engine.viewport.y = 70;
+                app.engine.viewport.x = 70;
                 app.engine.lastDirection = 's';
                 app.socket.emit('move', {
                     x: app.engine.viewport.x + 21,
@@ -443,7 +381,7 @@ $(function() {
                     direction: 's'
                 });
 
-                app.engine.map.draw(window.mapData, 's');
+                app.engine.map.draw(window.mapData);
             }
         },
 
@@ -461,7 +399,7 @@ $(function() {
     $.get('/map', function(data) {
         app.displayMessage('Client', 'Initializing Map...', 'client');
         window.mapData = data;
-        app.engine.start(window.mapData, 100, 100);
+        app.engine.start(window.mapData, 70, 70);
     });
 
 });

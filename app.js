@@ -187,13 +187,12 @@ db.open(function(err, db) {
                 session: this.id,
                 x: data.x,
                 y: data.y,
-                g: data.g,
-                b: data.b
+                tile: data.tile,
+                layer: data.layer
             });
 
             // update map
-            if (data.g !== null) map[data.y][data.x].g = data.g;
-            if (data.b !== null) map[data.y][data.x].b = data.b;
+            map[data.y][data.x][data.layer] = data.tile;
 
             console.log("Terraform", this.id, data);
         });
