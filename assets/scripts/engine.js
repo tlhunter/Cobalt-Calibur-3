@@ -241,6 +241,11 @@ $(function() {
                     app.displayMessage(data.name, data.message, data.priority);
                 });
 
+                app.socket.on('disconnect', function(data) {
+                    alert("The connection to the server has closed. Anything you build now won't be preserved.");
+                    app.displayMessage('Server', 'Disconnected', 'server');
+                });
+
                 app.socket.on('move', function(data) {
                     app.engine.players.update(data.session, data.x, data.y, data.direction);
                     app.engine.map.draw(mapData);
