@@ -186,7 +186,7 @@ $(function() {
 
             start: function(mapData, x, y) {
                 // load background image
-                window.app.engine.tileset.src = '/assets/tilesets/Hakurei_Shrine.png';
+                window.app.engine.tileset.src = '/assets/tilesets/Cobalt_Calibur.png';
                 window.app.engine.tileset.onload = function() {
                     app.displayMessage('Client', 'Tileset Loaded', 'client');
                 }
