@@ -72,6 +72,16 @@ $(function() {
                             direction: direction
                         });
                     }
+                },
+
+                remove: function(session) {
+                    var len = app.engine.players.locations.length;
+                    for (var i=0; i<len; i++) {
+                        var player = app.engine.players.locations[i];
+                        if (player.session == session) {
+                            app.engine.players.locations.splice(i, 1);
+                        }
+                    }
                 }
             },
 
@@ -228,18 +238,20 @@ $(function() {
                 });
 
                 app.socket.on('chat', function (data) {
-                    console.log("Chat", data);
                     app.displayMessage(data.name, data.message, data.priority);
                 });
 
                 app.socket.on('move', function(data) {
-                    console.log("Move", data);
                     app.engine.players.update(data.session, data.x, data.y, data.direction);
                     app.engine.map.draw(mapData);
                 });
 
+                app.socket.on('leave', function(data) {
+                    app.engine.players.remove(data.session);
+                    app.engine.map.draw(mapData);
+                });
+
                 app.socket.on('terraform', function (data) {
-                    console.log("Terraform", data, node);
                     var node = window.mapData[data.y][data.x];
                     node[data.layer] = data.tile;
                     app.engine.map.draw(window.mapData);

@@ -152,6 +152,21 @@ db.open(function(err, db) {
             console.log("Chat", this.id, data);
         });
 
+        // when a user disconnects, remove them from the db, and let the world know
+        socket.on('disconnect', function(data) {
+            var session_id = this.id;
+            socket.broadcast.emit('leave', {
+                session: session_id
+            });
+            db.collection('locations', function(err, collection) {
+                collection.remove({session: session_id}, function(err, result) {
+                    if (err) {
+                        console.log("Error removing a disconnected user from table");
+                    }
+                });
+            });
+        });
+
         // Receive movement, send to all users
         socket.on('move', function(data) {
             var session = this.id;
