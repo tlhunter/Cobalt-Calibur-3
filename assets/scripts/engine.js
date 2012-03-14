@@ -295,7 +295,18 @@ $(function() {
                         tile: [tile_x, tile_y],
                         layer: layer
                     });
+                });
 
+                $('#terraform .remove-tile').click(function() {
+                    console.log('removing tile');
+                    window.mapData[app.engine.viewport.y + 15][app.engine.viewport.x + 21][1] = null;
+                    app.engine.map.draw(window.mapData);
+                    app.socket.emit('terraform', {
+                        x: app.engine.viewport.x + 21,
+                        y: app.engine.viewport.y + 15,
+                        tile: null,
+                        layer: 1
+                    });
                 });
 
                 // Pres Esc inside of text box, leave the text box
