@@ -30,6 +30,7 @@ $(function() {
 
             // Last direction this player was facing
             lastDirection: 's',
+            characterIndex: 9,
 
             // Data regarding the canvas tag
             screen: {
@@ -129,7 +130,7 @@ $(function() {
                     } else if (app.engine.lastDirection == 'w') {
                         index = 6;
                     }
-                    app.engine.tile.drawPlayer(21, 15, index, 9);
+                    app.engine.tile.drawPlayer(21, 15, index, app.engine.characterIndex);
                 }
             },
             tile: {
@@ -300,6 +301,14 @@ $(function() {
                         tile: [tile_x, tile_y],
                         layer: layer
                     });
+                });
+
+                $('#picture').bind('click keyup change', function() {
+                    var index = parseInt($('#picture').val(), 10);
+                    console.log(index);
+                    if (isNaN(index)) return;
+                    app.engine.characterIndex = index;
+                    app.engine.map.draw(window.mapData);
                 });
 
                 $('#terraform .remove-tile').click(function() {
