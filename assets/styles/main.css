@@ -129,3 +129,19 @@ body {
     background: transparent url("/assets/tilesets/Cobalt_Calibur.png") no-repeat top left;
     float: left;
 }
+#nametags {
+    position: absolute;
+}
+#nametags .name {
+    position: relative;
+    width: 100px;
+    text-align: center;
+    opacity: 0.75;
+}
+#nametags .name span {
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-family: verdana;
+}
