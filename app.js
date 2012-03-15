@@ -13,7 +13,7 @@ var port = process.env['MONGO_NODE_DRIVER_PORT'] != null ? process.env['MONGO_NO
 
 console.log("MongoDB: Connecting to " + host + ":" + port);
 
-var db = new Db('terraformia', new Server(host, port, {}), {native_parser:true});
+var db = new Db('terraformia', new Server(host, port, {}), {native_parser:false});
 
 var map = [];
 var locations = [];
