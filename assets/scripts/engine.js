@@ -248,6 +248,7 @@ $(function() {
                 });
 
                 app.socket.on('move', function(data) {
+                    console.log("Move", data);
                     app.engine.players.update(data.session, data.x, data.y, data.direction);
                     app.engine.map.draw(mapData);
                 });

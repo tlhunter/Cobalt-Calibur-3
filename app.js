@@ -120,12 +120,9 @@ db.open(function(err, db) {
         setTimeout(
             function() {
                 _und.each(locations, function(player) {
-                    socket.emit('move', {
-                        session: player.session,
-                        x: player.x,
-                        y: player.y,
-                        direction: player.direction
-                    });
+                    socket.emit('move',
+                        player
+                    );
                 });
             },
             50
@@ -147,13 +144,14 @@ db.open(function(err, db) {
             socket.broadcast.emit('leave', {
                 session: session_id
             });
-            db.collection('locations', function(err, collection) {
-                collection.remove({session: session_id}, function(err, result) {
-                    if (err) {
-                        console.log("Error removing a disconnected user from table");
-                    }
-                });
-            });
+            var len = locations.length;
+            for (var i=0; i<len; i++) {
+                var player = locations[i];
+                if (player.session == session_id) {
+                    locations.splice(i, 1);
+                    break;
+                }
+            }
         });
 
         // Receive movement, send to all users
@@ -166,12 +164,24 @@ db.open(function(err, db) {
                 direction: data.direction
             });
             // update locations table
-            _und.each(locations, function(player) {
-                if (player.session == session) {
-                    player = data;
+            var foundPlayer = false;
+            var len = locations.length;
+            for (var i=0; i<len; i++) {
+                if (locations[i].session == session) {
+                    locations[i] = data;
+                    locations[i].session = session;
+                    foundPlayer = true;
+                    break;
                 }
-            });
-            console.log("Move", this.id, data);
+            }
+            if (!foundPlayer) {
+                locations.push({
+                    session: session,
+                    x: data.x,
+                    y: data.y,
+                    direction: data.direction
+                });
+            }
         });
 
         // Receive terraform, sent to ALL USERZ!!1
@@ -186,18 +196,6 @@ db.open(function(err, db) {
 
             // update map
             map[data.y][data.x][data.layer] = data.tile;
-
-            console.log("Terraform", this.id, data);
         });
-
-        socket.onclose = function(event) {
-            var len = locations.length;
-            for (var i=0; i<len; i++) {
-                var player = locations[i];
-                if (player.session == session) {
-                    locations.split(i, 1);
-                }
-            }
-        };
     });
 });
