@@ -20,7 +20,27 @@ db.open(function(err, db) {
     // Delete previous location entries... Fix this when we no longer use session id's as user identifiable data
     db.collection('locations', function(err, collection) {
         collection.remove();
+        console.log("MongoDB: Deleting existing list of locations");
     });
+
+    setInterval(function() {
+        db.collection('maps', function(err, collection) {
+            if (err) {
+                console.log("MongoDB: Error selecting map collection to save", err);
+            }
+            collection.remove({}, function(err, result) {
+                console.log("MongoDB: Deleting previous map");
+                collection.insert({map: map});
+                collection.count(function(err, count) {
+                    if (count == 1) {
+                        console.log("MongoDB: Map saved to database");
+                    } else {
+                        console.log("MongoDB: Error Saving Map");
+                    }
+                });
+            });
+        });
+    }, 60000); // Save map to Mongo once every minute
 
     console.log("Express: Attempting to listen on port 81");
     app.listen(81);
@@ -120,27 +140,6 @@ db.open(function(err, db) {
             50
         );
 
-        setInterval(function() {
-            db.collection('maps', function(err, collection) {
-                if (err) {
-                    console.log("Error Saving Map to MongoDB", err);
-                }
-                collection.remove({}, function(err, result) {
-                    collection.insert({map: map});
-                    collection.count(function(err, count) {
-                        if (count == 1) {
-                            socket.emit('chat', {
-                                name: 'Server',
-                                message: 'Map saved to database',
-                                priority: 'server'
-                            });
-                        } else {
-                            console.log("Error Saving Map!");
-                        }
-                    });
-                });
-            });
-        }, 60000);
 
         // Receive chat, send chats to all users
         socket.on('chat', function (data) {
