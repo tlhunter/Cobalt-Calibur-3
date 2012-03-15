@@ -4,6 +4,7 @@ var app = require('express').createServer(),
     io = require('socket.io').listen(app),
     Db = require('mongodb').Db,
     fs = require('fs'),
+    _und = require("underscore"),
     Connection = require('mongodb').Connection,
     Server = require('mongodb').Server;
 
@@ -15,13 +16,9 @@ console.log("MongoDB: Connecting to " + host + ":" + port);
 var db = new Db('terraformia', new Server(host, port, {}), {native_parser:true});
 
 var map = [];
+var locations = [];
 
 db.open(function(err, db) {
-    // Delete previous location entries... Fix this when we no longer use session id's as user identifiable data
-    db.collection('locations', function(err, collection) {
-        collection.remove();
-        console.log("MongoDB: Deleting existing list of locations");
-    });
 
     setInterval(function() {
         db.collection('maps', function(err, collection) {
@@ -116,30 +113,23 @@ db.open(function(err, db) {
                     priority: 'server'
                 });
             },
-            10
+            20
         );
 
         // Send the list of known locations, one per message
         setTimeout(
             function() {
-                db.collection('locations', function(err, collection) {
-                    collection.find({}, {}, function(err, cursor) {
-                        cursor.each(function(err, player) {
-                            if (player == null) {
-                                return;
-                            }
-                            socket.emit('move', {
-                                session: player.session,
-                                x: player.x,
-                                y: player.y
-                            });
-                        });
+                _und.each(locations, function(player) {
+                    socket.emit('move', {
+                        session: player.session,
+                        x: player.x,
+                        y: player.y,
+                        direction: player.direction
                     });
                 });
             },
             50
         );
-
 
         // Receive chat, send chats to all users
         socket.on('chat', function (data) {
@@ -176,21 +166,10 @@ db.open(function(err, db) {
                 direction: data.direction
             });
             // update locations table
-            db.collection('locations', function(err, collection) {
-                collection.update(
-                    {
-                        session: session
-                    },
-                    {
-                        x: data.x,
-                        y: data.y,
-                        direction: data.direction,
-                        session: session
-                    },
-                    {
-                        upsert: true
-                    }
-                );
+            _und.each(locations, function(player) {
+                if (player.session == session) {
+                    player = data;
+                }
             });
             console.log("Move", this.id, data);
         });
@@ -212,11 +191,13 @@ db.open(function(err, db) {
         });
 
         socket.onclose = function(event) {
-            db.collection('locations', function(err, collection) {
-                collection.remove({
-                    session: this.id
-                });
-            });
+            var len = locations.length;
+            for (var i=0; i<len; i++) {
+                var player = locations[i];
+                if (player.session == session) {
+                    locations.split(i, 1);
+                }
+            }
         };
     });
 });
