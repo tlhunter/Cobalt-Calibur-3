@@ -130,7 +130,10 @@ body {
     float: left;
 }
 #nametags {
-    position: relative;
+    position: absolute;
+    width: 672px;
+    height: 480px;
+    overflow: hidden;
 }
 #nametags .name {
     position: absolute;
