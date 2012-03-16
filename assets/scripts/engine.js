@@ -364,14 +364,15 @@ $(function() {
                         y: app.engine.viewport.y + 15,
                         direction: 's'
                     });
-                }, 10);
-                // tell people what we look like when we first login
-                setTimeout(function() {
+                }, 10000);
+
+                // Tell people who we are every 15 seconds (temporary solution for a race condition)
+                setInterval(function() {
                     app.engine.updateCharacterInfo(
                         $('#player-name').val(),
                         $('#picture').val()
                     );
-                }, 50);
+                }, 15000);
 
                 app.engine.initialDraw(mapData);
 
