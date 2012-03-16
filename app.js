@@ -4,6 +4,7 @@ var app = require('express').createServer(),
     io = require('socket.io').listen(app),
     Db = require('mongodb').Db,
     fs = require('fs'),
+    sanitizer = require('sanitizer'),
     _und = require("underscore"),
     Connection = require('mongodb').Connection,
     Server = require('mongodb').Server;
@@ -131,10 +132,11 @@ db.open(function(err, db) {
 
         // Receive chat, send chats to all users
         socket.on('chat', function (data) {
-            var message = data.message.substr(0, 100);
+            var message = sanitizer.escape(data.message.substr(0, 100));
+            var name = sanitizer.escape(data.name);
             socket.broadcast.emit('chat', {
                 session: this.id,
-                name: data.name,
+                name: name,
                 message: message
             });
             console.log("Chat", this.id, data);
@@ -161,7 +163,7 @@ db.open(function(err, db) {
         // Get an update from the client for their char's name and picture
         socket.on('character info', function(data) {
             var session = this.id;
-            var char_name = data.name.substr(0, 12);
+            var char_name = sanitizer.escape(data.name.substr(0, 12));
             socket.broadcast.emit('character info', {
                 session: session,
                 name: char_name,
