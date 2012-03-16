@@ -165,7 +165,7 @@ db.open(function(err, db) {
             socket.broadcast.emit('character info', {
                 session: session,
                 name: char_name,
-                picture: data.picture
+                picture: parseInt(data.picture, 10) || 56
             });
             var len = players.length;
             var foundPlayer = false;
