@@ -243,6 +243,8 @@ $(function() {
                         app.displayMessage('Help', '-{Keys}--------------------', 'help');
                         app.displayMessage('Help', 'Use the WASD keys to move', 'help');
                         app.displayMessage('Help', 'Press T to go to chat mode', 'help');
+                        app.displayMessage('Help', 'Press / to go to chat mode', 'help');
+                        app.displayMessage('Help', 'Press x to remove tile', 'help');
                         app.displayMessage('Help', 'Press Esc go to leave chat', 'help');
                         app.displayMessage('Help', '-{Commands}----------------', 'help');
                         app.displayMessage('Help', '/clear: reset message area', 'help');
@@ -250,9 +252,14 @@ $(function() {
                         app.displayMessage('Help', '/help: displays this help', 'help');
                         app.displayMessage('Help', '/spawn: reset location', 'help');
                         app.displayMessage('Help', '/tp name: teleport player', 'help');
+                        app.displayMessage('Help', '/nick name: change name', 'help');
                         return;
                     } else if (message === '/spawn') {
                         app.engine.moveToSpawn();
+                        return;
+                    } else if (message.indexOf('/nick ') === 0) {
+                        var playerName = message.substr(6);
+                        app.$playerName.val(playerName).change();
                         return;
                     } else if (message.indexOf('/tp ') === 0) {
                         var foundPlayer = false;
@@ -357,7 +364,11 @@ $(function() {
                 $('#tileset').mousemove(function(e) {
                     var tile_x = Math.floor(e.offsetX / app.engine.TILEWIDTH);
                     var tile_y = Math.floor(e.offsetY / app.engine.TILEHEIGHT);
-                    $tilesetSelector.css({top: tile_y * app.engine.TILEHEIGHT, left: tile_x * app.engine.TILEWIDTH});
+                    var color = 'orange';
+                    if (tile_x <= 17 || (tile_x <= 23 && tile_y <= 7)) {
+                        color = 'blue';
+                    }
+                    $tilesetSelector.css({top: tile_y * app.engine.TILEHEIGHT, left: tile_x * app.engine.TILEWIDTH, 'outline-color': color});
                 });
                 $('#tileset').click(function(e) {
                     var tile_x = Math.floor(e.offsetX / app.engine.TILEWIDTH);
@@ -395,7 +406,6 @@ $(function() {
                 });
 
                 $('#terraform .remove-tile').click(function() {
-                    console.log('removing tile');
                     window.mapData[app.engine.viewport.y + 15][app.engine.viewport.x + 21][1] = null;
                     app.engine.map.draw(window.mapData);
                     app.socket.emit('terraform', {
@@ -433,8 +443,16 @@ $(function() {
                         $('#message-input').focus();
                     } else if (e.which == 47) { // /
                         $('#message-input').focus();
+                    } else if (e.which == 120) { // x
+                        window.mapData[app.engine.viewport.y + 15][app.engine.viewport.x + 21][1] = null;
+                        app.engine.map.draw(window.mapData);
+                        app.socket.emit('terraform', {
+                            x: app.engine.viewport.x + 21,
+                            y: app.engine.viewport.y + 15,
+                            tile: null,
+                            layer: 1
+                        });
                     }
-
                 });
 
                 $('#movement .north').click(function() { app.engine.move('n'); });
