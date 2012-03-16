@@ -357,17 +357,13 @@ $(function() {
                 app.engine.viewport.x = x;
                 app.engine.viewport.y = y;
 
-                // tell people where we are when we first login
-                setTimeout(function() {
+                // Tell people who and where we are every 15 seconds (temporary solution for a race condition)
+                setInterval(function() {
                     app.socket.emit('move', {
                         x: app.engine.viewport.x + 21,
                         y: app.engine.viewport.y + 15,
-                        direction: 's'
+                        direction: app.engine.lastDirection
                     });
-                }, 10000);
-
-                // Tell people who we are every 15 seconds (temporary solution for a race condition)
-                setInterval(function() {
                     app.engine.updateCharacterInfo(
                         $('#player-name').val(),
                         $('#picture').val()
