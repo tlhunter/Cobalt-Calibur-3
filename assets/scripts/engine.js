@@ -249,9 +249,36 @@ $(function() {
                         app.displayMessage('Help', '/redraw: re draws map', 'help');
                         app.displayMessage('Help', '/help: displays this help', 'help');
                         app.displayMessage('Help', '/spawn: reset location', 'help');
+                        app.displayMessage('Help', '/tp name: teleport player', 'help');
                         return;
                     } else if (message === '/spawn') {
                         app.engine.moveToSpawn();
+                        return;
+                    } else if (message.indexOf('/tp ') === 0) {
+                        var foundPlayer = false;
+                        var playerName = message.substr(4);
+                        var len = app.engine.players.locations.length;
+                        for (var i = 0; i < len; i++) {
+                            var player = app.engine.players.locations[i];
+                            if (player.name == playerName) {
+                                app.engine.viewport.x = player.x - 21;
+                                app.engine.viewport.y = player.y - 15;
+                                app.engine.lastDirection = 's';
+
+                                app.socket.emit('move', {
+                                    x: app.engine.viewport.x + 21,
+                                    y: app.engine.viewport.y + 15,
+                                    direction: app.engine.lastDirection
+                                });
+
+                                app.engine.map.draw(window.mapData);
+                                foundPlayer = true;
+                                break;
+                            }
+                        }
+                        if (!foundPlayer) {
+                            app.displayMessage('Client', "Couldn't find player " + playerName, 'client');
+                        }
                         return;
                     }
                     app.displayMessage(app.$playerName.val(), message, 'self');
