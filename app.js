@@ -77,6 +77,32 @@ db.open(function(err, db) {
         });
     });
 
+    // Exports the map from the database to JSON
+    app.get('/export-map', function(req, res) {
+        db.collection('maps', function(err, collection) {
+            if (err) {
+                res.send(err);
+                throw err;
+            }
+            collection.findOne({}, {}, function(err, item) {
+                if (err) {
+                    res.send(err);
+                    throw err;
+                }
+                if (item != null) {
+                    var data = JSON.stringify(item.map);
+                    fs.writeFileSync('map-export.json', data, 'utf8');
+                    res.send("Backed up map");
+                    return;
+                } else {
+                    res.send("Couldn't back up map");
+                    return;
+                }
+            });
+
+        });
+    });
+
     // User requests a file in the assets folder, read it and return it
     app.get('/assets/*', function (req, res) {
         // is this secure? in PHP land it would be pretty bad
