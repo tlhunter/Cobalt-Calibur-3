@@ -17,8 +17,13 @@ $(function() {
         // Build main Engine object
         engine: {
 
+            // Images containing our tilesets
             tileset: new Image(),
             tilesetCharacters: new Image(),
+
+            // Animation frame data
+            animFrameGlobal: false,
+            animFrameMe: false,
 
             // Stores our canvas context object
             handle: document.getElementById('map').getContext('2d'),
@@ -127,6 +132,11 @@ $(function() {
                                     } else if (player.direction == 'w') {
                                         index = 6;
                                     }
+
+                                    if (app.engine.animFrameGlobal) {
+                                        index++;
+                                    }
+
                                     var player_name = player.name || '???';
                                     var picture_id = player.picture || 56;
                                     app.engine.nametags.add(player.name, i, j);
@@ -148,6 +158,11 @@ $(function() {
                     }
 
                     app.engine.nametags.add(app.$playerName.val(), 21, 15);
+
+                    if (app.engine.animFrameMe) {
+                        index++;
+                    };
+
                     app.engine.tile.drawPlayer(21, 15, index, app.engine.characterIndex);
 
                     app.engine.nametags.show();
@@ -308,12 +323,12 @@ $(function() {
                     if (data.name || data.picture) {
                         app.engine.players.updateInfo(data.session, data.name, data.picture);
                     }
-                    app.engine.map.draw(mapData);
+                    //app.engine.map.draw(mapData);
                 });
 
                 app.socket.on('leave', function(data) {
                     app.engine.players.remove(data.session);
-                    app.engine.map.draw(mapData);
+                    //app.engine.map.draw(mapData);
                     var player_name = data.name || 'unknown';
                     app.displayMessage('Server', data.name + " has left the game", 'server');
                 });
@@ -321,13 +336,13 @@ $(function() {
                 app.socket.on('terraform', function (data) {
                     var node = window.mapData[data.y][data.x];
                     node[data.layer] = data.tile;
-                    app.engine.map.draw(window.mapData);
+                    //app.engine.map.draw(window.mapData);
                 });
 
                 app.socket.on('character info', function(data) {
                     if (app.socket.socket.sessionid == data.dession) return;
                     app.engine.players.updateInfo(data.session, data.name, data.picture);
-                    app.engine.map.draw(window.mapData);
+                    //app.engine.map.draw(window.mapData);
                 });
 
                 app.$playerName.val('Anon' + Math.floor(Math.random() * 8999 + 1000));
@@ -401,7 +416,7 @@ $(function() {
                 });
 
                 $('#player-name').bind('keyup change', function() {
-                    app.engine.map.draw(window.mapData);
+                    //app.engine.map.draw(window.mapData);
                     app.engine.updateCharacterInfo($(this).val(), $('#picture').val());
                 });
 
@@ -461,9 +476,21 @@ $(function() {
                 $('#movement .south').click(function() { app.engine.move('s'); });
 
                 app.displayMessage('Help', 'Type /help for some help', 'help');
+
+                // global animation and map redraw function
+                var currentFrame = 0;
+                setInterval(function() {
+                    currentFrame++;
+                    if (currentFrame % 3 == 0) {
+                        currentFrame = 0;
+                        // redraw every 200 ms, but change animation every 400 ms
+                        app.engine.animFrameGlobal = !app.engine.animFrameGlobal;
+                    }
+                    app.engine.map.draw(window.mapData);
+                }, 150);
             },
 
-            // Moves a character in the cardinal direction provided
+            // Moves this character in the cardinal direction provided
             move: function(direction) {
                 switch(direction) {
                     case 'n':
@@ -496,6 +523,7 @@ $(function() {
                 }
 
                 app.engine.lastDirection = direction;
+                app.engine.animFrameMe = !app.engine.animFrameMe;
 
                 app.socket.emit('move', {
                     x: app.engine.viewport.x + 21,
