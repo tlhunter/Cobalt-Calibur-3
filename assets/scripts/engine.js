@@ -1,3 +1,4 @@
+// Copyright 2011 Thomas Hunter :3
 'use strict';
 
 $(function() {
@@ -30,7 +31,7 @@ $(function() {
 
             // Last direction this player was facing
             lastDirection: 's',
-            characterIndex: 9,
+            characterIndex: 0,
 
             // Data regarding the canvas tag
             screen: {
@@ -75,6 +76,17 @@ $(function() {
                     }
                 },
 
+                updateInfo: function(session, name, picture) {
+                    var len = app.engine.players.locations.length;
+                    for (var i=0; i<len; i++) {
+                        var player = app.engine.players.locations[i];
+                        if (player.session == session) {
+                            player.name = name;
+                            player.picture = picture;
+                        }
+                    }
+                },
+
                 remove: function(session) {
                     var len = app.engine.players.locations.length;
                     for (var i=0; i<len; i++) {
@@ -93,6 +105,7 @@ $(function() {
                     var mapX = 0;
                     var mapY = 0;
                     var tile;
+                    app.engine.nametags.hide();
 
                     for (j=0; j<app.engine.screen.tilesY; j++) {
                         for (i=0; i < app.engine.screen.tilesX; i++) {
@@ -114,7 +127,10 @@ $(function() {
                                     } else if (player.direction == 'w') {
                                         index = 6;
                                     }
-                                    app.engine.tile.drawPlayer(i, j, index, 0);
+                                    var player_name = player.name || '???';
+                                    var picture_id = player.picture || 56;
+                                    app.engine.nametags.add(player.name, i, j);
+                                    app.engine.tile.drawPlayer(i, j, index, picture_id);
                                 }
                             }
                         }
@@ -130,7 +146,11 @@ $(function() {
                     } else if (app.engine.lastDirection == 'w') {
                         index = 6;
                     }
+
+                    app.engine.nametags.add(app.$playerName.val(), 21, 15);
                     app.engine.tile.drawPlayer(21, 15, index, app.engine.characterIndex);
+
+                    app.engine.nametags.show();
                 }
             },
             tile: {
@@ -248,14 +268,20 @@ $(function() {
                 });
 
                 app.socket.on('move', function(data) {
-                    console.log("Move", data);
+                    if (app.socket.socket.sessionid == data.session) return;
                     app.engine.players.update(data.session, data.x, data.y, data.direction);
+                    // when move is first sent by server, entire player array sent with it
+                    if (data.name || data.picture) {
+                        app.engine.players.updateInfo(data.session, data.name, data.picture);
+                    }
                     app.engine.map.draw(mapData);
                 });
 
                 app.socket.on('leave', function(data) {
                     app.engine.players.remove(data.session);
                     app.engine.map.draw(mapData);
+                    var player_name = data.name || 'unknown';
+                    app.displayMessage('Server', data.name + " has left the game", 'server');
                 });
 
                 app.socket.on('terraform', function (data) {
@@ -264,7 +290,15 @@ $(function() {
                     app.engine.map.draw(window.mapData);
                 });
 
+                app.socket.on('character info', function(data) {
+                    if (app.socket.socket.sessionid == data.dession) return;
+                    app.engine.players.updateInfo(data.session, data.name, data.picture);
+                    app.engine.map.draw(window.mapData);
+                });
+
                 app.$playerName.val('Anon' + Math.floor(Math.random() * 8999 + 1000));
+                app.engine.characterIndex = Math.floor(Math.random() * 56);
+                $('#picture').val(app.engine.characterIndex);
 
                 app.engine.screen.width  = window.app.$canvas.width();
                 app.engine.screen.height = window.app.$canvas.height();
@@ -273,6 +307,22 @@ $(function() {
 
                 app.engine.viewport.x = x;
                 app.engine.viewport.y = y;
+
+                // tell people where we are when we first login
+                setTimeout(function() {
+                    app.socket.emit('move', {
+                        x: app.engine.viewport.x + 21,
+                        y: app.engine.viewport.y + 15,
+                        direction: 's'
+                    });
+                }, 10);
+                // tell people what we look like when we first login
+                setTimeout(function() {
+                    app.engine.updateCharacterInfo(
+                        $('#player-name').val(),
+                        $('#picture').val()
+                    );
+                }, 50);
 
                 app.engine.initialDraw(mapData);
 
@@ -306,10 +356,15 @@ $(function() {
 
                 $('#picture').bind('click keyup change', function() {
                     var index = parseInt($('#picture').val(), 10);
-                    console.log(index);
                     if (isNaN(index)) return;
                     app.engine.characterIndex = index;
                     app.engine.map.draw(window.mapData);
+                    app.engine.updateCharacterInfo($('#player-name').val(), $(this).val());
+                });
+
+                $('#player-name').bind('keyup change', function() {
+                    app.engine.map.draw(window.mapData);
+                    app.engine.updateCharacterInfo($(this).val(), $('#picture').val());
                 });
 
                 $('#terraform .remove-tile').click(function() {
@@ -420,6 +475,42 @@ $(function() {
                 });
 
                 app.engine.map.draw(window.mapData);
+            },
+
+            // Nametags are displayed in HTML in a layer above canvas (for now at least, not sure which is faster)
+            nametags: {
+                $tags: $('#nametags'),
+
+                // adds a player name, provided the X and Y coords of the player
+                add: function(name, x, y) {
+                    var x_pixel = (x - 4) * app.engine.TILEWIDTH + 7; // 7 is left margin or something
+                    var y_pixel = (y - 1) * app.engine.TILEHEIGHT;
+                    var $tags = app.engine.nametags.$tags;
+                    var $name = $('<div class="name"><span>' + name + '</span></div>');
+                    $name.css({
+                        left: x_pixel,
+                        top: y_pixel
+                    });
+                    $tags.append($name);
+                },
+
+                // hide (for efficient DOM redraws) and clear entries
+                hide: function() {
+                    app.engine.nametags.$tags.hide().empty();
+                },
+
+                // show list again
+                show: function() {
+                    app.engine.nametags.$tags.show();
+                }
+            },
+
+            // run this when we make a local change to alert other players and server
+            updateCharacterInfo: function(name, picture) {
+                app.socket.emit('character info', {
+                    name: name,
+                    picture: picture
+                });
             }
         },
 

@@ -12,14 +12,17 @@ var host = process.env['MONGO_NODE_DRIVER_HOST'] != null ? process.env['MONGO_NO
 var port = process.env['MONGO_NODE_DRIVER_PORT'] != null ? process.env['MONGO_NODE_DRIVER_PORT'] : Connection.DEFAULT_PORT;
 
 console.log("MongoDB: Connecting to " + host + ":" + port);
-
 var db = new Db('terraformia', new Server(host, port, {}), {native_parser:false});
 
+// Giant array of map data
 var map = [];
-var locations = [];
+
+// Array of known player locations
+var players = [];
 
 db.open(function(err, db) {
 
+    // Every minute we want to write the database from memory to mongo
     setInterval(function() {
         db.collection('maps', function(err, collection) {
             if (err) {
@@ -42,8 +45,41 @@ db.open(function(err, db) {
     console.log("Express: Attempting to listen on port 81");
     app.listen(81);
 
+    // User requests root, return HTML
     app.get('/', function (req, res) {
         res.sendfile(__dirname + '/index.html');
+    });
+
+    // User request map, return map JSON from RAM
+    app.get('/map', function(req, res) {
+        res.send(map);
+    });
+
+    // User requests map builder page, builds map from JSON file, returns OK
+    app.get('/build-map', function(req, res) {
+        var fileContents = fs.readFileSync('map.json','utf8');
+        var mapData = JSON.parse(fileContents);
+        db.collection('maps', function(err, collection) {
+            if (err) {
+                res.send(err);
+                throw err;
+            }
+            collection.remove({}, function(err, result) {
+                collection.insert({map: mapData});
+                collection.count(function(err, count) {
+                    if (count == 1) {
+                        console.log("Map was rebuilt from map.json file");
+                        res.send('ok');
+                    }
+                });
+            });
+        });
+    });
+
+    // User requests a file in the assets folder, read it and return it
+    app.get('/assets/*', function (req, res) {
+        // is this secure? in PHP land it would be pretty bad
+        res.sendfile(__dirname + '/assets/' + req.params[0]);
     });
 
     // Builds the map object with data from the mongo db
@@ -67,41 +103,6 @@ db.open(function(err, db) {
         });
     });
 
-
-    // Returns the entire map object, terraforming changes will be sent via websocket
-    app.get('/map', function(req, res) {
-        res.send(map);
-    });
-
-    // Builds the map from the json file, should only need to be run once
-    app.get('/build-map', function(req, res) {
-        var fileContents = fs.readFileSync('map.json','utf8');
-        var mapData = JSON.parse(fileContents);
-        db.collection('maps', function(err, collection) {
-            if (err) {
-                res.send(err);
-                throw err;
-            }
-            collection.remove({}, function(err, result) {
-                collection.insert({map: mapData});
-                collection.count(function(err, count) {
-                    if (count == 1) {
-                        console.log("Map was rebuilt from map.json file");
-                        res.send('ok');
-                    }
-                });
-            });
-        });
-    });
-
-    // Returns all of the known player locations
-
-    // Generic pass through for grabbing files inside of the assets folder
-    app.get('/assets/*', function (req, res) {
-        // is this secure? in PHP land it would be pretty bad
-        res.sendfile(__dirname + '/assets/' + req.params[0]);
-    });
-
     io.sockets.on('connection', function (socket) {
 
         // Let the client know they're not alone
@@ -116,10 +117,10 @@ db.open(function(err, db) {
             20
         );
 
-        // Send the list of known locations, one per message
+        // Send the list of known players, one per packet
         setTimeout(
             function() {
-                _und.each(locations, function(player) {
+                _und.each(players, function(player) {
                     socket.emit('move',
                         player
                     );
@@ -130,27 +131,61 @@ db.open(function(err, db) {
 
         // Receive chat, send chats to all users
         socket.on('chat', function (data) {
+            var message = data.message.substr(0, 100);
             socket.broadcast.emit('chat', {
                 session: this.id,
                 name: data.name,
-                message: data.message
+                message: message
             });
             console.log("Chat", this.id, data);
         });
 
-        // when a user disconnects, remove them from the db, and let the world know
+        // when a user disconnects, remove them from the players array, and let the world know
         socket.on('disconnect', function(data) {
             var session_id = this.id;
-            socket.broadcast.emit('leave', {
-                session: session_id
-            });
-            var len = locations.length;
+            var len = players.length;
+            var player_name;
             for (var i=0; i<len; i++) {
-                var player = locations[i];
-                if (player.session == session_id) {
-                    locations.splice(i, 1);
+                if (players[i].session == session_id) {
+                    player_name = players[i].name;
+                    players.splice(i, 1);
                     break;
                 }
+            }
+            socket.broadcast.emit('leave', {
+                session: session_id,
+                name: player_name || null
+            });
+        });
+
+        // Get an update from the client for their char's name and picture
+        socket.on('character info', function(data) {
+            var session = this.id;
+            var char_name = data.name.substr(0, 12);
+            socket.broadcast.emit('character info', {
+                session: session,
+                name: char_name,
+                picture: data.picture
+            });
+            var len = players.length;
+            var foundPlayer = false;
+            for (var i=0; i<len; i++) {
+                if (players[i].session == session) {
+                    players[i].name = char_name;
+                    players[i].picture = data.picture;
+                    foundPlayer = true;
+                    break;
+                }
+            }
+            if (!foundPlayer) {
+                players.push({
+                    session: session,
+                    name: char_name,
+                    picture: data.picture,
+                    direction: 's',
+                    x: 0,
+                    y: 0
+                });
             }
         });
 
@@ -163,19 +198,19 @@ db.open(function(err, db) {
                 y: data.y,
                 direction: data.direction
             });
-            // update locations table
+            // update players table
             var foundPlayer = false;
-            var len = locations.length;
+            var len = players.length;
             for (var i=0; i<len; i++) {
-                if (locations[i].session == session) {
-                    locations[i] = data;
-                    locations[i].session = session;
+                if (players[i].session == session) {
+                    players[i].x = data.x;
+                    players[i].y = data.y;
                     foundPlayer = true;
                     break;
                 }
             }
             if (!foundPlayer) {
-                locations.push({
+                players.push({
                     session: session,
                     x: data.x,
                     y: data.y,
@@ -194,7 +229,6 @@ db.open(function(err, db) {
                 layer: data.layer
             });
 
-            // update map
             map[data.y][data.x][data.layer] = data.tile;
         });
     });
