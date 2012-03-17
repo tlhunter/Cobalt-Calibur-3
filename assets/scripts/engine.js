@@ -268,6 +268,7 @@ $(function() {
                         app.displayMessage('Help', '/spawn: reset location', 'help');
                         app.displayMessage('Help', '/tp name: teleport player', 'help');
                         app.displayMessage('Help', '/nick name: change name', 'help');
+                        app.displayMessage('Help', '/who: list of players', 'help');
                         return;
                     } else if (message === '/spawn') {
                         app.engine.moveToSpawn();
@@ -301,6 +302,12 @@ $(function() {
                         if (!foundPlayer) {
                             app.displayMessage('Client', "Couldn't find player " + playerName, 'client');
                         }
+                        return;
+                    } else if (message === '/who') {
+                        app.displayMessage("Client", "Found " + app.engine.players.locations.length + " players", 'client');
+                        _.each(app.engine.players.locations, function(player) {
+                            app.displayMessage("Client", player.name, 'client');
+                        });
                         return;
                     }
                     app.displayMessage(app.$playerName.val(), message, 'self');
