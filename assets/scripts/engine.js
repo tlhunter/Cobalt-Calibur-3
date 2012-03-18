@@ -138,7 +138,10 @@ $(function() {
                                     }
 
                                     var player_name = player.name || '???';
-                                    var picture_id = player.picture || 56;
+                                    var picture_id = player.picture;
+                                    if (isNaN(picture_id)) {
+                                        picture_id = 56;
+                                    }
                                     app.engine.nametags.add(player.name, i, j);
                                     app.engine.tile.drawPlayer(i, j, index, picture_id);
                                 }
