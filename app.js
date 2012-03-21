@@ -1,25 +1,30 @@
+// Use clean code
 'use strict';
 
-var app = require('express').createServer(),
-    io = require('socket.io').listen(app),
-    Db = require('mongodb').Db,
-    fs = require('fs'),
-    sanitizer = require('sanitizer'),
-    _und = require("underscore"),
-    Connection = require('mongodb').Connection,
-    Server = require('mongodb').Server;
+// requires
+var app = require('express').createServer();
+var io = require('socket.io').listen(app);
+var Db = require('mongodb').Db;
+var fs = require('fs');
+var sanitizer = require('sanitizer');
+var _und = require("underscore");
+var Connection = require('mongodb').Connection;
+var Server = require('mongodb').Server;
 
-var host = process.env['MONGO_NODE_DRIVER_HOST'] != null ? process.env['MONGO_NODE_DRIVER_HOST'] : 'localhost';
-var port = process.env['MONGO_NODE_DRIVER_PORT'] != null ? process.env['MONGO_NODE_DRIVER_PORT'] : Connection.DEFAULT_PORT;
+var mongo_host = process.env['MONGO_NODE_DRIVER_HOST'] != null ? process.env['MONGO_NODE_DRIVER_HOST'] : 'localhost';
+var mongo_port = process.env['MONGO_NODE_DRIVER_PORT'] != null ? process.env['MONGO_NODE_DRIVER_PORT'] : Connection.DEFAULT_PORT;
 
-console.log("MongoDB: Connecting to " + host + ":" + port);
-var db = new Db('terraformia', new Server(host, port, {}), {native_parser:false});
+console.log("MongoDB: Connecting to " + mongo_host + ":" + mongo_port);
+var db = new Db('terraformia', new Server(mongo_host, mongo_port, {}), {native_parser:false});
 
-// Giant array of map data
-var map = [];
+// Global object containing game data
+var game = {
+    // Giant array of map data
+    map: [],
 
-// Array of known player locations
-var players = [];
+    // Array of known player locations
+    players: [],
+};
 
 db.open(function(err, db) {
 
@@ -31,7 +36,7 @@ db.open(function(err, db) {
             }
             collection.remove({}, function(err, result) {
                 console.log("MongoDB: Deleting previous map");
-                collection.insert({map: map});
+                collection.insert({map: game.map});
                 collection.count(function(err, count) {
                     if (count == 1) {
                         console.log("MongoDB: Map saved to database");
@@ -53,7 +58,7 @@ db.open(function(err, db) {
 
     // User request map, return map JSON from RAM
     app.get('/map', function(req, res) {
-        res.send(map);
+        res.send(game.map);
     });
 
     // User requests map builder page, builds map from JSON file, returns OK
@@ -121,7 +126,7 @@ db.open(function(err, db) {
                 throw err;
             }
             if (item != null) {
-                map = item.map;
+                game.map = item.map;
                 return;
             } else {
                 console.log("MongoDB: The map in Mongo is null");
@@ -147,7 +152,7 @@ db.open(function(err, db) {
         // Send the list of known players, one per packet
         setTimeout(
             function() {
-                _und.each(players, function(player) {
+                _und.each(game.players, function(player) {
                     socket.emit('move',
                         player
                     );
@@ -171,12 +176,12 @@ db.open(function(err, db) {
         // when a user disconnects, remove them from the players array, and let the world know
         socket.on('disconnect', function(data) {
             var session_id = this.id;
-            var len = players.length;
+            var len = game.players.length;
             var player_name;
             for (var i=0; i<len; i++) {
-                if (players[i].session == session_id) {
-                    player_name = players[i].name;
-                    players.splice(i, 1);
+                if (game.players[i].session == session_id) {
+                    player_name = game.players[i].name;
+                    game.players.splice(i, 1);
                     break;
                 }
             }
@@ -199,18 +204,18 @@ db.open(function(err, db) {
                 name: char_name,
                 picture: picture
             });
-            var len = players.length;
+            var len = game.players.length;
             var foundPlayer = false;
             for (var i=0; i<len; i++) {
-                if (players[i].session == session) {
-                    players[i].name = char_name;
-                    players[i].picture = data.picture;
+                if (game.players[i].session == session) {
+                    game.players[i].name = char_name;
+                    game.players[i].picture = data.picture;
                     foundPlayer = true;
                     break;
                 }
             }
             if (!foundPlayer) {
-                players.push({
+                game.players.push({
                     session: session,
                     name: char_name,
                     picture: data.picture,
@@ -232,17 +237,17 @@ db.open(function(err, db) {
             });
             // update players table
             var foundPlayer = false;
-            var len = players.length;
+            var len = game.players.length;
             for (var i=0; i<len; i++) {
-                if (players[i].session == session) {
-                    players[i].x = data.x;
-                    players[i].y = data.y;
+                if (game.players[i].session == session) {
+                    game.players[i].x = data.x;
+                    game.players[i].y = data.y;
                     foundPlayer = true;
                     break;
                 }
             }
             if (!foundPlayer) {
-                players.push({
+                game.players.push({
                     session: session,
                     x: data.x,
                     y: data.y,
@@ -261,7 +266,7 @@ db.open(function(err, db) {
                 layer: data.layer
             });
 
-            map[data.y][data.x][data.layer] = data.tile;
+            game.map[data.y][data.x][data.layer] = data.tile;
         });
     });
 });
