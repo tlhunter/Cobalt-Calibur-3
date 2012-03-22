@@ -504,25 +504,33 @@ $(function() {
                         if (app.engine.viewport.y <= -15) {
                             return false;
                         }
-                        app.engine.viewport.y--;
+                        if (app.engine.lastDirection == 'n') {
+                            app.engine.viewport.y--;
+                        }
                         break;
                     case 'w':
                         if (app.engine.viewport.x <= -21) {
                             return false;
                         }
-                        app.engine.viewport.x--;
+                        if (app.engine.lastDirection == 'w') {
+                            app.engine.viewport.x--;
+                        }
                         break;
                     case 's':
                         if (app.engine.viewport.y >= app.engine.TOTALTILES_X - 16) {
                             return false;
                         }
-                        app.engine.viewport.y++;
+                        if (app.engine.lastDirection == 's') {
+                            app.engine.viewport.y++;
+                        }
                         break;
                     case 'e':
                         if (app.engine.viewport.x >= app.engine.TOTALTILES_Y - 22) {
                             return false;
                         }
-                        app.engine.viewport.x++;
+                        if (app.engine.lastDirection == 'e') {
+                            app.engine.viewport.x++;
+                        }
                         break;
                     default:
                         return false;
