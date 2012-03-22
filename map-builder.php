@@ -1,10 +1,10 @@
 <?php
 $map = array();
-for($y = 0; $y < 160; $y++) {
-    for($x = 0; $x < 160; $x++) {
+for($y = 0; $y < 200; $y++) {
+    for($x = 0; $x < 200; $x++) {
         $map[$x][$y] = array(
-            array(1,8),             // background is [0]
-            null                    // foreground is [1]
+            0,
+            null
         );
     }
 }

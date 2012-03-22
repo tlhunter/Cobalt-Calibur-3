@@ -18,8 +18,11 @@ $(function() {
         engine: {
 
             // Images containing our tilesets
-            tileset: new Image(),
-            tilesetCharacters: new Image(),
+            tilesets: {
+                terrain: new Image(),
+                characters: new Image(),
+                inventory: new Image(),
+            },
 
             // Animation frame data
             animFrameGlobal: false,
@@ -31,8 +34,12 @@ $(function() {
             // Dimensions of a single tile
             TILEWIDTH: 16,
             TILEHEIGHT: 16,
-            TOTALTILES_X: 160,
-            TOTALTILES_Y: 160,
+            TOTALTILES_X: 200,
+            TOTALTILES_Y: 200,
+
+            // Character distance from upper left corner of viewport
+            PLAYER_OFFSET_X: 8,
+            PLAYER_OFFSET_Y: 8,
 
             // Last direction this player was facing
             lastDirection: 's',
@@ -160,13 +167,15 @@ $(function() {
                         index = 6;
                     }
 
-                    app.engine.nametags.add(app.$playerName.val(), 21, 15);
+                    app.engine.nametags.add(app.$playerName.val(), app.engine.PLAYER_OFFSET_X, app.engine.PLAYER_OFFSET_Y);
 
                     if (app.engine.animFrameMe) {
                         index++;
                     };
 
-                    app.engine.tile.drawPlayer(21, 15, index, app.engine.characterIndex);
+                    app.engine.tile.drawPlayer(app.engine.PLAYER_OFFSET_X, app.engine.PLAYER_OFFSET_Y, index, app.engine.characterIndex);
+
+                    app.engine.daytime.drawDayLight();
 
                     app.engine.nametags.show();
                 }
@@ -177,14 +186,15 @@ $(function() {
                     var y_pixel = y * app.engine.TILEHEIGHT;
 
                     if (!tile) {
-                        app.engine.handle.fillRect(x_pixel, y_pixel, app.engine.TILEWIDTH, app.engine.TILEHEIGHT);  
+                        app.engine.handle.fillStyle = "rgb(0,0,0)";  
+                        app.engine.handle.fillRect(x_pixel, y_pixel, app.engine.TILEWIDTH, app.engine.TILEHEIGHT);
                         return;
                     }
 
                     app.engine.handle.drawImage(
-                        window.app.engine.tileset,
-                        tile[0][0] * app.engine.TILEWIDTH,
-                        tile[0][1] * app.engine.TILEHEIGHT,
+                        window.app.engine.tilesets.terrain,
+                        0,
+                        tile[0] * app.engine.TILEHEIGHT,
                         app.engine.TILEWIDTH,
                         app.engine.TILEHEIGHT,
                         x_pixel,
@@ -192,26 +202,12 @@ $(function() {
                         app.engine.TILEWIDTH,
                         app.engine.TILEHEIGHT
                     );
-
-                    if (tile[1]) {
-                       app.engine.handle.drawImage(
-                            window.app.engine.tileset,
-                            tile[1][0] * app.engine.TILEWIDTH,
-                            tile[1][1] * app.engine.TILEHEIGHT,
-                            app.engine.TILEWIDTH,
-                            app.engine.TILEHEIGHT,
-                            x_pixel,
-                            y_pixel,
-                            app.engine.TILEWIDTH,
-                            app.engine.TILEHEIGHT
-                           );
-                    }
                 },
                 drawPlayer: function(x, y, tile_x, tile_y) {
                     var x_pixel = x * app.engine.TILEWIDTH;
                     var y_pixel = y * app.engine.TILEHEIGHT;
                     app.engine.handle.drawImage(
-                        window.app.engine.tilesetCharacters,
+                        window.app.engine.tilesets.characters,
                         tile_x * app.engine.TILEWIDTH,
                         tile_y * app.engine.TILEHEIGHT,
                         app.engine.TILEWIDTH,
@@ -234,18 +230,23 @@ $(function() {
             },
 
             start: function(mapData, x, y) {
-                // load background image
-                window.app.engine.tileset.src = '/assets/tilesets/Cobalt_Calibur.png';
-                window.app.engine.tileset.onload = function() {
-                    app.displayMessage('Client', 'Tileset Loaded', 'client');
+                // load background sprites
+                window.app.engine.tilesets.terrain.src = '/assets/tilesets/terrain.png';
+                window.app.engine.tilesets.terrain.onload = function() {
+                    app.displayMessage('Client', 'Tileset Terrain loaded', 'client');
                 }
-                // load characters image
-                window.app.engine.tilesetCharacters.src = '/assets/tilesets/characters.png';
-                window.app.engine.tilesetCharacters.onload = function() {
-                    app.displayMessage('Client', 'Character Tileset Loaded', 'client');
+                // load characters sprites
+                window.app.engine.tilesets.characters.src = '/assets/tilesets/characters.png';
+                window.app.engine.tilesets.characters.onload = function() {
+                    app.displayMessage('Client', 'Tileset Characters loaded', 'client');
                 }
 
-                app.engine.handle.fillStyle = "rgb(0,0,0)";  
+                // load inventory sprites
+                window.app.engine.tilesets.inventory.src = '/assets/tilesets/inventory.png';
+                window.app.engine.tilesets.inventory.onload = function() {
+                    app.displayMessage('Client', 'Tileset Inventory loaded', 'client');
+                }
+
 
                 $('#message-box form').submit(function(event) {
                     event.preventDefault();
@@ -269,8 +270,8 @@ $(function() {
                         app.displayMessage('Help', '/redraw: re draws map', 'help');
                         app.displayMessage('Help', '/help: displays this help', 'help');
                         app.displayMessage('Help', '/spawn: reset location', 'help');
-                        app.displayMessage('Help', '/tp name: teleport player', 'help');
                         app.displayMessage('Help', '/nick name: change name', 'help');
+                        app.displayMessage('Help', '/pic num: change picture', 'help');
                         app.displayMessage('Help', '/who: list of players', 'help');
                         return;
                     } else if (message === '/spawn') {
@@ -280,31 +281,9 @@ $(function() {
                         var playerName = message.substr(6);
                         app.$playerName.val(playerName).change();
                         return;
-                    } else if (message.indexOf('/tp ') === 0) {
-                        var foundPlayer = false;
-                        var playerName = message.substr(4);
-                        var len = app.engine.players.locations.length;
-                        for (var i = 0; i < len; i++) {
-                            var player = app.engine.players.locations[i];
-                            if (player.name == playerName) {
-                                app.engine.viewport.x = player.x - 21;
-                                app.engine.viewport.y = player.y - 15;
-                                app.engine.lastDirection = 's';
-
-                                app.socket.emit('move', {
-                                    x: app.engine.viewport.x + 21,
-                                    y: app.engine.viewport.y + 15,
-                                    direction: app.engine.lastDirection
-                                });
-
-                                app.engine.map.draw(window.mapData);
-                                foundPlayer = true;
-                                break;
-                            }
-                        }
-                        if (!foundPlayer) {
-                            app.displayMessage('Client', "Couldn't find player " + playerName, 'client');
-                        }
+                    } else if (message.indexOf('/pic ') === 0) {
+                        var playerName = message.substr(5);
+                        // change picture
                         return;
                     } else if (message === '/who') {
                         app.displayMessage("Client", "Found " + app.engine.players.locations.length + " players", 'client');
@@ -355,6 +334,10 @@ $(function() {
                     //app.engine.map.draw(window.mapData);
                 });
 
+                app.socket.on('event time', function(data) {
+                    app.engine.daytime.setCurrentTime(data.time);
+                });
+
                 app.$playerName.val('Anon' + Math.floor(Math.random() * 8999 + 1000));
                 app.engine.characterIndex = Math.floor(Math.random() * 56);
                 $('#picture').val(app.engine.characterIndex);
@@ -370,8 +353,8 @@ $(function() {
                 // Tell people who and where we are every 15 seconds (temporary solution for a race condition)
                 setInterval(function() {
                     app.socket.emit('move', {
-                        x: app.engine.viewport.x + 21,
-                        y: app.engine.viewport.y + 15,
+                        x: app.engine.viewport.x + app.engine.PLAYER_OFFSET_X,
+                        y: app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y,
                         direction: app.engine.lastDirection
                     });
                     app.engine.updateCharacterInfo(
@@ -382,37 +365,6 @@ $(function() {
 
                 app.engine.initialDraw(mapData);
 
-                var $tilesetSelector = $('#tileset .selector');
-                $('#tileset').mousemove(function(e) {
-                    var tile_x = Math.floor(e.offsetX / app.engine.TILEWIDTH);
-                    var tile_y = Math.floor(e.offsetY / app.engine.TILEHEIGHT);
-                    var color = 'orange';
-                    if (tile_x <= 17 || (tile_x <= 23 && tile_y <= 7)) {
-                        color = 'blue';
-                    }
-                    $tilesetSelector.css({top: tile_y * app.engine.TILEHEIGHT, left: tile_x * app.engine.TILEWIDTH, 'outline-color': color});
-                });
-                $('#tileset').click(function(e) {
-                    var tile_x = Math.floor(e.offsetX / app.engine.TILEWIDTH);
-                    var tile_y = Math.floor(e.offsetY / app.engine.TILEHEIGHT);
-
-                    // The tileset uses a weird shape for foreground and background imagery, this if statement emulates that
-                    var layer = 1;
-                    if (tile_x <= 17 || (tile_x <= 23 && tile_y <= 7)) {
-                        layer = 0;
-                    }
-
-                    window.mapData[app.engine.viewport.y + 15][app.engine.viewport.x + 21][layer] = [tile_x, tile_y];
-
-                    app.engine.map.draw(window.mapData);
-
-                    app.socket.emit('terraform', {
-                        x: app.engine.viewport.x + 21,
-                        y: app.engine.viewport.y + 15,
-                        tile: [tile_x, tile_y],
-                        layer: layer
-                    });
-                });
 
                 $('#picture').bind('click keyup change', function() {
                     var index = parseInt($('#picture').val(), 10);
@@ -428,11 +380,11 @@ $(function() {
                 });
 
                 $('#terraform .remove-tile').click(function() {
-                    window.mapData[app.engine.viewport.y + 15][app.engine.viewport.x + 21][1] = null;
+                    window.mapData[app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y][app.engine.viewport.x + app.engine.PLAYER_OFFSET_X][1] = null;
                     app.engine.map.draw(window.mapData);
                     app.socket.emit('terraform', {
-                        x: app.engine.viewport.x + 21,
-                        y: app.engine.viewport.y + 15,
+                        x: app.engine.viewport.x + app.engine.PLAYER_OFFSET_X,
+                        y: app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y,
                         tile: null,
                         layer: 1
                     });
@@ -466,21 +418,16 @@ $(function() {
                     } else if (e.which == 47) { // /
                         $('#message-input').focus();
                     } else if (e.which == 120) { // x
-                        window.mapData[app.engine.viewport.y + 15][app.engine.viewport.x + 21][1] = null;
+                        window.mapData[app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y][app.engine.viewport.x + app.engine.PLAYER_OFFSET_X][1] = null;
                         app.engine.map.draw(window.mapData);
                         app.socket.emit('terraform', {
-                            x: app.engine.viewport.x + 21,
-                            y: app.engine.viewport.y + 15,
+                            x: app.engine.viewport.x + app.engine.PLAYER_OFFSET_X,
+                            y: app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y,
                             tile: null,
                             layer: 1
                         });
                     }
                 });
-
-                $('#movement .north').click(function() { app.engine.move('n'); });
-                $('#movement .west').click(function() { app.engine.move('w'); });
-                $('#movement .east').click(function() { app.engine.move('e'); });
-                $('#movement .south').click(function() { app.engine.move('s'); });
 
                 app.displayMessage('Help', 'Type /help for some help', 'help');
 
@@ -497,11 +444,45 @@ $(function() {
                 }, 150);
             },
 
+            daytime: {
+                // integer representing hour of day
+                currentTime: 8,
+
+                setCurrentTime: function(time) {
+                    app.engine.daytime.currentTime = time;
+                    app.displayMessage('Client', 'In Game time is ' + time + ':00 houres', 'client');
+                },
+
+                drawDayLight: function() {
+                    var color = null;
+                    var time = app.engine.daytime.currentTime;
+                    if (time < 5) { // night
+                        color = "rgba(0, 0, 0, 0.65)";
+                    } else if (time < 7) { // dusk
+                        color = "rgba(0, 13, 54, 0.5)";
+                    } else if (time < 8) { // dusk
+                        color = "rgba(0, 13, 54, 0.25)";
+                    } else if (time < 17) { // day
+                        color = null;
+                    } else if (time < 18) { //dawn
+                        color = "rgba(54,22,0, 0.25)";
+                    } else if (time < 20) { //dawn
+                        color = "rgba(54,22,0, 0.5)";
+                    } else {
+                        color = "rgba(0, 0, 0, 0.65)";
+                    }
+                    if (color) {
+                        app.engine.handle.fillStyle = color;  
+                        app.engine.handle.fillRect(0, 0, app.engine.screen.width, app.engine.screen.height);
+                    }
+                },
+            },
+
             // Moves this character in the cardinal direction provided
             move: function(direction) {
                 switch(direction) {
                     case 'n':
-                        if (app.engine.viewport.y <= -15) {
+                        if (app.engine.viewport.y <= -app.engine.PLAYER_OFFSET_Y) {
                             return false;
                         }
                         if (app.engine.lastDirection == 'n') {
@@ -509,7 +490,7 @@ $(function() {
                         }
                         break;
                     case 'w':
-                        if (app.engine.viewport.x <= -21) {
+                        if (app.engine.viewport.x <= -app.engine.PLAYER_OFFSET_X) {
                             return false;
                         }
                         if (app.engine.lastDirection == 'w') {
@@ -517,7 +498,7 @@ $(function() {
                         }
                         break;
                     case 's':
-                        if (app.engine.viewport.y >= app.engine.TOTALTILES_X - 16) {
+                        if (app.engine.viewport.y >= app.engine.TOTALTILES_X - app.engine.PLAYER_OFFSET_Y + 1) {
                             return false;
                         }
                         if (app.engine.lastDirection == 's') {
@@ -525,7 +506,7 @@ $(function() {
                         }
                         break;
                     case 'e':
-                        if (app.engine.viewport.x >= app.engine.TOTALTILES_Y - 22) {
+                        if (app.engine.viewport.x >= app.engine.TOTALTILES_Y - app.engine.PLAYER_OFFSET_X + 1) {
                             return false;
                         }
                         if (app.engine.lastDirection == 'e') {
@@ -541,8 +522,8 @@ $(function() {
                 app.engine.animFrameMe = !app.engine.animFrameMe;
 
                 app.socket.emit('move', {
-                    x: app.engine.viewport.x + 21,
-                    y: app.engine.viewport.y + 15,
+                    x: app.engine.viewport.x + app.engine.PLAYER_OFFSET_X,
+                    y: app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y,
                     direction: direction
                 });
 
@@ -557,8 +538,8 @@ $(function() {
                 app.engine.viewport.x = 70;
                 app.engine.lastDirection = 's';
                 app.socket.emit('move', {
-                    x: app.engine.viewport.x + 21,
-                    y: app.engine.viewport.y + 15,
+                    x: app.engine.viewport.x + app.engine.PLAYER_OFFSET_X,
+                    y: app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y,
                     direction: 's'
                 });
 

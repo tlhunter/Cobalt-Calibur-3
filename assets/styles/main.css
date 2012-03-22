@@ -24,40 +24,6 @@ body {
 }
 #message-box {
 }
-#movement {
-    width: 200px;
-    height: 150px;
-    background-image: url("/assets/images/compass.jpg");
-}
-#movement .direction {
-    position: absolute;
-    color: #fff;
-    text-shadow: 0 3px 3px #000;
-    font-size: 20px;
-    text-align: center;
-    width: 30px;
-    cursor: pointer;
-    font-weight: bold;
-}
-#movement .direction:hover {
-    color: #654827;
-}
-#movement .direction.west {
-    margin-top: 63px;
-    margin-left: 27px;
-}
-#movement .direction.east {
-    margin-top: 63px;
-    margin-left: 148px;
-}
-#movement .direction.south {
-    margin-top: 125px;
-    margin-left: 86px;
-}
-#movement .direction.north {
-    margin-top: 2px;
-    margin-left: 86px;
-}
 #messages {
     background-color: black;
     color: white;
@@ -99,40 +65,10 @@ body {
 #message-send {
     display: none;
 }
-#terraform {
-    margin-top: 10px;
-    padding-bottom: 10px;
-    position: relative;
-    height: 256px;
-}
-#terraform span {
-    cursor: pointer;
-    color: red;
-    margin-left: 10px;
-    float: left;
-    text-decoration: underline;
-}
-#terraform .selector {
-    pointer-events: none;
-    width: 16px;
-    height: 16px;
-    outline: 1px solid white;
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    background-color: rgba(255, 255, 255, 0.25);
-}
-#tileset {
-    width: 480px;
-    height: 256px;
-    cursor: none;
-    background: transparent url("/assets/tilesets/Cobalt_Calibur.png") no-repeat top left;
-    float: left;
-}
 #nametags {
     position: absolute;
-    width: 672px;
-    height: 480px;
+    width: 272px;
+    height: 272px;
     overflow: hidden;
 }
 #nametags .name {

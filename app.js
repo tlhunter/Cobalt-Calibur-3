@@ -2,29 +2,82 @@
 'use strict';
 
 // requires
-var app = require('express').createServer();
-var io = require('socket.io').listen(app);
-var Db = require('mongodb').Db;
-var fs = require('fs');
-var sanitizer = require('sanitizer');
-var _und = require("underscore");
-var Connection = require('mongodb').Connection;
-var Server = require('mongodb').Server;
+var app         = require('express').createServer();
+var io          = require('socket.io').listen(app);
+var Db          = require('mongodb').Db;
+var fs          = require('fs');
+var sanitizer   = require('sanitizer');
+var _           = require('underscore');
+var connection  = require('mongodb').Connection;
+var server      = require('mongodb').Server;
 
-var mongo_host = process.env['MONGO_NODE_DRIVER_HOST'] != null ? process.env['MONGO_NODE_DRIVER_HOST'] : 'localhost';
-var mongo_port = process.env['MONGO_NODE_DRIVER_PORT'] != null ? process.env['MONGO_NODE_DRIVER_PORT'] : Connection.DEFAULT_PORT;
-
-console.log("MongoDB: Connecting to " + mongo_host + ":" + mongo_port);
-var db = new Db('terraformia', new Server(mongo_host, mongo_port, {}), {native_parser:false});
+// Database connection
+var mongo_host  = process.env['MONGO_NODE_DRIVER_HOST'] != null ? process.env['MONGO_NODE_DRIVER_HOST'] : 'localhost';
+var mongo_port  = process.env['MONGO_NODE_DRIVER_PORT'] != null ? process.env['MONGO_NODE_DRIVER_PORT'] : connection.DEFAULT_PORT;
+var db          = new Db('terraformia', new server(mongo_host, mongo_port, {}), {native_parser:false});
 
 // Global object containing game data
 var game = {
+    // collection of global events containing their handles and time values
+    events: {
+        daynight: {
+            handle: null,
+            interval: 1 * 60 * 1000,
+            cycle: 24,
+            current: 8,
+            payload: function() {
+                game.events.daynight.current++;
+                if (game.events.daynight.current >= game.events.daynight.cycle) {
+                    game.events.daynight.current = 0;
+                }
+                io.sockets.emit('event time', {
+                    time: game.events.daynight.current
+                });
+                console.log("event time " + game.events.daynight.current);
+            }
+        },
+        earthquake: {
+            handle: null,
+            interval: 72 * 60 * 1000,
+            payload: function() {
+                io.sockets.emit('event earthquake', {
+                });
+                console.log("event earthquake");
+            }
+        },
+        corruption: {
+            handle: null,
+            interval: 1 * 60 * 1000,
+            payload: function() {
+                io.sockets.emit('event corruption', {
+                });
+                console.log("event corruption");
+            }
+        },
+        npcmovement: {
+            handle: null,
+            interval: 5 * 1000,
+            payload: function() {
+                io.sockets.emit('event npcmovement', {
+                });
+                console.log("event npcmovement");
+            }
+        }
+    },
+
     // Giant array of map data
     map: [],
 
     // Array of known player locations
     players: [],
 };
+
+_.each(game.events, function(event) {
+    event.handle = setInterval(
+        event.payload,
+        event.interval
+    );
+});
 
 db.open(function(err, db) {
 
@@ -74,6 +127,7 @@ db.open(function(err, db) {
                 collection.insert({map: mapData});
                 collection.count(function(err, count) {
                     if (count == 1) {
+                        game.map = mapData;
                         console.log("Map was rebuilt from map.json file");
                         res.send('ok');
                     }
@@ -152,7 +206,7 @@ db.open(function(err, db) {
         // Send the list of known players, one per packet
         setTimeout(
             function() {
-                _und.each(game.players, function(player) {
+                _.each(game.players, function(player) {
                     socket.emit('move',
                         player
                     );
