@@ -54,6 +54,7 @@ $(function() {
                     switch (d) {
                         case 'n':
                             if (app.engine.player.location.y <= 0) {
+                                app.engine.player.setDirection(d);
                                 app.displayMessage('Client', 'Blocked', 'client');
                                 return false;
                             }
@@ -61,6 +62,7 @@ $(function() {
                             break;
                         case 'e':
                             if (app.engine.player.location.x >= app.engine.TOTALTILES_X - 1) {
+                                app.engine.player.setDirection(d);
                                 app.displayMessage('Client', 'Blocked', 'client');
                                 return false;
                             }
@@ -68,6 +70,7 @@ $(function() {
                             break;
                         case 's':
                             if (app.engine.player.location.y >= app.engine.TOTALTILES_Y - 1) {
+                                app.engine.player.setDirection(d);
                                 app.displayMessage('Client', 'Blocked', 'client');
                                 return false;
                             }
@@ -75,6 +78,7 @@ $(function() {
                             break;
                         case 'w':
                             if (app.engine.player.location.x <= 0) {
+                                app.engine.player.setDirection(d);
                                 app.displayMessage('Client', 'Blocked', 'client');
                                 return false;
                             }
@@ -87,10 +91,9 @@ $(function() {
                     }
 
                     app.engine.animFrameMe = !app.engine.animFrameMe;
-                    app.engine.player.direction = d;
                     app.engine.player.updateViewport();
 
-                    app.engine.player.broadcastLocation();
+                    app.engine.player.setDirection(d); // broadcasts location
                 },
 
                 // Forces an XY location
