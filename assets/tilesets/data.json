@@ -1,0 +1,68 @@
+{
+  "characters": [
+    {
+      "name": "Ghost",
+      "player": false
+    },
+    {
+      "name": "Arthur",
+      "player": true
+    },
+    {
+      "name": "Gloria",
+      "player": true
+    },
+    {
+      "name": "Sharon",
+      "player": true
+    }
+  ],
+  "inventory": [
+    {
+      "name": "Stone"
+    },
+    {
+      "name": "Wood"
+    },
+    {
+      "name": "Water"
+    },
+    {
+      "name": "Sand"
+    },
+    {
+      "name": "Copper Ore"
+    },
+    {
+      "name": "Iron Ore"
+    },
+    {
+      "name": "Silver Ore"
+    },
+    {
+      "name": "Gold Ore"
+    },
+    {
+      "name": "Cobalt Ore"
+    }
+  ],
+  "terrain": [
+    {
+      "name": "Grass",
+      "mineable": false,
+      "provides": null,
+      "block_player": false,
+      "block_npc": false,
+      "replaceable": true,
+      "becomes": "dirt",
+      "spawn_npc": false
+    },
+    {
+      "name": "Dirt",
+      "mineable": false
+    },
+    {
+      "name": "Sand"
+    }
+  ]
+}
