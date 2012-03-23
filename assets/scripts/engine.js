@@ -3,8 +3,6 @@
 
 $(function() {
     var app = {
-        self: this,
-
         // Make socket connection ASAP
         socket: io.connect(window.document.location.protocol + "//" + window.document.location.host),
 
@@ -55,8 +53,8 @@ $(function() {
 
             // Data regarding the viewport (window into the map)
             viewport: {
-                x: 70,          // The viewport left tile
-                y: 70,          // The viewport top tile
+                x: null,          // The viewport left tile
+                y: null,          // The viewport top tile
             },
 
             // Functions and data regarding the other players
@@ -214,7 +212,8 @@ $(function() {
             },
 
             start: function() {
-
+                app.engine.viewport.x = Math.floor(app.engine.TOTALTILES_X / 2) - app.engine.PLAYER_OFFSET_X;
+                app.engine.viewport.y = Math.floor(app.engine.TOTALTILES_Y / 2) - app.engine.PLAYER_OFFSET_Y;
 
                 $('#message-box form').submit(function(event) {
                     event.preventDefault();
@@ -237,6 +236,7 @@ $(function() {
                         app.displayMessage('Help', '/pic 1-16: change picture', 'help');
                         app.displayMessage('Help', '/who: list of players', 'help');
                         app.displayMessage('Help', '/time: get current time', 'help');
+                        app.displayMessage('Help', '/gps: get coordinates', 'help');
                         app.displayMessage('Help', '/help: displays this help', 'help');
                         app.displayMessage('Help', '/clear: reset message area', 'help');
                         app.displayMessage('Help', '/redraw: re draws map', 'help');
@@ -266,6 +266,21 @@ $(function() {
                         return;
                     } else if (message === '/time') {
                         app.displayMessage("Client", "Current Time: " + app.engine.daytime.currentTime + ":00", 'client');
+                        return;
+                    } else if (message === '/gps') {
+                        app.displayMessage("Client", "Coordinates: [" + (app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y) + "," + (app.engine.viewport.x + app.engine.PLAYER_OFFSET_X) + "]", 'client');
+                        return;
+                    } else if (message.indexOf('/drop ') === 0) {
+                        var tile = parseInt(message.substr(6), 10);
+                        if (isNaN(tile)) {
+                            return;
+                        }
+                        app.engine.map.data[app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y][app.engine.viewport.x + app.engine.PLAYER_OFFSET_X][0] = tile;
+                        app.socket.emit('terraform', {
+                            x: app.engine.viewport.x + app.engine.PLAYER_OFFSET_X,
+                            y: app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y,
+                            tile: [tile, null]
+                        });
                         return;
                     }
                     app.displayMessage(app.engine.playerName, message, 'self');
@@ -374,15 +389,6 @@ $(function() {
                         $('#message-input').focus();
                     } else if (e.which == 47) { // /
                         $('#message-input').focus();
-                    } else if (e.which == 120) { // x
-                        //app.engine.map.data[app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y][app.engine.viewport.x + app.engine.PLAYER_OFFSET_X][1] = null;
-                        //app.engine.map.draw();
-                        //app.socket.emit('terraform', {
-                            //x: app.engine.viewport.x + app.engine.PLAYER_OFFSET_X,
-                            //y: app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y,
-                            //tile: null,
-                            //layer: 1
-                        //});
                     } else if (e.which >= 49 && e.which <= 54) { // 1 - 6
                         var num = e.which - 48;
                         console.log("Place " + num);
@@ -480,20 +486,6 @@ $(function() {
                 app.engine.map.draw();
 
                 return true;
-            },
-
-            // Resets the player to the spawn location
-            moveToSpawn: function() {
-                app.engine.viewport.y = 70;
-                app.engine.viewport.x = 70;
-                app.engine.lastDirection = 's';
-                app.socket.emit('move', {
-                    x: app.engine.viewport.x + app.engine.PLAYER_OFFSET_X,
-                    y: app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y,
-                    direction: 's'
-                });
-
-                app.engine.map.draw();
             },
 
             // Nametags are displayed in HTML in a layer above canvas (for now at least, not sure which is faster)

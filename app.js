@@ -320,11 +320,10 @@ db.open(function(err, db) {
                 session: this.id,
                 x: data.x,
                 y: data.y,
-                tile: data.tile,
-                layer: data.layer
+                tile: data.tile
             });
 
-            game.map[data.y][data.x][data.layer] = data.tile;
+            game.map[data.y][data.x] = data.tile;
         });
     });
 });
