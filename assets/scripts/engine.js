@@ -212,22 +212,6 @@ $(function() {
             },
 
             start: function() {
-                // load background sprites
-                app.engine.tilesets.terrain.src = '/assets/tilesets/terrain.png';
-                app.engine.tilesets.terrain.onload = function() {
-                    app.displayMessage('Client', 'Tileset Terrain loaded', 'client');
-                }
-                // load characters sprites
-                app.engine.tilesets.characters.src = '/assets/tilesets/characters.png';
-                app.engine.tilesets.characters.onload = function() {
-                    app.displayMessage('Client', 'Tileset Characters loaded', 'client');
-                }
-
-                // load inventory sprites
-                app.engine.tilesets.inventory.src = '/assets/tilesets/inventory.png';
-                app.engine.tilesets.inventory.onload = function() {
-                    app.displayMessage('Client', 'Tileset Inventory loaded', 'client');
-                }
 
 
                 $('#message-box form').submit(function(event) {
@@ -554,12 +538,28 @@ $(function() {
 
     };
 
-    app.displayMessage('Client', 'Downloading Map Data...', 'client');
+    app.displayMessage('Client', 'Downloading assets...', 'client');
+
+    // load background sprites
+    app.engine.tilesets.terrain.src = '/assets/tilesets/terrain.png';
+    app.engine.tilesets.terrain.onload = function() {
+        app.displayMessage('Client', 'Tileset Terrain done.', 'client');
+    }
+    // load characters sprites
+    app.engine.tilesets.characters.src = '/assets/tilesets/characters.png';
+    app.engine.tilesets.characters.onload = function() {
+        app.displayMessage('Client', 'Tileset Characters done.', 'client');
+    }
+
+    // load inventory sprites
+    app.engine.tilesets.inventory.src = '/assets/tilesets/inventory.png';
+    app.engine.tilesets.inventory.onload = function() {
+        app.displayMessage('Client', 'Tileset Inventory done.', 'client');
+    }
 
     $.get('/map', function(data) {
-        app.displayMessage('Client', 'Initializing Map...', 'client');
+        app.displayMessage('Client', 'Map data done.', 'client');
         app.engine.map.data = data;
         app.engine.start();
     });
-
 });
