@@ -210,15 +210,6 @@ $(function() {
                     );
                 }
             },
-            initialDraw: function() {
-                setTimeout(function(md) {
-                    return function() {
-                        app.displayMessage('Client', 'Drawing Map...', 'client');
-                        app.engine.map.draw();
-                        app.displayMessage('Client', 'Done Drawing Map.', 'client');
-                    }
-                }(), 50);   // wait 100 ms
-            },
 
             start: function() {
                 // load background sprites
@@ -358,7 +349,7 @@ $(function() {
                     );
                 }, 15000);
 
-                app.engine.initialDraw();
+                app.engine.map.draw();
 
                 $('#terraform .remove-tile').click(function() {
                     app.engine.map.data[app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y][app.engine.viewport.x + app.engine.PLAYER_OFFSET_X][1] = null;
