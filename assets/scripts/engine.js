@@ -434,7 +434,7 @@ $(function() {
                         color = "rgba(0, 0, 0, 0.65)";
                     }
                     if (color) {
-                        app.engine.handle.fillStyle = color;  
+                        app.engine.handle.fillStyle = color;
                         app.engine.handle.fillRect(0, 0, app.engine.screen.width, app.engine.screen.height);
                     }
                 },
