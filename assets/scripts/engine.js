@@ -257,7 +257,7 @@ $(function() {
             map: {
                 data: [],
                 getTileData: function(x, y) {
-                    var tile = app.engine.map.data[y][x];
+                    var tile = app.engine.map.data[x][y];
                     var data = {};
                     if (tile && typeof tile[0] != 'undefined') {
                         data.tile = app.engine.tilesets.descriptors.terrain[tile[0]];
@@ -282,7 +282,7 @@ $(function() {
                         for (i=0; i < app.engine.screen.tilesX; i++) {
                             mapX = i + app.engine.viewport.x;
                             mapY = j + app.engine.viewport.y;
-                            tile = (app.engine.map.data[mapY] && app.engine.map.data[mapY][mapX]) ? app.engine.map.data[mapY][mapX] : null;
+                            tile = (app.engine.map.data[mapX] && app.engine.map.data[mapX][mapY]) ? app.engine.map.data[mapX][mapY] : null;
                             app.engine.tile.draw(i, j, tile);
                             var len = app.engine.players.locations.length;
                             for (var k = 0; k < len; k++) {
@@ -431,14 +431,14 @@ $(function() {
                         app.displayMessage("Client", "Current Time: " + app.engine.daytime.currentTime + ":00", 'client');
                         return;
                     } else if (message === '/gps') {
-                        app.displayMessage("Client", "Coordinates: [" + (app.engine.player.location.y) + "," + (app.engine.player.location.x) + "]", 'client');
+                        app.displayMessage("Client", "Coordinates: [" + (app.engine.player.location.x) + "," + (app.engine.player.location.y) + "]", 'client');
                         return;
                     } else if (message.indexOf('/drop ') === 0) {
                         var tile = parseInt(message.substr(6), 10);
                         if (isNaN(tile)) {
                             return;
                         }
-                        app.engine.map.data[app.engine.player.location.y][app.engine.player.location.x][0] = tile;
+                        app.engine.map.data[app.engine.player.location.x][app.engine.player.location.y][0] = tile;
                         app.socket.emit('terraform', {
                             x: app.engine.player.location.x,
                             y: app.engine.player.location.y,
@@ -474,8 +474,7 @@ $(function() {
                 });
 
                 app.socket.on('terraform', function (data) {
-                    var node = app.engine.map.data[data.y][data.x];
-                    node[data.layer] = data.tile;
+                    app.engine.map.data[data.x][data.y] = data.tile;
                 });
 
                 app.socket.on('character info', function(data) {

@@ -323,7 +323,7 @@ db.open(function(err, db) {
                 tile: data.tile
             });
 
-            game.map[data.y][data.x] = data.tile;
+            game.map[data.x][data.y] = data.tile;
         });
     });
 });
