@@ -254,8 +254,8 @@ db.open(function(err, db) {
             var session = this.id;
             var char_name = sanitizer.escape(data.name.substr(0, 12));
             var picture = parseInt(data.picture, 10);
-            if (isNaN(picture)) {
-                picture = 56;
+            if (isNaN(picture) || picture > 15) {
+                picture = 0;
             }
             socket.broadcast.emit('character info', {
                 session: session,

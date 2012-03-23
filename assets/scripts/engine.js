@@ -227,7 +227,8 @@ $(function() {
                         return;
                     } else if (message === '/help') {
                         app.displayMessage('Help', '-{Keys}--------------------', 'help');
-                        app.displayMessage('Help', 'Use the WASD keys to move', 'help');
+                        app.displayMessage('Help', 'Use the wasd keys to move', 'help');
+                        app.displayMessage('Help', 'Use the WASD keys to turn', 'help');
                         app.displayMessage('Help', 'Press T to go to chat mode', 'help');
                         app.displayMessage('Help', 'Press / to go to chat mode', 'help');
                         app.displayMessage('Help', 'Press Esc go to leave chat', 'help');
@@ -375,15 +376,24 @@ $(function() {
                     if ($(e.target).is(":input")) {
                         return;
                     }
+                    console.log(e.which);
 
-                    if (e.which == 119) { // W
-                        app.engine.move('n');
-                    } else if (e.which == 97) { // A
-                        app.engine.move('w');
-                    } else if (e.which == 115) { // S
-                        app.engine.move('s');
-                    } else if (e.which == 100) { // D
-                        app.engine.move('e');
+                    if (e.which == 119) { // w
+                        app.engine.move('n', false);
+                    } else if (e.which == 97) { // a
+                        app.engine.move('w', false);
+                    } else if (e.which == 115) { // s
+                        app.engine.move('s', false);
+                    } else if (e.which == 100) { // d
+                        app.engine.move('e', false);
+                    } else if (e.which == 87) { // W
+                        app.engine.move('n', true);
+                    } else if (e.which == 65) { // A
+                        app.engine.move('w', true);
+                    } else if (e.which == 83) { // S
+                        app.engine.move('s', true);
+                    } else if (e.which == 68) { // D
+                        app.engine.move('e', true);
                     } else if (e.which == 116) { // T
                         e.preventDefault(); // keeps us from getting a t in the box
                         $('#message-input').focus();
@@ -447,25 +457,25 @@ $(function() {
             },
 
             // Moves this character in the cardinal direction provided
-            move: function(direction) {
+            move: function(direction, turnOnly) {
                 switch(direction) {
                     case 'n':
-                        if (app.engine.viewport.y > -app.engine.PLAYER_OFFSET_Y && app.engine.lastDirection == 'n') {
+                        if (!turnOnly || app.engine.viewport.y > -app.engine.PLAYER_OFFSET_Y && app.engine.lastDirection == 'n') {
                             app.engine.viewport.y--;
                         }
                         break;
                     case 'w':
-                        if (app.engine.viewport.x > -app.engine.PLAYER_OFFSET_X && app.engine.lastDirection == 'w') {
+                        if (!turnOnly || app.engine.viewport.x > -app.engine.PLAYER_OFFSET_X && app.engine.lastDirection == 'w') {
                             app.engine.viewport.x--;
                         }
                         break;
                     case 's':
-                        if (app.engine.viewport.y < app.engine.TOTALTILES_X - app.engine.PLAYER_OFFSET_Y - 1 && app.engine.lastDirection == 's') {
+                        if (!turnOnly || app.engine.viewport.y < app.engine.TOTALTILES_X - app.engine.PLAYER_OFFSET_Y - 1 && app.engine.lastDirection == 's') {
                             app.engine.viewport.y++;
                         }
                         break;
                     case 'e':
-                        if (app.engine.viewport.x < app.engine.TOTALTILES_Y - app.engine.PLAYER_OFFSET_X - 1 && app.engine.lastDirection == 'e') {
+                        if (!turnOnly || app.engine.viewport.x < app.engine.TOTALTILES_Y - app.engine.PLAYER_OFFSET_X - 1 && app.engine.lastDirection == 'e') {
                             app.engine.viewport.x++;
                         }
                         break;
