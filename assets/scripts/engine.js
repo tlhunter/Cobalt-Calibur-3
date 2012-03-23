@@ -145,7 +145,7 @@ $(function() {
                         direction: app.engine.player.direction
                     });
 
-                    app.engine.map.render();
+                    app.engine.map.render(true);
                 }
             },
 
@@ -217,7 +217,7 @@ $(function() {
             // Functions and data regarding the map
             map: {
                 data: [],
-                render: function() {
+                render: function(redrawNametags) {
                     // immediately draw canvas as black
                     app.engine.handle.fillStyle = "rgb(0,0,0)";
                     app.engine.handle.fillRect(0, 0, app.engine.screen.width, app.engine.screen.height);
@@ -226,7 +226,7 @@ $(function() {
                     var mapX = 0;
                     var mapY = 0;
                     var tile;
-                    app.engine.nametags.hide();
+                    if (redrawNametags) app.engine.nametags.hide();
 
                     for (j=0; j<app.engine.screen.tilesY; j++) {
                         for (i=0; i < app.engine.screen.tilesX; i++) {
@@ -245,7 +245,7 @@ $(function() {
                                     if (isNaN(picture_id)) {
                                         picture_id = 56;
                                     }
-                                    app.engine.nametags.add(player.name, i, j);
+                                    if (redrawNametags) app.engine.nametags.add(player.name, i, j);
                                     app.engine.tile.drawPlayer(i, j, index, picture_id);
                                 }
                             }
@@ -254,10 +254,10 @@ $(function() {
 
                     // Draw this player
                     var index = app.engine.map.getCharacterFrame(app.engine.player.direction, app.engine.animFrameMe);
-                    app.engine.nametags.add(app.engine.player.name, app.engine.PLAYER_OFFSET_X, app.engine.PLAYER_OFFSET_Y);
+                    if (redrawNametags) app.engine.nametags.add(app.engine.player.name, app.engine.PLAYER_OFFSET_X, app.engine.PLAYER_OFFSET_Y);
                     app.engine.tile.drawPlayer(app.engine.PLAYER_OFFSET_X, app.engine.PLAYER_OFFSET_Y, index, app.engine.player.picture);
 
-                    app.engine.nametags.show();
+                    if (redrawNametags) app.engine.nametags.show();
 
                     app.engine.daytime.drawDayLight();
                 },
@@ -501,12 +501,13 @@ $(function() {
                         // redraw every 150 ms, but change animation every 450 ms
                         app.engine.animFrameGlobal = !app.engine.animFrameGlobal;
                     }
-                    app.engine.map.render();
+                    app.engine.map.render(currentFrame === 0);
                 }, 150);
 
                 // Display helpful command
                 setTimeout(function() {
                     app.displayMessage('Help', 'Type /help for some help', 'help');
+                    app.displayMessage('Help', 'Type /nick NEWNAME to change your name', 'help');
                 }, 500);
             },
 
