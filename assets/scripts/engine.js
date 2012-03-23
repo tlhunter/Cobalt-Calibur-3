@@ -145,7 +145,7 @@ $(function() {
                         direction: app.engine.player.direction
                     });
 
-                    app.engine.map.draw();
+                    app.engine.map.render();
                 }
             },
 
@@ -217,7 +217,7 @@ $(function() {
             // Functions and data regarding the map
             map: {
                 data: [],
-                draw: function() {
+                render: function() {
                     // immediately draw canvas as black
                     app.engine.handle.fillStyle = "rgb(0,0,0)";
                     app.engine.handle.fillRect(0, 0, app.engine.screen.width, app.engine.screen.height);
@@ -331,7 +331,7 @@ $(function() {
                         app.$messages.empty();
                         return;
                     } else if (message === '/redraw') {
-                        app.engine.map.draw();
+                        app.engine.map.render();
                         return;
                     } else if (message === '/help') {
                         app.displayMessage('Help', '-{Keys}--------------------', 'help');
@@ -411,12 +411,10 @@ $(function() {
                     if (data.name || data.picture) {
                         app.engine.players.updateInfo(data.session, data.name, data.picture);
                     }
-                    //app.engine.map.draw();
                 });
 
                 app.socket.on('leave', function(data) {
                     app.engine.players.remove(data.session);
-                    //app.engine.map.draw();
                     var player_name = data.name || 'unknown';
                     app.displayMessage('Server', data.name + " has left the game", 'server');
                 });
@@ -424,13 +422,11 @@ $(function() {
                 app.socket.on('terraform', function (data) {
                     var node = app.engine.map.data[data.y][data.x];
                     node[data.layer] = data.tile;
-                    //app.engine.map.draw();
                 });
 
                 app.socket.on('character info', function(data) {
                     if (app.socket.socket.sessionid == data.dession) return;
                     app.engine.players.updateInfo(data.session, data.name, data.picture);
-                    //app.engine.map.draw();
                 });
 
                 app.socket.on('event time', function(data) {
@@ -458,7 +454,7 @@ $(function() {
                     );
                 }, 15000);
 
-                app.engine.map.draw();
+                app.engine.map.render();
 
                 // Pres Esc inside of text box, leave the text box
                 $(document).keyup(function(e) {
@@ -502,6 +498,7 @@ $(function() {
                 });
 
                 // global animation and map redraw function
+                // Tried using requestAnimationFrame, but that is slow and choppy
                 var currentFrame = 0;
                 setInterval(function() {
                     currentFrame++;
@@ -510,7 +507,7 @@ $(function() {
                         // redraw every 150 ms, but change animation every 450 ms
                         app.engine.animFrameGlobal = !app.engine.animFrameGlobal;
                     }
-                    app.engine.map.draw();
+                    app.engine.map.render();
                 }, 150);
 
                 // Display helpful command
