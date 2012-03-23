@@ -20,6 +20,7 @@ var db          = new Db('terraformia', new server(mongo_host, mongo_port, {}), 
 var game = {
     // collection of global events containing their handles and time values
     events: {
+
         daynight: {
             handle: null,
             interval: 1 * 60 * 1000,
@@ -33,34 +34,37 @@ var game = {
                 io.sockets.emit('event time', {
                     time: game.events.daynight.current
                 });
-                console.log("event time " + game.events.daynight.current);
+                console.log("Event: Time (" + game.events.daynight.current + ")");
             }
         },
+
         earthquake: {
             handle: null,
             interval: 72 * 60 * 1000,
             payload: function() {
                 io.sockets.emit('event earthquake', {
                 });
-                console.log("event earthquake");
+                console.log("Event: Earthquake");
             }
         },
+
         corruption: {
             handle: null,
             interval: 1 * 60 * 1000,
             payload: function() {
                 io.sockets.emit('event corruption', {
                 });
-                console.log("event corruption");
+                console.log("Event: Corruption");
             }
         },
+
         npcmovement: {
             handle: null,
             interval: 5 * 1000,
             payload: function() {
                 io.sockets.emit('event npcmovement', {
                 });
-                console.log("event npcmovement");
+                console.log("Event: NPC Movement");
             }
         }
     },
@@ -72,6 +76,7 @@ var game = {
     players: [],
 };
 
+// Initialize timers
 _.each(game.events, function(event) {
     event.handle = setInterval(
         event.payload,
@@ -190,8 +195,10 @@ db.open(function(err, db) {
     });
 
     io.sockets.on('connection', function (socket) {
+        //npc locations
+        //corruption zones
 
-        // Let the client know they're not alone
+        // Send the list of known players, one per packet
         setTimeout(
             function() {
                 socket.emit('chat', {
@@ -199,17 +206,13 @@ db.open(function(err, db) {
                     message: 'Socket Established',
                     priority: 'server'
                 });
-            },
-            20
-        );
-
-        // Send the list of known players, one per packet
-        setTimeout(
-            function() {
                 _.each(game.players, function(player) {
                     socket.emit('move',
                         player
                     );
+                });
+                socket.emit('event time', {
+                    time: game.events.daynight.current
                 });
             },
             50
@@ -247,6 +250,7 @@ db.open(function(err, db) {
 
         // Get an update from the client for their char's name and picture
         socket.on('character info', function(data) {
+            console.log(data);
             var session = this.id;
             var char_name = sanitizer.escape(data.name.substr(0, 12));
             var picture = parseInt(data.picture, 10);

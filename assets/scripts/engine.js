@@ -2,7 +2,7 @@
 'use strict';
 
 $(function() {
-    window.app = {
+    var app = {
         self: this,
 
         // Make socket connection ASAP
@@ -11,7 +11,6 @@ $(function() {
         // Grab some DOM elements
         $messages: $('#messages'),
         $newMessage: $('#message-input'),
-        $playerName: $('#player-name'),
         $canvas: $('#map'),
 
         // Build main Engine object
@@ -44,6 +43,7 @@ $(function() {
             // Last direction this player was facing
             lastDirection: 's',
             characterIndex: 0,
+            playerName: '',
 
             // Data regarding the canvas tag
             screen: {
@@ -129,20 +129,7 @@ $(function() {
                             for (var k = 0; k < len; k++) {
                                 var player = app.engine.players.locations[k];
                                 if (player.x == mapX && player.y == mapY) {
-                                    var index = 0;
-                                    if (player.direction == 'n') {
-                                        index = 4;
-                                    } else if (player.direction == 'e') {
-                                        index = 2;
-                                    } else if (player.direction == 's') {
-                                        index = 0;
-                                    } else if (player.direction == 'w') {
-                                        index = 6;
-                                    }
-
-                                    if (app.engine.animFrameGlobal) {
-                                        index++;
-                                    }
+                                    var index = app.engine.map.getCharacterFrame(player.direction, app.engine.animFrameGlobal);
 
                                     var player_name = player.name || '???';
                                     var picture_id = player.picture;
@@ -156,28 +143,31 @@ $(function() {
                         }
                     }
 
+                    var index = app.engine.map.getCharacterFrame(app.engine.lastDirection, app.engine.animFrameMe);
+                    app.engine.nametags.add(app.engine.playerName, app.engine.PLAYER_OFFSET_X, app.engine.PLAYER_OFFSET_Y);
+                    app.engine.tile.drawPlayer(app.engine.PLAYER_OFFSET_X, app.engine.PLAYER_OFFSET_Y, index, app.engine.characterIndex);
+                    app.engine.nametags.show();
+
+                    app.engine.daytime.drawDayLight();
+                },
+
+                getCharacterFrame: function(direction, altFrame) {
                     var index = 0;
-                    if (app.engine.lastDirection == 'n') {
+                    if (direction == 'n') {
                         index = 4;
-                    } else if (app.engine.lastDirection == 'e') {
+                    } else if (direction == 'e') {
                         index = 2;
-                    } else if (app.engine.lastDirection == 's') {
+                    } else if (direction == 's') {
                         index = 0;
-                    } else if (app.engine.lastDirection == 'w') {
+                    } else if (direction == 'w') {
                         index = 6;
                     }
 
-                    app.engine.nametags.add(app.$playerName.val(), app.engine.PLAYER_OFFSET_X, app.engine.PLAYER_OFFSET_Y);
-
-                    if (app.engine.animFrameMe) {
+                    if (altFrame) {
                         index++;
-                    };
+                    }
 
-                    app.engine.tile.drawPlayer(app.engine.PLAYER_OFFSET_X, app.engine.PLAYER_OFFSET_Y, index, app.engine.characterIndex);
-
-                    app.engine.daytime.drawDayLight();
-
-                    app.engine.nametags.show();
+                    return index;
                 }
             },
             tile: {
@@ -186,13 +176,13 @@ $(function() {
                     var y_pixel = y * app.engine.TILEHEIGHT;
 
                     if (!tile) {
-                        app.engine.handle.fillStyle = "rgb(0,0,0)";  
+                        app.engine.handle.fillStyle = "rgb(0,0,0)";
                         app.engine.handle.fillRect(x_pixel, y_pixel, app.engine.TILEWIDTH, app.engine.TILEHEIGHT);
                         return;
                     }
 
                     app.engine.handle.drawImage(
-                        window.app.engine.tilesets.terrain,
+                        app.engine.tilesets.terrain,
                         0,
                         tile[0] * app.engine.TILEHEIGHT,
                         app.engine.TILEWIDTH,
@@ -207,7 +197,7 @@ $(function() {
                     var x_pixel = x * app.engine.TILEWIDTH;
                     var y_pixel = y * app.engine.TILEHEIGHT;
                     app.engine.handle.drawImage(
-                        window.app.engine.tilesets.characters,
+                        app.engine.tilesets.characters,
                         tile_x * app.engine.TILEWIDTH,
                         tile_y * app.engine.TILEHEIGHT,
                         app.engine.TILEWIDTH,
@@ -231,19 +221,19 @@ $(function() {
 
             start: function(mapData, x, y) {
                 // load background sprites
-                window.app.engine.tilesets.terrain.src = '/assets/tilesets/terrain.png';
-                window.app.engine.tilesets.terrain.onload = function() {
+                app.engine.tilesets.terrain.src = '/assets/tilesets/terrain.png';
+                app.engine.tilesets.terrain.onload = function() {
                     app.displayMessage('Client', 'Tileset Terrain loaded', 'client');
                 }
                 // load characters sprites
-                window.app.engine.tilesets.characters.src = '/assets/tilesets/characters.png';
-                window.app.engine.tilesets.characters.onload = function() {
+                app.engine.tilesets.characters.src = '/assets/tilesets/characters.png';
+                app.engine.tilesets.characters.onload = function() {
                     app.displayMessage('Client', 'Tileset Characters loaded', 'client');
                 }
 
                 // load inventory sprites
-                window.app.engine.tilesets.inventory.src = '/assets/tilesets/inventory.png';
-                window.app.engine.tilesets.inventory.onload = function() {
+                app.engine.tilesets.inventory.src = '/assets/tilesets/inventory.png';
+                app.engine.tilesets.inventory.onload = function() {
                     app.displayMessage('Client', 'Tileset Inventory loaded', 'client');
                 }
 
@@ -253,7 +243,7 @@ $(function() {
                     var message = app.$newMessage.val();
                     app.$newMessage.val('');
                     if (message === '/clear') {
-                        window.app.$messages.empty();
+                        app.$messages.empty();
                         return;
                     } else if (message === '/redraw') {
                         app.engine.map.draw(window.mapData);
@@ -269,20 +259,25 @@ $(function() {
                         app.displayMessage('Help', '/clear: reset message area', 'help');
                         app.displayMessage('Help', '/redraw: re draws map', 'help');
                         app.displayMessage('Help', '/help: displays this help', 'help');
-                        app.displayMessage('Help', '/spawn: reset location', 'help');
                         app.displayMessage('Help', '/nick name: change name', 'help');
-                        app.displayMessage('Help', '/pic num: change picture', 'help');
+                        app.displayMessage('Help', '/pic 1-16: change picture', 'help');
                         app.displayMessage('Help', '/who: list of players', 'help');
-                        return;
-                    } else if (message === '/spawn') {
-                        app.engine.moveToSpawn();
                         return;
                     } else if (message.indexOf('/nick ') === 0) {
                         var playerName = message.substr(6);
-                        app.$playerName.val(playerName).change();
+                        app.engine.playerName = playerName;
+                        app.engine.updateCharacterInfo();
                         return;
                     } else if (message.indexOf('/pic ') === 0) {
-                        var playerName = message.substr(5);
+                        var picIndex = parseInt(message.substr(5), 10);
+                        if (isNaN(picIndex)) {
+                            picIndex = 1;
+                        }
+                        if (picIndex > 16) {
+                            picIndex = 1;
+                        }
+                        app.engine.characterIndex = picIndex;
+                        app.engine.updateCharacterInfo();
                         // change picture
                         return;
                     } else if (message === '/who') {
@@ -292,8 +287,8 @@ $(function() {
                         });
                         return;
                     }
-                    app.displayMessage(app.$playerName.val(), message, 'self');
-                    app.socket.emit('chat', {name: app.$playerName.val(), message: message, priority: 0});
+                    app.displayMessage(app.engine.playerName, message, 'self');
+                    app.socket.emit('chat', {name: app.engine.playerName, message: message, priority: 0});
                 });
 
                 app.socket.on('chat', function (data) {
@@ -301,7 +296,6 @@ $(function() {
                 });
 
                 app.socket.on('disconnect', function(data) {
-                    alert("The connection to the server has closed. Anything you build now won't be preserved.");
                     app.displayMessage('Server', 'Disconnected', 'server');
                 });
 
@@ -338,14 +332,13 @@ $(function() {
                     app.engine.daytime.setCurrentTime(data.time);
                 });
 
-                app.$playerName.val('Anon' + Math.floor(Math.random() * 8999 + 1000));
-                app.engine.characterIndex = Math.floor(Math.random() * 56);
-                $('#picture').val(app.engine.characterIndex);
+                app.engine.playerName = 'Anon' + Math.floor(Math.random() * 8999 + 1000);
+                app.engine.characterIndex = Math.floor(Math.random() * 15) + 1;
 
-                app.engine.screen.width  = window.app.$canvas.width();
-                app.engine.screen.height = window.app.$canvas.height();
-                app.engine.screen.tilesX = window.app.$canvas.width() / 15;
-                app.engine.screen.tilesY = window.app.$canvas.height() / 16;
+                app.engine.screen.width  = app.$canvas.width();
+                app.engine.screen.height = app.$canvas.height();
+                app.engine.screen.tilesX = app.$canvas.width() / app.engine.TILEWIDTH;
+                app.engine.screen.tilesY = app.$canvas.height() / app.engine.TILEHEIGHT;
 
                 app.engine.viewport.x = x;
                 app.engine.viewport.y = y;
@@ -358,26 +351,12 @@ $(function() {
                         direction: app.engine.lastDirection
                     });
                     app.engine.updateCharacterInfo(
-                        $('#player-name').val(),
-                        $('#picture').val()
+                        app.engine.playerName,
+                        app.engine.characterIndex
                     );
                 }, 15000);
 
                 app.engine.initialDraw(mapData);
-
-
-                $('#picture').bind('click keyup change', function() {
-                    var index = parseInt($('#picture').val(), 10);
-                    if (isNaN(index)) return;
-                    app.engine.characterIndex = index;
-                    app.engine.map.draw(window.mapData);
-                    app.engine.updateCharacterInfo($('#player-name').val(), $(this).val());
-                });
-
-                $('#player-name').bind('keyup change', function() {
-                    //app.engine.map.draw(window.mapData);
-                    app.engine.updateCharacterInfo($(this).val(), $('#picture').val());
-                });
 
                 $('#terraform .remove-tile').click(function() {
                     window.mapData[app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y][app.engine.viewport.x + app.engine.PLAYER_OFFSET_X][1] = null;
@@ -482,34 +461,22 @@ $(function() {
             move: function(direction) {
                 switch(direction) {
                     case 'n':
-                        if (app.engine.viewport.y <= -app.engine.PLAYER_OFFSET_Y) {
-                            return false;
-                        }
-                        if (app.engine.lastDirection == 'n') {
+                        if (app.engine.viewport.y > -app.engine.PLAYER_OFFSET_Y && app.engine.lastDirection == 'n') {
                             app.engine.viewport.y--;
                         }
                         break;
                     case 'w':
-                        if (app.engine.viewport.x <= -app.engine.PLAYER_OFFSET_X) {
-                            return false;
-                        }
-                        if (app.engine.lastDirection == 'w') {
+                        if (app.engine.viewport.x > -app.engine.PLAYER_OFFSET_X && app.engine.lastDirection == 'w') {
                             app.engine.viewport.x--;
                         }
                         break;
                     case 's':
-                        if (app.engine.viewport.y >= app.engine.TOTALTILES_X - app.engine.PLAYER_OFFSET_Y + 1) {
-                            return false;
-                        }
-                        if (app.engine.lastDirection == 's') {
+                        if (app.engine.viewport.y < app.engine.TOTALTILES_X - app.engine.PLAYER_OFFSET_Y - 1 && app.engine.lastDirection == 's') {
                             app.engine.viewport.y++;
                         }
                         break;
                     case 'e':
-                        if (app.engine.viewport.x >= app.engine.TOTALTILES_Y - app.engine.PLAYER_OFFSET_X + 1) {
-                            return false;
-                        }
-                        if (app.engine.lastDirection == 'e') {
+                        if (app.engine.viewport.x < app.engine.TOTALTILES_Y - app.engine.PLAYER_OFFSET_X - 1 && app.engine.lastDirection == 'e') {
                             app.engine.viewport.x++;
                         }
                         break;
@@ -575,10 +542,10 @@ $(function() {
             },
 
             // run this when we make a local change to alert other players and server
-            updateCharacterInfo: function(name, picture) {
+            updateCharacterInfo: function() {
                 app.socket.emit('character info', {
-                    name: name,
-                    picture: picture
+                    name: app.engine.playerName,
+                    picture: app.engine.characterIndex
                 });
             }
         },
