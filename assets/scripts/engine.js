@@ -114,6 +114,10 @@ $(function() {
             map: {
                 data: [],
                 draw: function() {
+                    // immediately draw canvas as black
+                    app.engine.handle.fillStyle = "rgb(0,0,0)";
+                    app.engine.handle.fillRect(0, 0, app.engine.screen.width, app.engine.screen.height);
+
                     var i, j;
                     var mapX = 0;
                     var mapY = 0;
@@ -176,9 +180,7 @@ $(function() {
                     var x_pixel = x * app.engine.TILEWIDTH;
                     var y_pixel = y * app.engine.TILEHEIGHT;
 
-                    if (!tile) {
-                        app.engine.handle.fillStyle = "rgb(0,0,0)";
-                        app.engine.handle.fillRect(x_pixel, y_pixel, app.engine.TILEWIDTH, app.engine.TILEHEIGHT);
+                    if (tile == null || isNaN(tile[0])) {
                         return;
                     }
 
@@ -229,16 +231,15 @@ $(function() {
                         app.displayMessage('Help', 'Use the WASD keys to move', 'help');
                         app.displayMessage('Help', 'Press T to go to chat mode', 'help');
                         app.displayMessage('Help', 'Press / to go to chat mode', 'help');
-                        app.displayMessage('Help', 'Press x to remove tile', 'help');
                         app.displayMessage('Help', 'Press Esc go to leave chat', 'help');
                         app.displayMessage('Help', '-{Commands}----------------', 'help');
-                        app.displayMessage('Help', '/clear: reset message area', 'help');
-                        app.displayMessage('Help', '/redraw: re draws map', 'help');
-                        app.displayMessage('Help', '/help: displays this help', 'help');
                         app.displayMessage('Help', '/nick name: change name', 'help');
                         app.displayMessage('Help', '/pic 1-16: change picture', 'help');
                         app.displayMessage('Help', '/who: list of players', 'help');
                         app.displayMessage('Help', '/time: get current time', 'help');
+                        app.displayMessage('Help', '/help: displays this help', 'help');
+                        app.displayMessage('Help', '/clear: reset message area', 'help');
+                        app.displayMessage('Help', '/redraw: re draws map', 'help');
                         return;
                     } else if (message.indexOf('/nick ') === 0) {
                         var playerName = message.substr(6);
