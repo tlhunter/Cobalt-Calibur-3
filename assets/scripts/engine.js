@@ -19,6 +19,7 @@ $(function() {
                 terrain: new Image(),
                 characters: new Image(),
                 inventory: new Image(),
+                descriptors: {}
             },
 
             // Animation frame data
@@ -55,7 +56,12 @@ $(function() {
                         case 'n':
                             if (app.engine.player.location.y <= 0) {
                                 app.engine.player.setDirection(d);
-                                app.displayMessage('Client', 'Blocked', 'client');
+                                app.displayMessage('Client', 'Blocked Northern Border', 'client');
+                                return false;
+                            }
+                            if (!app.engine.player.canMoveTo(app.engine.player.location.x, app.engine.player.location.y - 1)) {
+                                app.engine.player.setDirection(d);
+                                app.displayMessage('Client', 'Blocked by object', 'client');
                                 return false;
                             }
                             app.engine.player.location.y--;
@@ -63,7 +69,12 @@ $(function() {
                         case 'e':
                             if (app.engine.player.location.x >= app.engine.TOTALTILES_X - 1) {
                                 app.engine.player.setDirection(d);
-                                app.displayMessage('Client', 'Blocked', 'client');
+                                app.displayMessage('Client', 'Blocked Eastern Border', 'client');
+                                return false;
+                            }
+                            if (!app.engine.player.canMoveTo(app.engine.player.location.x + 1, app.engine.player.location.y)) {
+                                app.engine.player.setDirection(d);
+                                app.displayMessage('Client', 'Blocked by object', 'client');
                                 return false;
                             }
                             app.engine.player.location.x++;
@@ -71,7 +82,12 @@ $(function() {
                         case 's':
                             if (app.engine.player.location.y >= app.engine.TOTALTILES_Y - 1) {
                                 app.engine.player.setDirection(d);
-                                app.displayMessage('Client', 'Blocked', 'client');
+                                app.displayMessage('Client', 'Blocked Southern Border', 'client');
+                                return false;
+                            }
+                            if (!app.engine.player.canMoveTo(app.engine.player.location.x, app.engine.player.location.y + 1)) {
+                                app.engine.player.setDirection(d);
+                                app.displayMessage('Client', 'Blocked by object', 'client');
                                 return false;
                             }
                             app.engine.player.location.y++;
@@ -79,7 +95,12 @@ $(function() {
                         case 'w':
                             if (app.engine.player.location.x <= 0) {
                                 app.engine.player.setDirection(d);
-                                app.displayMessage('Client', 'Blocked', 'client');
+                                app.displayMessage('Client', 'Blocked Western Border', 'client');
+                                return false;
+                            }
+                            if (!app.engine.player.canMoveTo(app.engine.player.location.x - 1, app.engine.player.location.y)) {
+                                app.engine.player.setDirection(d);
+                                app.displayMessage('Client', 'Blocked by object', 'client');
                                 return false;
                             }
                             app.engine.player.location.x--;
@@ -115,29 +136,44 @@ $(function() {
                 // Gets information about the tile we are facing
                 getFacingTile: function() {
                     var coords = app.engine.player.location;
+                    var data = {};
                     switch(app.engine.player.direction) {
                         case 'n':
-                            return {x: coords.x, y: coords.y - 1};
+                            data.location = {x: coords.x, y: coords.y - 1};
                             break;
                         case 'e':
-                            return {x: coords.x + 1, y: coords.y};
+                            data.location = {x: coords.x + 1, y: coords.y};
                             break;
                         case 's':
-                            return {x: coords.x, y: coords.y + 1};
+                            data.location = {x: coords.x, y: coords.y + 1};
                             break;
                         case 'w':
-                            return {x: coords.x - 1, y: coords.y};
+                            data.location = {x: coords.x - 1, y: coords.y};
                             break;
                         default:
                             console.log("Invalid Direction", app.engine.player.direction);
                             break;
                     }
+
+                    _.extend(
+                        data,
+                        app.engine.map.getTileData(data.location.x, data.location.y)
+                    );
+
+                    return data;
                 },
 
                 // Updates the viewport based on the players current location
                 updateViewport: function() {
                     app.engine.viewport.x = app.engine.player.location.x - app.engine.PLAYER_OFFSET_X;
                     app.engine.viewport.y = app.engine.player.location.y - app.engine.PLAYER_OFFSET_Y;
+                },
+
+                canMoveTo: function(x, y) {
+                    if (app.engine.map.getTileData(x, y).tile.block_player) {
+                        return false;
+                    }
+                    return true;
                 },
 
                 // Transmits a socket message with our current location and direction
@@ -220,6 +256,17 @@ $(function() {
             // Functions and data regarding the map
             map: {
                 data: [],
+                getTileData: function(x, y) {
+                    var tile = app.engine.map.data[y][x];
+                    var data = {};
+                    if (tile && typeof tile[0] != 'undefined') {
+                        data.tile = app.engine.tilesets.descriptors.terrain[tile[0]];
+                    }
+                    if (tile && typeof tile[1] != 'undefined') {
+                        data.health = tile[1];
+                    }
+                    return data;
+                },
                 render: function(redrawNametags) {
                     // immediately draw canvas as black
                     app.engine.handle.fillStyle = "rgb(0,0,0)";
@@ -325,6 +372,14 @@ $(function() {
             start: function() {
                 app.engine.viewport.x = Math.floor(app.engine.TOTALTILES_X / 2) - app.engine.PLAYER_OFFSET_X;
                 app.engine.viewport.y = Math.floor(app.engine.TOTALTILES_Y / 2) - app.engine.PLAYER_OFFSET_Y;
+
+                app.engine.screen.width  = app.$canvas.width();
+                app.engine.screen.height = app.$canvas.height();
+                app.engine.screen.tilesX = app.$canvas.width() / app.engine.TILEWIDTH;
+                app.engine.screen.tilesY = app.$canvas.height() / app.engine.TILEHEIGHT;
+
+                app.engine.player.name = 'Anon' + Math.floor(Math.random() * 8999 + 1000);
+                app.engine.player.picture = Math.floor(Math.random() * 15) + 1;
 
                 $('#message-box form').submit(function(event) {
                     event.preventDefault();
@@ -432,13 +487,9 @@ $(function() {
                     app.engine.daytime.setCurrentTime(data.time);
                 });
 
-                app.engine.player.name = 'Anon' + Math.floor(Math.random() * 8999 + 1000);
-                app.engine.player.picture = Math.floor(Math.random() * 15) + 1;
-
-                app.engine.screen.width  = app.$canvas.width();
-                app.engine.screen.height = app.$canvas.height();
-                app.engine.screen.tilesX = app.$canvas.width() / app.engine.TILEWIDTH;
-                app.engine.screen.tilesY = app.$canvas.height() / app.engine.TILEHEIGHT;
+                app.socket.on('event earthquake', function(data) {
+                    app.displayMessage('Server', "There has been an earthquake! Check your buildings for damage. New Ore has been added to the world.", 'server');
+                });
 
                 // Tell people who and where we are every 15 seconds (temporary solution for a race condition)
                 setInterval(function() {
@@ -554,7 +605,7 @@ $(function() {
                 // adds a player name, provided the X and Y coords of the player
                 add: function(name, x, y) {
                     var x_pixel = (x - 4) * app.engine.TILEWIDTH + 7; // 7 is left margin or something
-                    var y_pixel = (y - 1) * app.engine.TILEHEIGHT;
+                    var y_pixel = (y - 1) * app.engine.TILEHEIGHT + 2;
                     var $tags = app.engine.nametags.$tags;
                     var $name = $('<div class="name"><span>' + name + '</span></div>');
                     $name.css({
@@ -594,6 +645,12 @@ $(function() {
     };
 
     app.displayMessage('Client', 'Downloading assets...', 'client');
+
+    // load Character, Inventory, Terrain descriptors
+    $.get('/assets/tilesets/data.json', function(data) {
+        app.displayMessage('Client', 'Tileset Descriptors done.', 'client');
+        app.engine.tilesets.descriptors = data;
+    });
 
     // load background sprites
     app.engine.tilesets.terrain.src = '/assets/tilesets/terrain.png';
