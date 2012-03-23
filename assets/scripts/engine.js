@@ -55,8 +55,8 @@ $(function() {
 
             // Data regarding the viewport (window into the map)
             viewport: {
-                x: 0,           // The viewport left tile
-                y: 0,           // The viewport top tile
+                x: 70,          // The viewport left tile
+                y: 70,          // The viewport top tile
             },
 
             // Functions and data regarding the other players
@@ -112,7 +112,8 @@ $(function() {
 
             // Functions and data regarding the map
             map: {
-                draw: function(mapData) {
+                data: [],
+                draw: function() {
                     var i, j;
                     var mapX = 0;
                     var mapY = 0;
@@ -123,7 +124,7 @@ $(function() {
                         for (i=0; i < app.engine.screen.tilesX; i++) {
                             mapX = i + app.engine.viewport.x;
                             mapY = j + app.engine.viewport.y;
-                            tile = (mapData[mapY] && mapData[mapY][mapX]) ? mapData[mapY][mapX] : null;
+                            tile = (app.engine.map.data[mapY] && app.engine.map.data[mapY][mapX]) ? app.engine.map.data[mapY][mapX] : null;
                             app.engine.tile.draw(i, j, tile);
                             var len = app.engine.players.locations.length;
                             for (var k = 0; k < len; k++) {
@@ -209,17 +210,17 @@ $(function() {
                     );
                 }
             },
-            initialDraw: function(mapData) {
+            initialDraw: function() {
                 setTimeout(function(md) {
                     return function() {
                         app.displayMessage('Client', 'Drawing Map...', 'client');
-                        app.engine.map.draw(mapData);
+                        app.engine.map.draw();
                         app.displayMessage('Client', 'Done Drawing Map.', 'client');
                     }
-                }(mapData), 50);   // wait 100 ms
+                }(), 50);   // wait 100 ms
             },
 
-            start: function(mapData, x, y) {
+            start: function() {
                 // load background sprites
                 app.engine.tilesets.terrain.src = '/assets/tilesets/terrain.png';
                 app.engine.tilesets.terrain.onload = function() {
@@ -246,7 +247,7 @@ $(function() {
                         app.$messages.empty();
                         return;
                     } else if (message === '/redraw') {
-                        app.engine.map.draw(window.mapData);
+                        app.engine.map.draw();
                         return;
                     } else if (message === '/help') {
                         app.displayMessage('Help', '-{Keys}--------------------', 'help');
@@ -262,6 +263,7 @@ $(function() {
                         app.displayMessage('Help', '/nick name: change name', 'help');
                         app.displayMessage('Help', '/pic 1-16: change picture', 'help');
                         app.displayMessage('Help', '/who: list of players', 'help');
+                        app.displayMessage('Help', '/time: get current time', 'help');
                         return;
                     } else if (message.indexOf('/nick ') === 0) {
                         var playerName = message.substr(6);
@@ -286,6 +288,9 @@ $(function() {
                             app.displayMessage("Client", player.name, 'client');
                         });
                         return;
+                    } else if (message === '/time') {
+                        app.displayMessage("Client", "Current Time: " + app.engine.daytime.currentTime + ":00", 'client');
+                        return;
                     }
                     app.displayMessage(app.engine.playerName, message, 'self');
                     app.socket.emit('chat', {name: app.engine.playerName, message: message, priority: 0});
@@ -306,26 +311,26 @@ $(function() {
                     if (data.name || data.picture) {
                         app.engine.players.updateInfo(data.session, data.name, data.picture);
                     }
-                    //app.engine.map.draw(mapData);
+                    //app.engine.map.draw();
                 });
 
                 app.socket.on('leave', function(data) {
                     app.engine.players.remove(data.session);
-                    //app.engine.map.draw(mapData);
+                    //app.engine.map.draw();
                     var player_name = data.name || 'unknown';
                     app.displayMessage('Server', data.name + " has left the game", 'server');
                 });
 
                 app.socket.on('terraform', function (data) {
-                    var node = window.mapData[data.y][data.x];
+                    var node = app.engine.map.data[data.y][data.x];
                     node[data.layer] = data.tile;
-                    //app.engine.map.draw(window.mapData);
+                    //app.engine.map.draw();
                 });
 
                 app.socket.on('character info', function(data) {
                     if (app.socket.socket.sessionid == data.dession) return;
                     app.engine.players.updateInfo(data.session, data.name, data.picture);
-                    //app.engine.map.draw(window.mapData);
+                    //app.engine.map.draw();
                 });
 
                 app.socket.on('event time', function(data) {
@@ -340,9 +345,6 @@ $(function() {
                 app.engine.screen.tilesX = app.$canvas.width() / app.engine.TILEWIDTH;
                 app.engine.screen.tilesY = app.$canvas.height() / app.engine.TILEHEIGHT;
 
-                app.engine.viewport.x = x;
-                app.engine.viewport.y = y;
-
                 // Tell people who and where we are every 15 seconds (temporary solution for a race condition)
                 setInterval(function() {
                     app.socket.emit('move', {
@@ -356,11 +358,11 @@ $(function() {
                     );
                 }, 15000);
 
-                app.engine.initialDraw(mapData);
+                app.engine.initialDraw();
 
                 $('#terraform .remove-tile').click(function() {
-                    window.mapData[app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y][app.engine.viewport.x + app.engine.PLAYER_OFFSET_X][1] = null;
-                    app.engine.map.draw(window.mapData);
+                    app.engine.map.data[app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y][app.engine.viewport.x + app.engine.PLAYER_OFFSET_X][1] = null;
+                    app.engine.map.draw();
                     app.socket.emit('terraform', {
                         x: app.engine.viewport.x + app.engine.PLAYER_OFFSET_X,
                         y: app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y,
@@ -397,14 +399,17 @@ $(function() {
                     } else if (e.which == 47) { // /
                         $('#message-input').focus();
                     } else if (e.which == 120) { // x
-                        window.mapData[app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y][app.engine.viewport.x + app.engine.PLAYER_OFFSET_X][1] = null;
-                        app.engine.map.draw(window.mapData);
-                        app.socket.emit('terraform', {
-                            x: app.engine.viewport.x + app.engine.PLAYER_OFFSET_X,
-                            y: app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y,
-                            tile: null,
-                            layer: 1
-                        });
+                        //app.engine.map.data[app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y][app.engine.viewport.x + app.engine.PLAYER_OFFSET_X][1] = null;
+                        //app.engine.map.draw();
+                        //app.socket.emit('terraform', {
+                            //x: app.engine.viewport.x + app.engine.PLAYER_OFFSET_X,
+                            //y: app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y,
+                            //tile: null,
+                            //layer: 1
+                        //});
+                    } else if (e.which >= 49 && e.which <= 54) { // 1 - 6
+                        var num = e.which - 48;
+                        console.log("Place " + num);
                     }
                 });
 
@@ -416,10 +421,10 @@ $(function() {
                     currentFrame++;
                     if (currentFrame % 3 == 0) {
                         currentFrame = 0;
-                        // redraw every 200 ms, but change animation every 400 ms
+                        // redraw every 150 ms, but change animation every 450 ms
                         app.engine.animFrameGlobal = !app.engine.animFrameGlobal;
                     }
-                    app.engine.map.draw(window.mapData);
+                    app.engine.map.draw();
                 }, 150);
             },
 
@@ -429,7 +434,6 @@ $(function() {
 
                 setCurrentTime: function(time) {
                     app.engine.daytime.currentTime = time;
-                    app.displayMessage('Client', 'In Game time is ' + time + ':00 houres', 'client');
                 },
 
                 drawDayLight: function() {
@@ -494,7 +498,7 @@ $(function() {
                     direction: direction
                 });
 
-                app.engine.map.draw(window.mapData);
+                app.engine.map.draw();
 
                 return true;
             },
@@ -510,7 +514,7 @@ $(function() {
                     direction: 's'
                 });
 
-                app.engine.map.draw(window.mapData);
+                app.engine.map.draw();
             },
 
             // Nametags are displayed in HTML in a layer above canvas (for now at least, not sure which is faster)
@@ -563,8 +567,8 @@ $(function() {
 
     $.get('/map', function(data) {
         app.displayMessage('Client', 'Initializing Map...', 'client');
-        window.mapData = data;
-        app.engine.start(window.mapData, 70, 70);
+        app.engine.map.data = data;
+        app.engine.start();
     });
 
 });
