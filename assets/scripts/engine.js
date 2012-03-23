@@ -330,9 +330,6 @@ $(function() {
                     if (message === '/clear') {
                         app.$messages.empty();
                         return;
-                    } else if (message === '/redraw') {
-                        app.engine.map.render();
-                        return;
                     } else if (message === '/help') {
                         app.displayMessage('Help', '-{Keys}--------------------', 'help');
                         app.displayMessage('Help', 'Use the wasd keys to move', 'help');
@@ -348,7 +345,6 @@ $(function() {
                         app.displayMessage('Help', '/gps: get coordinates', 'help');
                         app.displayMessage('Help', '/help: displays this help', 'help');
                         app.displayMessage('Help', '/clear: reset message area', 'help');
-                        app.displayMessage('Help', '/redraw: re draws map', 'help');
                         return;
                     } else if (message.indexOf('/nick ') === 0) {
                         var playerName = message.substr(6);
@@ -453,8 +449,6 @@ $(function() {
                         app.engine.player.picture
                     );
                 }, 15000);
-
-                app.engine.map.render();
 
                 // Pres Esc inside of text box, leave the text box
                 $(document).keyup(function(e) {
