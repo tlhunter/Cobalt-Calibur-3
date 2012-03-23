@@ -2,7 +2,7 @@
 'use strict';
 
 $(function() {
-    var app = {
+    window.app = {
         // Make socket connection ASAP
         socket: io.connect(window.document.location.protocol + "//" + window.document.location.host),
 
@@ -38,10 +38,116 @@ $(function() {
             PLAYER_OFFSET_X: 8,
             PLAYER_OFFSET_Y: 8,
 
-            // Last direction this player was facing
-            lastDirection: 's',
-            characterIndex: 0,
-            playerName: '',
+            player: {
+                direction: 's',
+                picture: 0,
+                name: '',
+
+                // Coordinates of player
+                location: {
+                    x: 100,
+                    y: 100
+                },
+
+                // Attempts to move the character in the nesw direction we specify
+                move: function(d) {
+                    switch (d) {
+                        case 'n':
+                            if (app.engine.player.location.y <= 0) {
+                                app.displayMessage('Client', 'Blocked', 'client');
+                                return false;
+                            }
+                            app.engine.player.location.y--;
+                            break;
+                        case 'e':
+                            if (app.engine.player.location.x >= app.engine.TOTALTILES_X - 1) {
+                                app.displayMessage('Client', 'Blocked', 'client');
+                                return false;
+                            }
+                            app.engine.player.location.x++;
+                            break;
+                        case 's':
+                            if (app.engine.player.location.y >= app.engine.TOTALTILES_Y - 1) {
+                                app.displayMessage('Client', 'Blocked', 'client');
+                                return false;
+                            }
+                            app.engine.player.location.y++;
+                            break;
+                        case 'w':
+                            if (app.engine.player.location.x <= 0) {
+                                app.displayMessage('Client', 'Blocked', 'client');
+                                return false;
+                            }
+                            app.engine.player.location.x--;
+                            break;
+                        default:
+                            console.log("Invalid Direction", d);
+                            return;
+                            break;
+                    }
+
+                    app.engine.animFrameMe = !app.engine.animFrameMe;
+                    app.engine.player.direction = d;
+                    app.engine.player.updateViewport();
+
+                    app.engine.player.broadcastLocation();
+                },
+
+                // Forces an XY location
+                setLocation: function(x, y) {
+                    app.engine.player.location.x = x;
+                    app.engine.player.location.y = y;
+
+                    app.engine.player.updateViewport();
+
+                    app.engine.player.broadcastLocation();
+                },
+
+                // Sets the direction we are facing
+                setDirection: function(d) {
+                    app.engine.player.direction = d;
+                    app.engine.player.broadcastLocation();
+                },
+
+                // Gets information about the tile we are facing
+                getFacingTile: function() {
+                    var coords = app.engine.player.location;
+                    switch(app.engine.player.direction) {
+                        case 'n':
+                            return {x: coords.x, y: coords.y - 1};
+                            break;
+                        case 'e':
+                            return {x: coords.x + 1, y: coords.y};
+                            break;
+                        case 's':
+                            return {x: coords.x, y: coords.y + 1};
+                            break;
+                        case 'w':
+                            return {x: coords.x - 1, y: coords.y};
+                            break;
+                        default:
+                            console.log("Invalid Direction", app.engine.player.direction);
+                            break;
+                    }
+                },
+
+                // Updates the viewport based on the players current location
+                updateViewport: function() {
+                    app.engine.viewport.x = app.engine.player.location.x - app.engine.PLAYER_OFFSET_X;
+                    app.engine.viewport.y = app.engine.player.location.y - app.engine.PLAYER_OFFSET_Y;
+                },
+
+                // Transmits a socket message with our current location and direction
+                broadcastLocation: function() {
+                    app.socket.emit('move', {
+                        x: app.engine.player.location.x,
+                        y: app.engine.player.location.y,
+                        direction: app.engine.player.direction
+                    });
+
+                    app.engine.map.draw();
+                }
+            },
 
             // Data regarding the canvas tag
             screen: {
@@ -146,9 +252,11 @@ $(function() {
                         }
                     }
 
-                    var index = app.engine.map.getCharacterFrame(app.engine.lastDirection, app.engine.animFrameMe);
-                    app.engine.nametags.add(app.engine.playerName, app.engine.PLAYER_OFFSET_X, app.engine.PLAYER_OFFSET_Y);
-                    app.engine.tile.drawPlayer(app.engine.PLAYER_OFFSET_X, app.engine.PLAYER_OFFSET_Y, index, app.engine.characterIndex);
+                    // Draw this player
+                    var index = app.engine.map.getCharacterFrame(app.engine.player.direction, app.engine.animFrameMe);
+                    app.engine.nametags.add(app.engine.player.name, app.engine.PLAYER_OFFSET_X, app.engine.PLAYER_OFFSET_Y);
+                    app.engine.tile.drawPlayer(app.engine.PLAYER_OFFSET_X, app.engine.PLAYER_OFFSET_Y, index, app.engine.player.picture);
+
                     app.engine.nametags.show();
 
                     app.engine.daytime.drawDayLight();
@@ -244,7 +352,7 @@ $(function() {
                         return;
                     } else if (message.indexOf('/nick ') === 0) {
                         var playerName = message.substr(6);
-                        app.engine.playerName = playerName;
+                        app.engine.player.name = playerName;
                         app.engine.updateCharacterInfo();
                         return;
                     } else if (message.indexOf('/pic ') === 0) {
@@ -255,7 +363,7 @@ $(function() {
                         if (picIndex > 16) {
                             picIndex = 1;
                         }
-                        app.engine.characterIndex = picIndex;
+                        app.engine.player.picture = picIndex;
                         app.engine.updateCharacterInfo();
                         // change picture
                         return;
@@ -269,23 +377,23 @@ $(function() {
                         app.displayMessage("Client", "Current Time: " + app.engine.daytime.currentTime + ":00", 'client');
                         return;
                     } else if (message === '/gps') {
-                        app.displayMessage("Client", "Coordinates: [" + (app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y) + "," + (app.engine.viewport.x + app.engine.PLAYER_OFFSET_X) + "]", 'client');
+                        app.displayMessage("Client", "Coordinates: [" + (app.engine.player.location.y) + "," + (app.engine.player.location.x) + "]", 'client');
                         return;
                     } else if (message.indexOf('/drop ') === 0) {
                         var tile = parseInt(message.substr(6), 10);
                         if (isNaN(tile)) {
                             return;
                         }
-                        app.engine.map.data[app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y][app.engine.viewport.x + app.engine.PLAYER_OFFSET_X][0] = tile;
+                        app.engine.map.data[app.engine.player.location.y][app.engine.player.location.x][0] = tile;
                         app.socket.emit('terraform', {
-                            x: app.engine.viewport.x + app.engine.PLAYER_OFFSET_X,
-                            y: app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y,
+                            x: app.engine.player.location.x,
+                            y: app.engine.player.location.y,
                             tile: [tile, null]
                         });
                         return;
                     }
-                    app.displayMessage(app.engine.playerName, message, 'self');
-                    app.socket.emit('chat', {name: app.engine.playerName, message: message, priority: 0});
+                    app.displayMessage(app.engine.player.name, message, 'self');
+                    app.socket.emit('chat', {name: app.engine.player.name, message: message, priority: 0});
                 });
 
                 app.socket.on('chat', function (data) {
@@ -329,8 +437,8 @@ $(function() {
                     app.engine.daytime.setCurrentTime(data.time);
                 });
 
-                app.engine.playerName = 'Anon' + Math.floor(Math.random() * 8999 + 1000);
-                app.engine.characterIndex = Math.floor(Math.random() * 15) + 1;
+                app.engine.player.name = 'Anon' + Math.floor(Math.random() * 8999 + 1000);
+                app.engine.player.picture = Math.floor(Math.random() * 15) + 1;
 
                 app.engine.screen.width  = app.$canvas.width();
                 app.engine.screen.height = app.$canvas.height();
@@ -340,28 +448,17 @@ $(function() {
                 // Tell people who and where we are every 15 seconds (temporary solution for a race condition)
                 setInterval(function() {
                     app.socket.emit('move', {
-                        x: app.engine.viewport.x + app.engine.PLAYER_OFFSET_X,
-                        y: app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y,
-                        direction: app.engine.lastDirection
+                        x: app.engine.player.location.x,
+                        y: app.engine.player.location.y,
+                        direction: app.engine.player.direction
                     });
                     app.engine.updateCharacterInfo(
-                        app.engine.playerName,
-                        app.engine.characterIndex
+                        app.engine.player.name,
+                        app.engine.player.picture
                     );
                 }, 15000);
 
                 app.engine.map.draw();
-
-                $('#terraform .remove-tile').click(function() {
-                    app.engine.map.data[app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y][app.engine.viewport.x + app.engine.PLAYER_OFFSET_X][1] = null;
-                    app.engine.map.draw();
-                    app.socket.emit('terraform', {
-                        x: app.engine.viewport.x + app.engine.PLAYER_OFFSET_X,
-                        y: app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y,
-                        tile: null,
-                        layer: 1
-                    });
-                });
 
                 // Pres Esc inside of text box, leave the text box
                 $(document).keyup(function(e) {
@@ -376,24 +473,23 @@ $(function() {
                     if ($(e.target).is(":input")) {
                         return;
                     }
-                    console.log(e.which);
 
                     if (e.which == 119) { // w
-                        app.engine.move('n', false);
+                        app.engine.player.move('n');
                     } else if (e.which == 97) { // a
-                        app.engine.move('w', false);
+                        app.engine.player.move('w');
                     } else if (e.which == 115) { // s
-                        app.engine.move('s', false);
+                        app.engine.player.move('s');
                     } else if (e.which == 100) { // d
-                        app.engine.move('e', false);
+                        app.engine.player.move('e');
                     } else if (e.which == 87) { // W
-                        app.engine.move('n', true);
+                        app.engine.player.setDirection('n');
                     } else if (e.which == 65) { // A
-                        app.engine.move('w', true);
+                        app.engine.player.setDirection('w');
                     } else if (e.which == 83) { // S
-                        app.engine.move('s', true);
+                        app.engine.player.setDirection('s');
                     } else if (e.which == 68) { // D
-                        app.engine.move('e', true);
+                        app.engine.player.setDirection('e');
                     } else if (e.which == 116) { // T
                         e.preventDefault(); // keeps us from getting a t in the box
                         $('#message-input').focus();
@@ -456,48 +552,6 @@ $(function() {
                 },
             },
 
-            // Moves this character in the cardinal direction provided
-            move: function(direction, turnOnly) {
-                switch(direction) {
-                    case 'n':
-                        if (!turnOnly || app.engine.viewport.y > -app.engine.PLAYER_OFFSET_Y && app.engine.lastDirection == 'n') {
-                            app.engine.viewport.y--;
-                        }
-                        break;
-                    case 'w':
-                        if (!turnOnly || app.engine.viewport.x > -app.engine.PLAYER_OFFSET_X && app.engine.lastDirection == 'w') {
-                            app.engine.viewport.x--;
-                        }
-                        break;
-                    case 's':
-                        if (!turnOnly || app.engine.viewport.y < app.engine.TOTALTILES_X - app.engine.PLAYER_OFFSET_Y - 1 && app.engine.lastDirection == 's') {
-                            app.engine.viewport.y++;
-                        }
-                        break;
-                    case 'e':
-                        if (!turnOnly || app.engine.viewport.x < app.engine.TOTALTILES_Y - app.engine.PLAYER_OFFSET_X - 1 && app.engine.lastDirection == 'e') {
-                            app.engine.viewport.x++;
-                        }
-                        break;
-                    default:
-                        return false;
-                        break;
-                }
-
-                app.engine.lastDirection = direction;
-                app.engine.animFrameMe = !app.engine.animFrameMe;
-
-                app.socket.emit('move', {
-                    x: app.engine.viewport.x + app.engine.PLAYER_OFFSET_X,
-                    y: app.engine.viewport.y + app.engine.PLAYER_OFFSET_Y,
-                    direction: direction
-                });
-
-                app.engine.map.draw();
-
-                return true;
-            },
-
             // Nametags are displayed in HTML in a layer above canvas (for now at least, not sure which is faster)
             nametags: {
                 $tags: $('#nametags'),
@@ -529,8 +583,8 @@ $(function() {
             // run this when we make a local change to alert other players and server
             updateCharacterInfo: function() {
                 app.socket.emit('character info', {
-                    name: app.engine.playerName,
-                    picture: app.engine.characterIndex
+                    name: app.engine.player.name,
+                    picture: app.engine.player.picture
                 });
             }
         },
