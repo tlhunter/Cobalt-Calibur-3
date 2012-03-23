@@ -389,8 +389,6 @@ $(function() {
                     }
                 });
 
-                app.displayMessage('Help', 'Type /help for some help', 'help');
-
                 // global animation and map redraw function
                 var currentFrame = 0;
                 setInterval(function() {
@@ -402,6 +400,11 @@ $(function() {
                     }
                     app.engine.map.draw();
                 }, 150);
+
+                // Display helpful command
+                setTimeout(function() {
+                    app.displayMessage('Help', 'Type /help for some help', 'help');
+                }, 500);
             },
 
             daytime: {
