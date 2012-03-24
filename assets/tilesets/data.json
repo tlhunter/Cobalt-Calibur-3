@@ -343,9 +343,9 @@
       "name": "Brick Floor",
       "mineable": true,
       "provides": "Stone",
-      "block_player": true,
-      "block_npc": true,
-      "replaceable": false,
+      "block_player": false,
+      "block_npc": false,
+      "replaceable": true,
       "becomes": "Dirt",
       "spawn_npc": false,
       "synthetic": true
