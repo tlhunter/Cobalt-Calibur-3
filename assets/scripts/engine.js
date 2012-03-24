@@ -202,6 +202,15 @@ $(function() {
                 y: null,          // The viewport top tile
             },
 
+            // NPC stuff
+            npc: {
+                data: [],
+
+                updateData: function(data) {
+                    app.engine.npc.data = data;
+                }
+            },
+
             // Functions and data regarding the other players
             players: {
 
@@ -284,6 +293,7 @@ $(function() {
                             mapY = j + app.engine.viewport.y;
                             tile = (app.engine.map.data[mapX] && app.engine.map.data[mapX][mapY]) ? app.engine.map.data[mapX][mapY] : null;
                             app.engine.tile.draw(i, j, tile);
+
                             var len = app.engine.players.locations.length;
                             for (var k = 0; k < len; k++) {
                                 var player = app.engine.players.locations[k];
@@ -297,6 +307,18 @@ $(function() {
                                     }
                                     if (redrawNametags) app.engine.nametags.add(player.name, i, j);
                                     app.engine.tile.drawPlayer(i, j, index, picture_id);
+                                }
+                            }
+
+                            var len = app.engine.npc.data.length;
+                            for (var l = 0; l < len; l++) {
+                                var npc = app.engine.npc.data[l];
+                                if (npc.x == mapX && npc.y == mapY) {
+                                    var index = app.engine.map.getCharacterFrame('s', app.engine.animFrameGlobal);
+
+                                    var npc_name = 'Cthulu Spawn';
+                                    if (redrawNametags) app.engine.nametags.add(npc_name, i, j);
+                                    app.engine.tile.drawPlayer(i, j, index, npc.id);
                                 }
                             }
                         }
@@ -489,6 +511,10 @@ $(function() {
 
                 app.socket.on('event earthquake', function(data) {
                     app.displayMessage('Server', "There has been an earthquake! Check your buildings for damage. New Ore has been added to the world.", 'server');
+                });
+
+                app.socket.on('event npcmovement', function(data) {
+                    app.engine.npc.updateData(data.npcs);
                 });
 
                 // Tell people who and where we are every 15 seconds (temporary solution for a race condition)
