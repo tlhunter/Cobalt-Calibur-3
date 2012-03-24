@@ -433,15 +433,16 @@ $(function() {
                     } else if (message === '/gps') {
                         app.displayMessage("Client", "Coordinates: [" + (app.engine.player.location.x) + "," + (app.engine.player.location.y) + "]", 'client');
                         return;
-                    } else if (message.indexOf('/drop ') === 0) {
+                    } else if (message.indexOf('/tile ') === 0) {
                         var tile = parseInt(message.substr(6), 10);
                         if (isNaN(tile)) {
                             return;
                         }
-                        app.engine.map.data[app.engine.player.location.x][app.engine.player.location.y][0] = tile;
+                        var coords = app.engine.player.getFacingTile().location;
+                        app.engine.map.data[coords.x][coords.y][0] = tile;
                         app.socket.emit('terraform', {
-                            x: app.engine.player.location.x,
-                            y: app.engine.player.location.y,
+                            x: coords.x,
+                            y: coords.y,
                             tile: [tile, null]
                         });
                         return;
@@ -541,6 +542,14 @@ $(function() {
                     } else if (e.which >= 49 && e.which <= 54) { // 1 - 6
                         var num = e.which - 48;
                         console.log("Place " + num);
+                        var tile = num + 8;
+                        var coords = app.engine.player.getFacingTile().location;
+                        app.engine.map.data[coords.x][coords.y][0] = tile;
+                        app.socket.emit('terraform', {
+                            x: coords.x,
+                            y: coords.y,
+                            tile: [tile, null]
+                        });
                     }
                 });
 
