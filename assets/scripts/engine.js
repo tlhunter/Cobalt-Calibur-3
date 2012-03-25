@@ -411,19 +411,16 @@ $(function() {
                         app.$messages.empty();
                         return;
                     } else if (message === '/help') {
-                        app.displayMessage('Help', '-{Keys}--------------------', 'help');
-                        app.displayMessage('Help', 'Use the wasd keys to move', 'help');
-                        app.displayMessage('Help', 'Use the WASD keys to turn', 'help');
-                        app.displayMessage('Help', 'Press T to go to chat mode', 'help');
-                        app.displayMessage('Help', 'Press / to go to chat mode', 'help');
-                        app.displayMessage('Help', 'Press Esc go to leave chat', 'help');
-                        app.displayMessage('Help', '-{Commands}----------------', 'help');
-                        app.displayMessage('Help', '/nick name: change name', 'help');
-                        app.displayMessage('Help', '/pic 1-16: change picture', 'help');
-                        app.displayMessage('Help', '/who: list of players', 'help');
-                        app.displayMessage('Help', '/time: get current time', 'help');
+                        app.displayMessage('Help', '-{Keys}----------------------------', 'help');
+                        app.displayMessage('Help', 'Use the WASD keys to move', 'help');
+                        app.displayMessage('Help', 'Use the WASD keys + SHIFT to turn', 'help');
+                        app.displayMessage('Help', 'Press T or / to enter the chat box', 'help');
+                        app.displayMessage('Help', 'Press Esc to leave the chat box', 'help');
+                        app.displayMessage('Help', '-{Commands}------------------------', 'help');
+                        app.displayMessage('Help', '/nick <em>name</em>: change your name', 'help');
+                        app.displayMessage('Help', '/pic <em>1-16</em>: change your avatar', 'help');
+                        app.displayMessage('Help', '/who: get a list of players', 'help');
                         app.displayMessage('Help', '/gps: get coordinates', 'help');
-                        app.displayMessage('Help', '/help: displays this help', 'help');
                         app.displayMessage('Help', '/clear: reset message area', 'help');
                         return;
                     } else if (message.indexOf('/nick ') === 0) {
@@ -448,9 +445,6 @@ $(function() {
                         _.each(app.engine.players.locations, function(player) {
                             app.displayMessage("Client", player.name, 'client');
                         });
-                        return;
-                    } else if (message === '/time') {
-                        app.displayMessage("Client", "Current Time: " + app.engine.daytime.currentTime + ":00", 'client');
                         return;
                     } else if (message === '/gps') {
                         app.displayMessage("Client", "Coordinates: [" + (app.engine.player.location.x) + "," + (app.engine.player.location.y) + "]", 'client');
