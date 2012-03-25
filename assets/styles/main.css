@@ -58,6 +58,14 @@ body {
     font-size: 10px;
     height: 110px;
 }
+#clock {
+    position: absolute;
+    right: 8px;
+    bottom: 6px;
+    font-family: consolas;
+    font-size: 11px;
+    text-shadow: 0px 1px 1px #000;
+}
 #messages, input {
     user-select: auto;
     -webkit-user-select: auto;

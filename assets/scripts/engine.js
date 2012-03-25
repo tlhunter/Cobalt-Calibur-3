@@ -605,6 +605,7 @@ $(function() {
 
                 setCurrentTime: function(time) {
                     app.engine.daytime.currentTime = time;
+                    $('#clock').html(time + ':00');
                 },
 
                 drawDayLight: function() {
