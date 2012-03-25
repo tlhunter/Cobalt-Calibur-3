@@ -9,29 +9,54 @@ body {
     margin: 10px 0 0 0;
 }
 #page {
-    width: 882px;
+    width: 512px;
+    height: 512px;
+    background: black url("/assets/images/interface.png") no-repeat top left;
     margin: 0 auto;
+    position: relative;
+    color: white;
+}
+#gamefield {
+    width: 272px;
+    height: 272px;
+    position: absolute;
+    left: 16px;
+    top: 48px;
+}
+#messagefield {
     color: #fff;
+    position: absolute;
+    left: 32px;
+    top: 352px;
+    width: 240px;
+    height: 128px;
 }
-#left-column {
-    width: 672px;
-    float: left;
+#inventoryfield {
+    left: 320px;
+    top: 64px;
+    width: 160px;
+    height: 240px;
+    position: absolute;
 }
-#right-column {
-    width: 200px;
-    float: left;
-    margin-left: 10px;
+#inventoryfield .inventory {
+    padding: 17px 16px 0 0;
+    color: #000;
 }
-#message-box {
+#inventoryfield .inventory-display {
+    text-align: right;
+    padding-right: 16px;
+    height: 24px;
+    font-size: 15px;
+    font-family: Consolas;
 }
 #messages {
     background-color: black;
     color: white;
     display: block;
-    height: 286px;
     font-family: Consolas;
     overflow: auto;
-    font-size: 11px;
+    font-size: 10px;
+    height: 110px;
 }
 #messages, input {
     user-select: auto;
@@ -60,7 +85,10 @@ body {
     color: #2c83ee;
 }
 #message-input {
-    width: 200px;
+    width: 240px;
+    border: 0px;
+    background-color: #fff;
+    color: #000;
 }
 #message-send {
     display: none;
@@ -70,6 +98,7 @@ body {
     width: 272px;
     height: 272px;
     overflow: hidden;
+    background: transparent url("/assets/images/map-overlay.png") no-repeat top left;
 }
 #nametags .name {
     position: absolute;
