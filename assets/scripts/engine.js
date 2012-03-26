@@ -56,13 +56,11 @@ $(function() {
                         case 'n':
                             if (app.engine.player.location.y <= 0) {
                                 app.engine.player.setDirection(d);
-                                app.displayMessage('Client', 'Blocked Northern Border', 'client');
                                 app.engine.player.thud();
                                 return false;
                             }
                             if (!app.engine.player.canMoveTo(app.engine.player.location.x, app.engine.player.location.y - 1)) {
                                 app.engine.player.setDirection(d);
-                                app.displayMessage('Client', 'Blocked by object', 'client');
                                 app.engine.player.thud();
                                 return false;
                             }
@@ -71,13 +69,11 @@ $(function() {
                         case 'e':
                             if (app.engine.player.location.x >= app.engine.TOTALTILES_X - 1) {
                                 app.engine.player.setDirection(d);
-                                app.displayMessage('Client', 'Blocked Eastern Border', 'client');
                                 app.engine.player.thud();
                                 return false;
                             }
                             if (!app.engine.player.canMoveTo(app.engine.player.location.x + 1, app.engine.player.location.y)) {
                                 app.engine.player.setDirection(d);
-                                app.displayMessage('Client', 'Blocked by object', 'client');
                                 app.engine.player.thud();
                                 return false;
                             }
@@ -86,13 +82,11 @@ $(function() {
                         case 's':
                             if (app.engine.player.location.y >= app.engine.TOTALTILES_Y - 1) {
                                 app.engine.player.setDirection(d);
-                                app.displayMessage('Client', 'Blocked Southern Border', 'client');
                                 app.engine.player.thud();
                                 return false;
                             }
                             if (!app.engine.player.canMoveTo(app.engine.player.location.x, app.engine.player.location.y + 1)) {
                                 app.engine.player.setDirection(d);
-                                app.displayMessage('Client', 'Blocked by object', 'client');
                                 app.engine.player.thud();
                                 return false;
                             }
@@ -101,13 +95,11 @@ $(function() {
                         case 'w':
                             if (app.engine.player.location.x <= 0) {
                                 app.engine.player.setDirection(d);
-                                app.displayMessage('Client', 'Blocked Western Border', 'client');
                                 app.engine.player.thud();
                                 return false;
                             }
                             if (!app.engine.player.canMoveTo(app.engine.player.location.x - 1, app.engine.player.location.y)) {
                                 app.engine.player.setDirection(d);
-                                app.displayMessage('Client', 'Blocked by object', 'client');
                                 app.engine.player.thud();
                                 return false;
                             }
@@ -123,6 +115,26 @@ $(function() {
                     app.engine.player.updateViewport();
 
                     app.engine.player.setDirection(d); // broadcasts location
+                },
+
+                inventory: {
+                    data: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+
+                    update: function(index, amount) {
+                        var data = app.engine.player.inventory.data;
+                        if (amount < 0) {
+                            if (data[index] >= -amount) {
+                                data[index] += amount;
+                                $('#inventory-'+index).stop().css({fontSize: '8px'}).animate({ fontSize : '15px' }).html(data[index]);
+                                return true;
+                            }
+                            return false;
+                        } else {
+                            data[index] += amount;
+                            $('#inventory-'+index).stop().css({fontSize: '22px'}).animate({ fontSize : '15px' }).html(data[index]);
+                            return true;
+                        }
+                    }
                 },
 
                 thud: function() {
