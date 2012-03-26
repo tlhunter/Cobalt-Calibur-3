@@ -57,11 +57,13 @@ $(function() {
                             if (app.engine.player.location.y <= 0) {
                                 app.engine.player.setDirection(d);
                                 app.displayMessage('Client', 'Blocked Northern Border', 'client');
+                                app.engine.player.thud();
                                 return false;
                             }
                             if (!app.engine.player.canMoveTo(app.engine.player.location.x, app.engine.player.location.y - 1)) {
                                 app.engine.player.setDirection(d);
                                 app.displayMessage('Client', 'Blocked by object', 'client');
+                                app.engine.player.thud();
                                 return false;
                             }
                             app.engine.player.location.y--;
@@ -70,11 +72,13 @@ $(function() {
                             if (app.engine.player.location.x >= app.engine.TOTALTILES_X - 1) {
                                 app.engine.player.setDirection(d);
                                 app.displayMessage('Client', 'Blocked Eastern Border', 'client');
+                                app.engine.player.thud();
                                 return false;
                             }
                             if (!app.engine.player.canMoveTo(app.engine.player.location.x + 1, app.engine.player.location.y)) {
                                 app.engine.player.setDirection(d);
                                 app.displayMessage('Client', 'Blocked by object', 'client');
+                                app.engine.player.thud();
                                 return false;
                             }
                             app.engine.player.location.x++;
@@ -83,11 +87,13 @@ $(function() {
                             if (app.engine.player.location.y >= app.engine.TOTALTILES_Y - 1) {
                                 app.engine.player.setDirection(d);
                                 app.displayMessage('Client', 'Blocked Southern Border', 'client');
+                                app.engine.player.thud();
                                 return false;
                             }
                             if (!app.engine.player.canMoveTo(app.engine.player.location.x, app.engine.player.location.y + 1)) {
                                 app.engine.player.setDirection(d);
                                 app.displayMessage('Client', 'Blocked by object', 'client');
+                                app.engine.player.thud();
                                 return false;
                             }
                             app.engine.player.location.y++;
@@ -96,11 +102,13 @@ $(function() {
                             if (app.engine.player.location.x <= 0) {
                                 app.engine.player.setDirection(d);
                                 app.displayMessage('Client', 'Blocked Western Border', 'client');
+                                app.engine.player.thud();
                                 return false;
                             }
                             if (!app.engine.player.canMoveTo(app.engine.player.location.x - 1, app.engine.player.location.y)) {
                                 app.engine.player.setDirection(d);
                                 app.displayMessage('Client', 'Blocked by object', 'client');
+                                app.engine.player.thud();
                                 return false;
                             }
                             app.engine.player.location.x--;
@@ -115,6 +123,10 @@ $(function() {
                     app.engine.player.updateViewport();
 
                     app.engine.player.setDirection(d); // broadcasts location
+                },
+
+                thud: function() {
+                    document.getElementById('sound-thud').play();
                 },
 
                 // Forces an XY location
@@ -505,6 +517,7 @@ $(function() {
 
                 app.socket.on('event earthquake', function(data) {
                     app.displayMessage('Server', "There has been an earthquake! Check your buildings for damage. New Ore has been added to the world.", 'server');
+                    document.getElementById('sound-earthquake').play();
                 });
 
                 app.socket.on('event npcmovement', function(data) {
