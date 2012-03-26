@@ -595,6 +595,9 @@ $(function() {
                             y: coords.y,
                             tile: [tile, null]
                         });
+                    } else if (e.which == 102) { // f
+                        console.log("Mining a block");
+                        document.getElementById('sound-mine').play();
                     }
                 });
 
