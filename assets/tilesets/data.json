@@ -239,7 +239,10 @@
     {
       "name": "Sand",
       "mineable": true,
-      "provides": "Sand",
+      "provides": {
+          "id": 3,
+          "quantity": 1
+      },
       "block_player": false,
       "block_npc": false,
       "replaceable": true,
@@ -249,7 +252,10 @@
     {
       "name": "Water",
       "mineable": true,
-      "provides": "Water",
+      "provides": {
+          "id": 2,
+          "quantity": 1
+      },
       "block_player": true,
       "block_npc": true,
       "replaceable": false,
@@ -259,7 +265,10 @@
     {
       "name": "Tree",
       "mineable": true,
-      "provides": "Wood",
+      "provides": {
+          "id": 1,
+          "quantity": 1
+      },
       "block_player": true,
       "block_npc": true,
       "replaceable": false,
@@ -269,7 +278,10 @@
     {
       "name": "Stump",
       "mineable": true,
-      "provides": "Wood",
+      "provides": {
+          "id": 1,
+          "quantity": 1
+      },
       "block_player": true,
       "block_npc": true,
       "replaceable": false,
@@ -279,7 +291,10 @@
     {
       "name": "Big Stone",
       "mineable": true,
-      "provides": "Stone",
+      "provides": {
+          "id": 0,
+          "quantity": 1
+      },
       "block_player": true,
       "block_npc": true,
       "replaceable": false,
@@ -289,7 +304,10 @@
     {
       "name": "Little Stone",
       "mineable": true,
-      "provides": "Stone",
+      "provides": {
+          "id": 0,
+          "quantity": 1
+      },
       "block_player": false,
       "block_npc": false,
       "replaceable": false,
@@ -309,7 +327,10 @@
     {
       "name": "Wood Wall",
       "mineable": true,
-      "provides": "Wood",
+      "provides": {
+          "id": 1,
+          "quantity": 1
+      },
       "block_player": true,
       "block_npc": true,
       "replaceable": false,
@@ -320,7 +341,10 @@
     {
       "name": "Wood Floor",
       "mineable": true,
-      "provides": "Wood",
+      "provides": {
+          "id": 1,
+          "quantity": 1
+      },
       "block_player": false,
       "block_npc": false,
       "replaceable": true,
@@ -331,7 +355,10 @@
     {
       "name": "Brick Wall",
       "mineable": true,
-      "provides": "Stone",
+      "provides": {
+          "id": 0,
+          "quantity": 1
+      },
       "block_player": true,
       "block_npc": true,
       "replaceable": false,
@@ -342,7 +369,10 @@
     {
       "name": "Brick Floor",
       "mineable": true,
-      "provides": "Stone",
+      "provides": {
+          "id": 0,
+          "quantity": 1
+      },
       "block_player": false,
       "block_npc": false,
       "replaceable": true,
@@ -353,7 +383,10 @@
     {
       "name": "Door",
       "mineable": true,
-      "provides": "Wood",
+      "provides": {
+          "id": 1,
+          "quantity": 12
+      },
       "block_player": false,
       "block_npc": true,
       "replaceable": false,
@@ -364,7 +397,10 @@
     {
       "name": "Glass",
       "mineable": true,
-      "provides": "Sand",
+      "provides": {
+          "id": 3,
+          "quantity": 4
+      },
       "block_player": true,
       "block_npc": true,
       "replaceable": false,
@@ -375,7 +411,10 @@
     {
       "name": "Big Copper Vein",
       "mineable": true,
-      "provides": "Copper",
+      "provides": {
+          "id": 4,
+          "quantity": 1
+      },
       "block_player": true,
       "block_npc": true,
       "replaceable": false,
@@ -385,7 +424,10 @@
     {
       "name": "Small Copper Vein",
       "mineable": true,
-      "provides": "Copper",
+      "provides": {
+          "id": 4,
+          "quantity": 1
+      },
       "block_player": false,
       "block_npc": false,
       "replaceable": false,
@@ -395,7 +437,10 @@
     {
       "name": "Big Iron Vein",
       "mineable": true,
-      "provides": "Iron",
+      "provides": {
+          "id": 5,
+          "quantity": 1
+      },
       "block_player": true,
       "block_npc": true,
       "replaceable": false,
@@ -405,7 +450,10 @@
     {
       "name": "Small Iron Vein",
       "mineable": true,
-      "provides": "Iron",
+      "provides": {
+          "id": 5,
+          "quantity": 1
+      },
       "block_player": false,
       "block_npc": false,
       "replaceable": false,
@@ -415,7 +463,10 @@
     {
       "name": "Big Silver Vein",
       "mineable": true,
-      "provides": "Silver",
+      "provides": {
+          "id": 6,
+          "quantity": 1
+      },
       "block_player": true,
       "block_npc": true,
       "replaceable": false,
@@ -425,7 +476,10 @@
     {
       "name": "Small Silver Vein",
       "mineable": true,
-      "provides": "Silver",
+      "provides": {
+          "id": 6,
+          "quantity": 1
+      },
       "block_player": false,
       "block_npc": false,
       "replaceable": false,
@@ -435,7 +489,10 @@
     {
       "name": "Big Gold Vein",
       "mineable": true,
-      "provides": "Gold",
+      "provides": {
+          "id": 7,
+          "quantity": 1
+      },
       "block_player": true,
       "block_npc": true,
       "replaceable": false,
@@ -445,7 +502,10 @@
     {
       "name": "Small Gold Vein",
       "mineable": true,
-      "provides": "Gold",
+      "provides": {
+          "id": 7,
+          "quantity": 1
+      },
       "block_player": false,
       "block_npc": false,
       "replaceable": false,
@@ -455,7 +515,10 @@
     {
       "name": "Big Cobalt Vein",
       "mineable": true,
-      "provides": "Cobalt",
+      "provides": {
+          "id": 8,
+          "quantity": 1
+      },
       "block_player": true,
       "block_npc": true,
       "replaceable": false,
@@ -465,7 +528,10 @@
     {
       "name": "Small Cobalt Vein",
       "mineable": true,
-      "provides": "Cobalt",
+      "provides": {
+          "id": 8,
+          "quantity": 1
+      },
       "block_player": false,
       "block_npc": false,
       "replaceable": false,

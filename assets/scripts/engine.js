@@ -209,7 +209,19 @@ $(function() {
                     });
 
                     app.engine.map.render(true);
-                }
+                },
+
+                // Mines the facing tile, adjusts inventory
+                mineFacingTile: function() {
+                    var tileData = app.engine.player.getFacingTile();
+                    var mineable = tileData.tile.mineable;
+                    if (!mineable) {
+                        document.getElementById('sound-mine-fail').play();
+                        return false;
+                    }
+                    var health = tileData.health;
+                    document.getElementById('sound-mine').play();
+                },
             },
 
             // Data regarding the canvas tag
@@ -596,8 +608,7 @@ $(function() {
                             tile: [tile, null]
                         });
                     } else if (e.which == 102) { // f
-                        console.log("Mining a block");
-                        document.getElementById('sound-mine').play();
+                        app.engine.player.mineFacingTile();
                     }
                 });
 
