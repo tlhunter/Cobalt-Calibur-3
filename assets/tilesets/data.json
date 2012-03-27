@@ -246,7 +246,7 @@
       "block_player": false,
       "block_npc": false,
       "replaceable": true,
-      "becomes": "Dirt",
+      "becomes": 1,
       "spawn_npc": true
     },
     {
@@ -259,7 +259,7 @@
       "block_player": true,
       "block_npc": true,
       "replaceable": false,
-      "becomes": "Dirt",
+      "becomes": 1,
       "spawn_npc": false
     },
     {
@@ -272,7 +272,8 @@
       "block_player": true,
       "block_npc": true,
       "replaceable": false,
-      "becomes": "Stump",
+      "becomes": 5,
+      "threshold": 10,
       "spawn_npc": false
     },
     {
@@ -285,7 +286,8 @@
       "block_player": true,
       "block_npc": true,
       "replaceable": false,
-      "becomes": "Grass",
+      "becomes": 0,
+      "threshold": 0,
       "spawn_npc": false
     },
     {
@@ -298,7 +300,8 @@
       "block_player": true,
       "block_npc": true,
       "replaceable": false,
-      "becomes": "Little Stone",
+      "becomes": 7,
+      "threshold": 10,
       "spawn_npc": false
     },
     {
@@ -311,7 +314,8 @@
       "block_player": false,
       "block_npc": false,
       "replaceable": false,
-      "becomes": "Rubble",
+      "becomes": 8,
+      "threshold": 0,
       "spawn_npc": false
     },
     {
@@ -321,7 +325,7 @@
       "block_player": false,
       "block_npc": false,
       "replaceable": true,
-      "becomes": "Dirt",
+      "becomes": 1,
       "spawn_npc": true
     },
     {
@@ -329,12 +333,12 @@
       "mineable": true,
       "provides": {
           "id": 1,
-          "quantity": 1
+          "quantity": 4
       },
       "block_player": true,
       "block_npc": true,
       "replaceable": false,
-      "becomes": "Dirt",
+      "becomes": 1,
       "spawn_npc": false,
       "synthetic": true
     },
@@ -343,12 +347,12 @@
       "mineable": true,
       "provides": {
           "id": 1,
-          "quantity": 1
+          "quantity": 2
       },
       "block_player": false,
       "block_npc": false,
       "replaceable": true,
-      "becomes": "Dirt",
+      "becomes": 1,
       "spawn_npc": false,
       "synthetic": true
     },
@@ -357,12 +361,12 @@
       "mineable": true,
       "provides": {
           "id": 0,
-          "quantity": 1
+          "quantity": 4
       },
       "block_player": true,
       "block_npc": true,
       "replaceable": false,
-      "becomes": "Dirt",
+      "becomes": 1,
       "spawn_npc": false,
       "synthetic": true
     },
@@ -371,12 +375,12 @@
       "mineable": true,
       "provides": {
           "id": 0,
-          "quantity": 1
+          "quantity": 2
       },
       "block_player": false,
       "block_npc": false,
       "replaceable": true,
-      "becomes": "Dirt",
+      "becomes": 1,
       "spawn_npc": false,
       "synthetic": true
     },
@@ -390,7 +394,7 @@
       "block_player": false,
       "block_npc": true,
       "replaceable": false,
-      "becomes": "Dirt",
+      "becomes": 1,
       "spawn_npc": false,
       "synthetic": true
     },
@@ -404,7 +408,7 @@
       "block_player": true,
       "block_npc": true,
       "replaceable": false,
-      "becomes": "Dirt",
+      "becomes": 1,
       "spawn_npc": false,
       "synthetic": true
     },
@@ -418,7 +422,8 @@
       "block_player": true,
       "block_npc": true,
       "replaceable": false,
-      "becomes": "Small Copper Vein",
+      "becomes": 16,
+      "threshold": 10,
       "spawn_npc": false
     },
     {
@@ -431,7 +436,8 @@
       "block_player": false,
       "block_npc": false,
       "replaceable": false,
-      "becomes": "Rubble",
+      "becomes": 8,
+      "threshold": 0,
       "spawn_npc": false
     },
     {
@@ -444,7 +450,8 @@
       "block_player": true,
       "block_npc": true,
       "replaceable": false,
-      "becomes": "Small Iron Vein",
+      "becomes": 18,
+      "threshold": 10,
       "spawn_npc": false
     },
     {
@@ -457,7 +464,8 @@
       "block_player": false,
       "block_npc": false,
       "replaceable": false,
-      "becomes": "Rubble",
+      "becomes": 8,
+      "threshold": 0,
       "spawn_npc": false
     },
     {
@@ -470,7 +478,8 @@
       "block_player": true,
       "block_npc": true,
       "replaceable": false,
-      "becomes": "Small Silver Vein",
+      "becomes": 20,
+      "threshold": 10,
       "spawn_npc": false
     },
     {
@@ -483,7 +492,8 @@
       "block_player": false,
       "block_npc": false,
       "replaceable": false,
-      "becomes": "Rubble",
+      "becomes": 8,
+      "threshold": 0,
       "spawn_npc": false
     },
     {
@@ -496,7 +506,8 @@
       "block_player": true,
       "block_npc": true,
       "replaceable": false,
-      "becomes": "Small Gold Vein",
+      "becomes": 22,
+      "threshold": 10,
       "spawn_npc": false
     },
     {
@@ -509,7 +520,8 @@
       "block_player": false,
       "block_npc": false,
       "replaceable": false,
-      "becomes": "Rubble",
+      "becomes": 8,
+      "threshold": 0,
       "spawn_npc": false
     },
     {
@@ -522,7 +534,8 @@
       "block_player": true,
       "block_npc": true,
       "replaceable": false,
-      "becomes": "Small Cobalt Vein",
+      "becomes": 24,
+      "threshold": 10,
       "spawn_npc": false
     },
     {
@@ -535,7 +548,8 @@
       "block_player": false,
       "block_npc": false,
       "replaceable": false,
-      "becomes": "Rubble",
+      "becomes": 8,
+      "threshold": 0,
       "spawn_npc": false
     }
   ]

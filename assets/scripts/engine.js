@@ -219,8 +219,43 @@ $(function() {
                         document.getElementById('sound-mine-fail').play();
                         return false;
                     }
-                    var health = tileData.health;
+                    var coords = tileData.location;
+                    //var health = tileData.health;
+                    var becomes = tileData.tile.becomes;
+                    var provides = tileData.tile.provides;
+                    //console.log(tileData, becomes, provides);
+                    app.engine.map.data[coords.x][coords.y][0] = becomes;
+                    app.socket.emit('terraform', {
+                        x: coords.x,
+                        y: coords.y,
+                        tile: [becomes, null]
+                    });
+                    app.engine.player.inventory.update(provides.id, provides.quantity);
                     document.getElementById('sound-mine').play();
+                },
+
+                // Attempts to create and then place the specified tile
+                placeItem: function(terrainIndex) {
+                    var replaceTile = app.engine.player.getFacingTile();
+                    if (!replaceTile.tile.replaceable) {
+                        app.displayMessage('Client', 'This object cannot be built over.', 'client');
+                        return false;
+                    }
+                    var coords = replaceTile.location;
+                    var item = app.engine.tilesets.descriptors.terrain[terrainIndex];
+                    // provides is also the cost of manufacturing the tile
+                    if (app.engine.player.inventory.update(item.provides.id, -item.provides.quantity)) {
+                        app.engine.map.data[coords.x][coords.y][0] = terrainIndex;
+                        app.socket.emit('terraform', {
+                            x: coords.x,
+                            y: coords.y,
+                            tile: [terrainIndex, null]
+                        });
+                            return true;
+                    } else {
+                        app.displayMessage('Client', "You don't have the inventory to build this.", 'client');
+                        return false;
+                    }
                 },
             },
 
@@ -597,16 +632,9 @@ $(function() {
                     } else if (e.which == 47) { // /
                         $('#message-input').focus();
                     } else if (e.which >= 49 && e.which <= 54) { // 1 - 6
-                        var num = e.which - 48;
-                        console.log("Place " + num);
-                        var tile = num + 8;
-                        var coords = app.engine.player.getFacingTile().location;
-                        app.engine.map.data[coords.x][coords.y][0] = tile;
-                        app.socket.emit('terraform', {
-                            x: coords.x,
-                            y: coords.y,
-                            tile: [tile, null]
-                        });
+                        var numberPressed = e.which - 48;
+                        var terrainIndex = numberPressed + 8;
+                        app.engine.player.placeItem(terrainIndex);
                     } else if (e.which == 102) { // f
                         app.engine.player.mineFacingTile();
                     }
