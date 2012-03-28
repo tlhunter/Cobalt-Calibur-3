@@ -48,11 +48,45 @@ var game = {
             }
         },
 
+        // This code sucks ass!
         corruption: {
+            RADIUS: 4,
             handle: null,
-            interval: 1 * 60 * 1000,
+            interval: 61 * 1000, // Every minute and a second
             payload: function() {
+                // First, we want to populate an array of which tiles are synthetic and which are not
+                var len_t = game.descriptors.terrain.length;
+                var synthetic_ids = [];
+                var corruption_map = [];
+                for (var k = 0; k < len_t; k++) {
+                    if (game.descriptors.terrain[k].synthetic) {
+                        synthetic_ids.push(k);
+                    }
+                }
+                var len_y = 200;
+                var len_x = 200;
+                // Now, we want to generate, you know, 40,000 tiles of 0's in a 2d array
+                for (var y = 0; y < len_y; y++) {
+                    corruption_map[y] = [];
+                    for (var x = 0; x < len_x; x++) {
+                        corruption_map[y][x] = 1;
+                    }
+                }
+                // Now, we want to go through all of our tiles, find synthetic ones, and draw a square around it
+                for (var y = 0; y < len_y; y++) {
+                    for (var x = 0; x < len_x; x++) {
+                        if (_.indexOf(synthetic_ids, game.map[x][y][0]) != -1) {
+                            for (var xx = -game.events.corruption.RADIUS; xx <= game.events.corruption.RADIUS; xx++) {
+                                for (var yy = -game.events.corruption.RADIUS; yy <= game.events.corruption.RADIUS; yy++) {
+                                    corruption_map[x+xx][y+yy] = 0;
+                                }
+                            }
+                        }
+                    }
+                }
+
                 io.sockets.emit('event corruption', {
+                    map: corruption_map
                 });
                 console.log("Event: Corruption");
             }
@@ -94,7 +128,7 @@ var game = {
     npcs: [],
 
     // Data from tilesets JSON
-    descriptors: [],
+    descriptors: {},
 };
 
 // Initialize timers
@@ -106,7 +140,7 @@ _.each(game.events, function(event) {
 });
 
 db.open(function(err, db) {
-    fs.readFile('map.json', function(err, data) {
+    fs.readFile('assets/tilesets/data.json', function(err, data) {
         if (err) throw err;
         game.descriptors = JSON.parse(data);
         for (var i = 0; i < 100; i++) {

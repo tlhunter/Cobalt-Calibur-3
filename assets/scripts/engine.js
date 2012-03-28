@@ -366,6 +366,8 @@ $(function() {
             // Functions and data regarding the map
             map: {
                 data: [],
+                corruption: [],
+                corruptionDataLoaded: false,
                 getTileData: function(x, y) {
                     var tile = app.engine.map.data[x][y];
                     var data = {};
@@ -422,6 +424,18 @@ $(function() {
                                     app.engine.tile.drawPlayer(i, j, index, npc.id);
                                 }
                             }
+
+                            if (app.engine.map.corruptionDataLoaded && app.engine.map.corruption[mapX][mapY] === 1) {
+                                var rnd = Math.floor(Math.random() * 3);
+                                if (rnd == 0) {
+                                    app.engine.handle.fillStyle = "rgba(15,0,61,0.5)";
+                                } else if (rnd == 1) {
+                                    app.engine.handle.fillStyle = "rgba(36,14,88,0.7)";
+                                } else if (rnd == 2) {
+                                    app.engine.handle.fillStyle = "rgba(47,24,99,0.6)";
+                                }
+                                app.engine.map.drawCorruptionTile(i, j);
+                            }
                         }
                     }
 
@@ -433,6 +447,16 @@ $(function() {
                     if (redrawNametags) app.engine.nametags.show();
 
                     app.engine.daytime.drawDayLight();
+                },
+
+                drawCorruptionTile: function(x, y) {
+                    // Set the fill color before running function for efficiency
+                    app.engine.handle.fillRect(
+                        x * app.engine.TILEWIDTH,
+                        y * app.engine.TILEHEIGHT,
+                        app.engine.TILEWIDTH,
+                        app.engine.TILEHEIGHT
+                    );
                 },
 
                 getCharacterFrame: function(direction, altFrame) {
@@ -611,6 +635,11 @@ $(function() {
 
                 app.socket.on('event npcmovement', function(data) {
                     app.engine.npc.updateData(data.npcs);
+                });
+
+                app.socket.on('event corruption', function(data) {
+                    app.engine.map.corruptionDataLoaded = true;
+                    app.engine.map.corruption = data.map;
                 });
 
                 // Tell people who and where we are every 15 seconds (temporary solution for a race condition)
