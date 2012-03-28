@@ -134,7 +134,14 @@ $(function() {
                             $('#inventory-'+index).stop().css({fontSize: '22px'}).animate({ fontSize : '15px' }).html(data[index]);
                             return true;
                         }
-                    }
+                    },
+
+                    resetCounters: function() {
+                        var len = app.engine.player.inventory.data.length;
+                        for (var i = 0; i < len; i++) {
+                            $('#inventory-'+i).html(app.engine.player.inventory.data[i]);
+                        }
+                    },
                 },
 
                 thud: function() {
@@ -256,6 +263,29 @@ $(function() {
                         app.displayMessage('Client', "You don't have the inventory to build this.", 'client');
                         return false;
                     }
+                },
+
+                saveData: function() {
+                    localStorage.setObject('data', {
+                        inventory: app.engine.player.inventory.data,
+                        direction: app.engine.player.direction,
+                        location: app.engine.player.location,
+                        name: app.engine.player.name,
+                        picture: app.engine.player.picture,
+                    });
+                },
+
+                loadData: function() {
+                    var persistentData = localStorage.getObject('data');
+                    if (persistentData) {
+                        app.engine.player.inventory.data = persistentData.inventory;
+                        app.engine.player.direction = persistentData.direction;
+                        app.engine.player.location = persistentData.location;
+                        app.engine.player.name = persistentData.name;
+                        app.engine.player.picture = persistentData.picture;
+                        return true;
+                    }
+                    return false;
                 },
             },
 
@@ -658,6 +688,16 @@ $(function() {
                     app.displayMessage('Help', 'Type /help for some help', 'help');
                     app.displayMessage('Help', 'Type /nick NEWNAME to change your name', 'help');
                 }, 500);
+
+                if (app.engine.player.loadData()) {
+                    app.engine.player.updateViewport();
+                    app.engine.player.inventory.resetCounters();
+                    app.displayMessage('Client', 'Loaded your saved character', 'client');
+                }
+
+                setInterval(function() {
+                    app.engine.player.saveData();
+                }, 5000); // save every 5 seconds
             },
 
             daytime: {
@@ -771,3 +811,11 @@ $(function() {
         app.engine.start();
     });
 });
+
+Storage.prototype.setObject = function(key, value) {
+    this.setItem(key, JSON.stringify(value));
+}
+
+Storage.prototype.getObject = function(key) {
+    return JSON.parse(this.getItem(key));
+}
