@@ -283,6 +283,7 @@ $(function() {
                 },
 
                 kill: function(message) {
+                    document.getElementById('sound-die').play();
                     app.engine.player.inventory.data = [0, 0, 0, 0, 0, 0, 0, 0, 0];
                     app.engine.player.inventory.resetCounters();
                     app.engine.player.direction = 's';
