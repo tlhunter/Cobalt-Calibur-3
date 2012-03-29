@@ -22,15 +22,61 @@ var game = {
     events: {
 
         daynight: {
+            BEACH_RADIUS: 1,
             handle: null,
             interval: 1 * 60 * 1000,
             cycle: 24,
             current: 8,
             payload: function() {
                 game.events.daynight.current++;
+
+                var len_y = 200;
+                var len_x = 200;
+                if (game.events.daynight.current === 9) {
+                    var new_trees = 0,
+                        new_grass = 0,
+                        new_sand = 0;
+
+                    for (var y = 0; y < len_y; y++) {
+                        for (var x = 0; x < len_x; x++) {
+                            switch(game.map[x][y][0]) {
+                                case 0: // grass
+                                    if (Math.random() < 1/1000) {
+                                        game.map[x][y] = [4, 20]; // tree, 20 health
+                                        new_trees++;
+                                    }
+                                    break;
+                                case 1: // dirt
+                                    if (Math.random() < 1/100) {
+                                        game.map[x][y][0] = 0; // grass
+                                        new_grass++;
+                                    }
+                                    break;
+                                case 3: // water
+                                    for (var xx = -game.events.daynight.BEACH_RADIUS; xx <= game.events.daynight.BEACH_RADIUS; xx++) {
+                                        for (var yy = -game.events.daynight.BEACH_RADIUS; yy <= game.events.daynight.BEACH_RADIUS; yy++) {
+                                            if (x+xx < 0 || x+xx >= len_x || y+yy < 0 || y+yy >= len_y) {
+                                                break;
+                                            }
+                                            var tile = game.map[x+xx][y+yy][0];
+                                            if (tile == 0 || tile == 1) { // if this is a grass or dirt tile
+                                                game.map[x+xx][y+yy][0] = 2; // make it sand
+                                                new_sand++;
+                                            }
+                                        }
+                                    }
+                                    break;
+                            }
+                        }
+                    }
+                    console.log("New Trees: " + new_trees + ", New Grass: " + new_grass + ", New Sand: " + new_sand);
+                    io.sockets.emit('event bigterraform', {});
+                }
+
                 if (game.events.daynight.current >= game.events.daynight.cycle) {
                     game.events.daynight.current = 0;
                 }
+
                 io.sockets.emit('event time', {
                     time: game.events.daynight.current
                 });

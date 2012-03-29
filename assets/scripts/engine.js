@@ -661,6 +661,9 @@ $(function() {
                 });
 
                 app.socket.on('event earthquake', function(data) {
+                    $.get('/map', function(data) {
+                        app.engine.map.data = data;
+                    });
                     app.displayMessage('Server', "There has been an earthquake! Check your buildings for damage. New Ore has been added to the world.", 'server');
                     document.getElementById('sound-earthquake').play();
                 });
@@ -672,6 +675,12 @@ $(function() {
                 app.socket.on('event corruption', function(data) {
                     app.engine.map.corruptionDataLoaded = true;
                     app.engine.map.corruption = data.map;
+                });
+
+                app.socket.on('event bigterraform', function(data) {
+                    $.get('/map', function(data) {
+                        app.engine.map.data = data;
+                    });
                 });
 
                 // Tell people who and where we are every 15 seconds (temporary solution for a race condition)
