@@ -111,6 +111,15 @@ $(function() {
                             break;
                     }
 
+                    // check if we're in corruption, if so, 1/5 chance to kill()
+                    var loc = app.engine.player.location;
+                    if (app.engine.map.corruptionDataLoaded && app.engine.map.corruption[loc.x][loc.y]) {
+                        if (Math.random() < 1/10) {
+                            app.engine.player.kill("You were killed by corruption");
+                            app.socket.emit('chat', {name: app.engine.player.name, message: "*Killed by Corruption*", priority: 0});
+                        }
+                    }
+
                     app.engine.animFrameMe = !app.engine.animFrameMe;
                     app.engine.player.updateViewport();
 
@@ -263,6 +272,16 @@ $(function() {
                         app.displayMessage('Client', "You don't have the inventory to build this.", 'client');
                         return false;
                     }
+                },
+
+                kill: function(message) {
+                    app.engine.player.inventory.data = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+                    app.engine.player.inventory.resetCounters();
+                    app.engine.player.direction = 's';
+                    app.engine.player.setLocation(100, 100);
+                    app.engine.player.updateViewport();
+                    app.displayMessage('Client', message, 'client');
+                    app.engine.player.saveData();
                 },
 
                 saveData: function() {
@@ -547,6 +566,7 @@ $(function() {
                         app.displayMessage('Help', '/who: get a list of players', 'help');
                         app.displayMessage('Help', '/gps: get coordinates', 'help');
                         app.displayMessage('Help', '/clear: reset message area', 'help');
+                        app.displayMessage('Help', '/kill: commit suicide', 'help');
                         return;
                     } else if (message.indexOf('/nick ') === 0) {
                         var playerName = message.substr(6);
@@ -570,6 +590,10 @@ $(function() {
                         _.each(app.engine.players.locations, function(player) {
                             app.displayMessage("Client", player.name, 'client');
                         });
+                        return;
+                    } else if (message === '/kill') {
+                        app.engine.player.kill('Committed Suicide');
+                            app.socket.emit('chat', {name: app.engine.player.name, message: "*Committed Suicide*", priority: 0});
                         return;
                     } else if (message === '/gps') {
                         app.displayMessage("Client", "Coordinates: [" + (app.engine.player.location.x) + "," + (app.engine.player.location.y) + "]", 'client');
