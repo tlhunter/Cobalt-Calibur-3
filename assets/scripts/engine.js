@@ -230,12 +230,16 @@ $(function() {
                 // Mines the facing tile, adjusts inventory
                 mineFacingTile: function() {
                     var tileData = app.engine.player.getFacingTile();
+                    var coords = tileData.location;
+                    if (coords.x >= 95 && coords.x <= 105 && coords.y >= 95 && coords.y <= 105) {
+                        app.displayMessage('Client', 'You cannot change the spawn location.', 'client');
+                        return false;
+                    }
                     var mineable = tileData.tile.mineable;
                     if (!mineable) {
                         document.getElementById('sound-mine-fail').play();
                         return false;
                     }
-                    var coords = tileData.location;
                     //var health = tileData.health;
                     var becomes = tileData.tile.becomes;
                     var provides = tileData.tile.provides;
@@ -253,11 +257,15 @@ $(function() {
                 // Attempts to create and then place the specified tile
                 placeItem: function(terrainIndex) {
                     var replaceTile = app.engine.player.getFacingTile();
+                    var coords = replaceTile.location;
+                    if (coords.x >= 95 && coords.x <= 105 && coords.y >= 95 && coords.y <= 105) {
+                        app.displayMessage('Client', 'You cannot change the spawn location.', 'client');
+                        return false;
+                    }
                     if (!replaceTile.tile.replaceable) {
                         app.displayMessage('Client', 'This object cannot be built over.', 'client');
                         return false;
                     }
-                    var coords = replaceTile.location;
                     var item = app.engine.tilesets.descriptors.terrain[terrainIndex];
                     // provides is also the cost of manufacturing the tile
                     if (app.engine.player.inventory.update(item.provides.id, -item.provides.quantity)) {
