@@ -231,7 +231,7 @@ $(function() {
                 mineFacingTile: function() {
                     var tileData = app.engine.player.getFacingTile();
                     var coords = tileData.location;
-                    if (coords.x >= 95 && coords.x <= 105 && coords.y >= 95 && coords.y <= 105) {
+                    if (coords.x >= 96 && coords.x <= 104 && coords.y >= 96 && coords.y <= 104) {
                         app.displayMessage('Client', 'You cannot change the spawn location.', 'client');
                         return false;
                     }
@@ -258,7 +258,7 @@ $(function() {
                 placeItem: function(terrainIndex) {
                     var replaceTile = app.engine.player.getFacingTile();
                     var coords = replaceTile.location;
-                    if (coords.x >= 95 && coords.x <= 105 && coords.y >= 95 && coords.y <= 105) {
+                    if (coords.x >= 96 && coords.x <= 104 && coords.y >= 96 && coords.y <= 104) {
                         app.displayMessage('Client', 'You cannot change the spawn location.', 'client');
                         return false;
                     }
