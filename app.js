@@ -86,10 +86,93 @@ var game = {
 
         earthquake: {
             handle: null,
-            interval: 72 * 60 * 1000,
+            interval: 73 * 60 * 1000,
+            eruptions: 3,
             payload: function() {
-                io.sockets.emit('event earthquake', {
-                });
+                var eruption = function(x, y, ore) {
+                    console.log("Epicenter at: [" + x + "," + y + "] Type: " + ore);
+                    game.map[x+0][y+0] = [ore, 20]; // center point
+
+                    // Big Rocks
+                    game.map[x+0][y+1] = [6, 20];
+                    game.map[x+0][y+2] = [6, 20];
+                    game.map[x+1][y+0] = [6, 20];
+
+                    game.map[x+2][y+0] = [6, 20];
+                    game.map[x+0][y-1] = [6, 20];
+                    game.map[x+0][y-2] = [6, 20];
+
+                    game.map[x-1][y+0] = [6, 20];
+                    game.map[x-2][y+0] = [6, 20];
+                    game.map[x+1][y+1] = [6, 20];
+
+                    game.map[x+1][y-1] = [6, 20];
+                    game.map[x-1][y-1] = [6, 20];
+                    game.map[x-1][y+1] = [6, 20];
+
+                    // Small Rocks
+                    game.map[x+1][y+2] = [7, 10];
+                    game.map[x+2][y+1] = [7, 10];
+
+                    game.map[x+2][y-1] = [7, 10];
+                    game.map[x+1][y-2] = [7, 10];
+
+                    game.map[x-1][y-2] = [7, 10];
+                    game.map[x-2][y-1] = [7, 10];
+
+                    game.map[x-2][y+1] = [7, 10];
+                    game.map[x-1][y+2] = [7, 10];
+
+                    // Rubble
+                    game.map[x-1][y+3] = [8, 1];
+                    game.map[x+0][y+3] = [8, 1];
+                    game.map[x+1][y+3] = [8, 1];
+                    game.map[x+2][y+2] = [8, 1];
+
+                    game.map[x+3][y+1] = [8, 1];
+                    game.map[x+3][y+0] = [8, 1];
+                    game.map[x+3][y-1] = [8, 1];
+                    game.map[x+2][y-2] = [8, 1];
+
+                    game.map[x-1][y-3] = [8, 1];
+                    game.map[x+0][y-3] = [8, 1];
+                    game.map[x+1][y-3] = [8, 1];
+                    game.map[x-2][y-2] = [8, 1];
+
+                    game.map[x-3][y+1] = [8, 1];
+                    game.map[x-3][y+0] = [8, 1];
+                    game.map[x-3][y-1] = [8, 1];
+                    game.map[x-2][y+2] = [8, 1];
+                };
+                var len_y = 200;
+                var len_x = 200;
+                var eruption_radius = 4;
+                var synthetic_ids = game.getSyntheticTiles();
+                var remaining = game.events.earthquake.eruptions;
+                var coords = {};
+                while (remaining) {
+                    coords.x = Math.floor(Math.random() * (len_x - (eruption_radius * 2))) + eruption_radius;
+                    coords.y = Math.floor(Math.random() * (len_y - (eruption_radius * 2))) + eruption_radius;
+                    if (_.indexOf(synthetic_ids, game.map[coords.x][coords.y][0]) != -1) {
+                        continue;
+                    }
+                    var ore_id = null;
+                    var oreOdds = Math.random();
+                    if (oreOdds < 0.4) { // 40%
+                        ore_id = 15;
+                    } else if (oreOdds < 0.7) { // 30%
+                        ore_id = 17;
+                    } else if (oreOdds < 0.85) { // 15%
+                        ore_id = 19;
+                    } else if (oreOdds < 0.95) { // 10%
+                        ore_id = 21;
+                    } else { // 5%
+                        ore_id = 23;
+                    }
+                    eruption(coords.x, coords.y, ore_id);
+                    remaining--;
+                }
+                io.sockets.emit('event earthquake', { });
                 console.log("Event: Earthquake");
             }
         },
@@ -101,14 +184,8 @@ var game = {
             interval: 61 * 1000, // Every minute and a second
             payload: function() {
                 // First, we want to populate an array of which tiles are synthetic and which are not
-                var len_t = game.descriptors.terrain.length;
-                var synthetic_ids = [];
+                var synthetic_ids = game.getSyntheticTiles();
                 var corruption_map = [];
-                for (var k = 0; k < len_t; k++) {
-                    if (game.descriptors.terrain[k].synthetic) {
-                        synthetic_ids.push(k);
-                    }
-                }
                 var len_y = 200;
                 var len_x = 200;
                 // Now, we want to generate, you know, 40,000 tiles of 0's in a 2d array
@@ -175,6 +252,17 @@ var game = {
 
     // Data from tilesets JSON
     descriptors: {},
+
+    getSyntheticTiles: function() {
+        var len_t = game.descriptors.terrain.length;
+        var synthetic_ids = [];
+        for (var k = 0; k < len_t; k++) {
+            if (game.descriptors.terrain[k].synthetic) {
+                synthetic_ids.push(k);
+            }
+        }
+        return synthetic_ids;
+    }
 };
 
 // Initialize timers
@@ -201,7 +289,7 @@ db.open(function(err, db) {
                 console.log("MongoDB: Error selecting map collection to save", err);
             }
             collection.remove({}, function(err, result) {
-                console.log("MongoDB: Deleting previous map");
+                console.log("MongoDB: Deleting previous map... Don't kill server!");
                 collection.insert({map: game.map});
                 collection.count(function(err, count) {
                     if (count == 1) {
