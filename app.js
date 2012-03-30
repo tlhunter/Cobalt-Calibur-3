@@ -413,7 +413,6 @@ db.open(function(err, db) {
         collection.findOne({}, {}, function(err, item) {
             if (err) {
                 console.log("MongoDB: Map collection is empty", err);
-                throw err;
             }
             if (item != null) {
                 game.map = item.map;
