@@ -312,7 +312,6 @@ function buildMap(db) {
                 if (count == 1) {
                     game.map = mapData;
                     console.log("Map was rebuilt from map.json file");
-                    res.send('ok');
                 }
             });
         });
