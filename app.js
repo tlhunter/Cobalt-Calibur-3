@@ -298,6 +298,27 @@ function initializeTimers() {
     });
 }
 
+function buildMap(db) {
+    var fileContents = fs.readFileSync('map.json','utf8');
+    var mapData = JSON.parse(fileContents);
+    db.collection('maps', function(err, collection) {
+        if (err) {
+            res.send(err);
+            throw err;
+        }
+        collection.remove({}, function(err, result) {
+            collection.insert({map: mapData});
+            collection.count(function(err, count) {
+                if (count == 1) {
+                    game.map = mapData;
+                    console.log("Map was rebuilt from map.json file");
+                    res.send('ok');
+                }
+            });
+        });
+    });
+}
+
 db.open(function(err, db) {
     fs.readFile('assets/tilesets/data.json', function(err, data) {
         if (err) throw err;
@@ -354,24 +375,7 @@ db.open(function(err, db) {
 
     // User requests map builder page, builds map from JSON file, returns OK
     app.get('/build-map', function(req, res) {
-        var fileContents = fs.readFileSync('map.json','utf8');
-        var mapData = JSON.parse(fileContents);
-        db.collection('maps', function(err, collection) {
-            if (err) {
-                res.send(err);
-                throw err;
-            }
-            collection.remove({}, function(err, result) {
-                collection.insert({map: mapData});
-                collection.count(function(err, count) {
-                    if (count == 1) {
-                        game.map = mapData;
-                        console.log("Map was rebuilt from map.json file");
-                        res.send('ok');
-                    }
-                });
-            });
-        });
+        buildMap(db);
     });
 
     // Exports the map from the database to JSON
@@ -423,6 +427,7 @@ db.open(function(err, db) {
                 return;
             } else {
                 console.log("MongoDB: The map in Mongo is null");
+                buildMap(db);
                 return;
             }
         });
