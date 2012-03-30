@@ -293,6 +293,22 @@ $(function() {
                     app.engine.player.saveData();
                 },
 
+                killIfNpcNearby: function() {
+                    var loc = app.engine.player.location;
+                    var len = app.engine.npc.data.length;
+                    for (var l = 0; l < len; l++) {
+                        var npc = app.engine.npc.data[l];
+                        for (var i = -1; i <= 1; i++) {
+                            for (var j = -1; j <= 1; j++) {
+                                if (npc.x == loc.x+i && npc.y == loc.y+j) {
+                                    app.engine.player.kill("Killed by " + app.engine.tilesets.descriptors.characters[npc.id].name);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                },
+
                 saveData: function() {
                     localStorage.setObject('data', {
                         inventory: app.engine.player.inventory.data,
@@ -750,6 +766,7 @@ $(function() {
                         currentFrame = 0;
                         // redraw every 150 ms, but change animation every 450 ms
                         app.engine.animFrameGlobal = !app.engine.animFrameGlobal;
+                        app.engine.player.killIfNpcNearby();
                     }
                     app.engine.map.render(currentFrame === 0);
                 }, 150);
