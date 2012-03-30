@@ -320,8 +320,11 @@
     },
     {
       "name": "Rubble",
-      "mineable": false,
-      "provides": null,
+      "mineable": true,
+      "provides": {
+          "id": 0,
+          "quantity": 1
+      },
       "block_player": false,
       "block_npc": false,
       "replaceable": true,
