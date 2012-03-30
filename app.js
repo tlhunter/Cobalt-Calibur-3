@@ -299,15 +299,21 @@ function initializeTimers() {
 }
 
 function buildMap(db) {
+    console.log("Attempting to build the database");
     var fileContents = fs.readFileSync('map.json','utf8');
     var mapData = JSON.parse(fileContents);
     db.collection('maps', function(err, collection) {
+        console.log("Connecting to the map collection");
         if (err) {
+            console.log(err);
             throw err;
         }
+        console.log("Cool, I connected to the collection");
         collection.remove({}, function(err, result) {
+            console.log("Removing the entries from the collection");
             collection.insert({map: mapData});
             collection.count(function(err, count) {
+                console.log("Done counting, not sure what I found");
                 if (count == 1) {
                     game.map = mapData;
                     console.log("Map was rebuilt from map.json file");
