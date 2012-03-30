@@ -219,18 +219,23 @@ var game = {
             handle: null,
             interval: 5 * 1000,
             payload: function() {
+
                 var len = game.npcs.length;
                 for(var i = 0; i < len; i++) {
                     var npc = game.npcs[i];
-                    var direction = Math.floor(Math.random() * 6);
-                    if (direction == 1 && npc.x < 200) {
+                    var new_direction = Math.floor(Math.random() * 6);
+                    if (new_direction == 1 && npc.x < 199 && game.canNPCWalk(npc.x+1, npc.y)) {
                         npc.x++;
-                    } else if (direction == 2 && npc.x > 0) {
+                        npc.d = 'e';
+                    } else if (new_direction == 2 && npc.x > 0 && game.canNPCWalk(npc.x-1, npc.y)) {
                         npc.x--;
-                    } else if (direction == 3 && npc.y < 200) {
+                        npc.d = 'w';
+                    } else if (new_direction == 3 && npc.y < 199 && game.canNPCWalk(npc.x, npc.y+1)) {
                         npc.y++;
-                    } else if (direction == 4 && npc.y > 0) {
+                        npc.d = 's';
+                    } else if (new_direction == 4 && npc.y > 0 && game.canNPCWalk(npc.x, npc.y-1)) {
                         npc.y--;
+                        npc.d = 'n';
                     }
                 }
                 io.sockets.emit('event npcmovement', {
@@ -243,6 +248,24 @@ var game = {
 
     // Giant array of map data
     map: [],
+    getTileData: function(x, y) {
+        var tile = game.map[x][y];
+        var data = {};
+        if (tile && typeof tile[0] != 'undefined') {
+            data.tile = game.descriptors.terrain[tile[0]];
+        }
+        if (tile && typeof tile[1] != 'undefined') {
+            data.health = tile[1];
+        }
+        return data;
+    },
+
+    canNPCWalk: function(x, y) {
+        if (game.getTileData(x, y).tile.block_npc) {
+            return false;
+        }
+        return true;
+    },
 
     // Array of known player locations
     players: [],
@@ -277,9 +300,21 @@ db.open(function(err, db) {
     fs.readFile('assets/tilesets/data.json', function(err, data) {
         if (err) throw err;
         game.descriptors = JSON.parse(data);
-        for (var i = 0; i < 100; i++) {
-            game.npcs.push({id: 23, x: i*2, y:i*2});// throwing them in at a slash for now
-        }
+        setTimeout(function() {
+            var remaining = 100;
+            var coords = {};
+            var npc_id;
+            while (remaining) {
+                coords.x = Math.floor(Math.random() * 200);
+                coords.y = Math.floor(Math.random() * 200);
+                if (!game.canNPCWalk(coords.x, coords.y)) {
+                    continue;
+                }
+                npc_id = Math.floor(Math.random() * 36) + 16;
+                game.npcs.push({id: npc_id, x: coords.x, y: coords.y, d: 's'});// throwing them in at a slash for now
+                remaining--;
+            }
+        }, 1000);
     });
 
     // Every minute we want to write the database from memory to mongo
