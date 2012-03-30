@@ -47,7 +47,7 @@ var game = {
                                     }
                                     break;
                                 case 1: // dirt
-                                    if (Math.random() < 1/100) {
+                                    if (Math.random() < 1/30) {
                                         game.map[x][y][0] = 0; // grass
                                         new_grass++;
                                     }
@@ -87,7 +87,7 @@ var game = {
         earthquake: {
             handle: null,
             interval: 73 * 60 * 1000,
-            eruptions: 3,
+            eruptions: 2,
             payload: function() {
                 var eruption = function(x, y, ore) {
                     console.log("Epicenter at: [" + x + "," + y + "] Type: " + ore);
