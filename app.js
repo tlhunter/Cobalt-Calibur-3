@@ -288,13 +288,15 @@ var game = {
     }
 };
 
-// Initialize timers
-_.each(game.events, function(event) {
-    event.handle = setInterval(
-        event.payload,
-        event.interval
-    );
-});
+function initializeTimers() {
+    // Initialize timers
+    _.each(game.events, function(event) {
+        event.handle = setInterval(
+            event.payload,
+            event.interval
+        );
+    });
+}
 
 db.open(function(err, db) {
     fs.readFile('assets/tilesets/data.json', function(err, data) {
@@ -413,9 +415,11 @@ db.open(function(err, db) {
         collection.findOne({}, {}, function(err, item) {
             if (err) {
                 console.log("MongoDB: Map collection is empty", err);
+                throw err;
             }
             if (item != null) {
                 game.map = item.map;
+                initializeTimers();
                 return;
             } else {
                 console.log("MongoDB: The map in Mongo is null");
