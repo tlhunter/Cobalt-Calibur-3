@@ -303,7 +303,6 @@ function buildMap(db) {
     var mapData = JSON.parse(fileContents);
     db.collection('maps', function(err, collection) {
         if (err) {
-            res.send(err);
             throw err;
         }
         collection.remove({}, function(err, result) {
