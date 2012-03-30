@@ -447,7 +447,7 @@ $(function() {
                                 if (npc.x == mapX && npc.y == mapY) {
                                     var index = app.engine.map.getCharacterFrame(npc.d, app.engine.animFrameGlobal);
 
-                                    var npc_name = 'Cthulu Spawn';
+                                    var npc_name = app.engine.tilesets.descriptors.characters[npc.id].name;
                                     if (redrawNametags) app.engine.nametags.add(npc_name, i, j);
                                     app.engine.tile.drawPlayer(i, j, index, npc.id);
                                 }
