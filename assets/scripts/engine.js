@@ -269,6 +269,7 @@ $(function() {
                     var item = app.engine.tilesets.descriptors.terrain[terrainIndex];
                     // provides is also the cost of manufacturing the tile
                     if (app.engine.player.inventory.update(item.provides.id, -item.provides.quantity)) {
+                        document.getElementById('sound-build').play();
                         app.engine.map.data[coords.x][coords.y][0] = terrainIndex;
                         app.socket.emit('terraform', {
                             x: coords.x,
