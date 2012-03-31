@@ -11,6 +11,9 @@ var _           = require('underscore');
 var connection  = require('mongodb').Connection;
 var server      = require('mongodb').Server;
 
+// Web server port
+var server_port = parseInt(process.argv[2], 10) || 80;
+
 // Database connection
 var mongo_host  = process.env['MONGO_NODE_DRIVER_HOST'] != null ? process.env['MONGO_NODE_DRIVER_HOST'] : 'localhost';
 var mongo_port  = process.env['MONGO_NODE_DRIVER_PORT'] != null ? process.env['MONGO_NODE_DRIVER_PORT'] : connection.DEFAULT_PORT;
@@ -364,8 +367,8 @@ db.open(function(err, db) {
         });
     }, 60000); // Save map to Mongo once every minute
 
-    console.log("Express: Attempting to listen on port 81");
-    app.listen(81);
+    console.log("Express: Attempting to listen on port " + server_port);
+    app.listen(server_port);
 
     // User requests root, return HTML
     app.get('/', function (req, res) {
