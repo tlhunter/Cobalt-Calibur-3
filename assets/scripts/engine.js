@@ -362,36 +362,21 @@ $(function() {
                 locations: [],
 
                 // Updates a player location, adding if it's a new entry
-                update: function(session, x, y, direction) {
+                update: function(data) {
                     var found = false;
                     var len = app.engine.players.locations.length;
                     for (var i=0; i<len; i++) {
                         var player = app.engine.players.locations[i];
-                        if (player.session == session) {
-                            player.x = x;
-                            player.y = y;
-                            player.direction = direction;
+                        if (player.session == data.session) {
+                            _.extend(
+                                player,
+                                data
+                            );
                             found = true;
                         }
                     }
                     if (!found) {
-                        app.engine.players.locations.push({
-                            session: session,
-                            x: x,
-                            y: y,
-                            direction: direction
-                        });
-                    }
-                },
-
-                updateInfo: function(session, name, picture) {
-                    var len = app.engine.players.locations.length;
-                    for (var i=0; i<len; i++) {
-                        var player = app.engine.players.locations[i];
-                        if (player.session == session) {
-                            player.name = name;
-                            player.picture = picture;
-                        }
+                        app.engine.players.locations.push(data);
                     }
                 },
 
@@ -649,15 +634,6 @@ $(function() {
                     app.displayMessage('Server', 'Disconnected', 'server');
                 });
 
-                app.socket.on('move', function(data) {
-                    if (app.socket.socket.sessionid == data.session) return;
-                    app.engine.players.update(data.session, data.x, data.y, data.direction);
-                    // when move is first sent by server, entire player array sent with it
-                    if (data.name || data.picture) {
-                        app.engine.players.updateInfo(data.session, data.name, data.picture);
-                    }
-                });
-
                 app.socket.on('leave', function(data) {
                     app.engine.players.remove(data.session);
                     var player_name = data.name || 'unknown';
@@ -670,7 +646,12 @@ $(function() {
 
                 app.socket.on('character info', function(data) {
                     if (app.socket.socket.sessionid == data.dession) return;
-                    app.engine.players.updateInfo(data.session, data.name, data.picture);
+                    app.engine.players.update(data);
+                });
+
+                app.socket.on('move', function(data) {
+                    if (app.socket.socket.sessionid == data.session) return;
+                    app.engine.players.update(data);
                 });
 
                 app.socket.on('event time', function(data) {
