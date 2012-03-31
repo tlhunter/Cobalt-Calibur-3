@@ -191,14 +191,14 @@ var game = {
             payload: function() {
                 // First, we want to populate an array of which tiles are synthetic and which are not
                 var synthetic_ids = game.getSyntheticTiles();
-                var corruption_map = [];
+                game.corruption_map = [];
                 var len_y = 200;
                 var len_x = 200;
                 // Now, we want to generate, you know, 40,000 tiles of 0's in a 2d array
                 for (var y = 0; y < len_y; y++) {
-                    corruption_map[y] = [];
+                    game.corruption_map[y] = [];
                     for (var x = 0; x < len_x; x++) {
-                        corruption_map[y][x] = 1;
+                        game.corruption_map[y][x] = 1;
                     }
                 }
                 // Now, we want to go through all of our tiles, find synthetic ones, and draw a square around it
@@ -208,7 +208,7 @@ var game = {
                             for (var xx = -game.events.corruption.RADIUS; xx <= game.events.corruption.RADIUS; xx++) {
                                 for (var yy = -game.events.corruption.RADIUS; yy <= game.events.corruption.RADIUS; yy++) {
                                     if (x+xx >= 0 && x+xx < len_x && y+yy >= 0 && y+yy < len_y) {
-                                        corruption_map[x+xx][y+yy] = 0;
+                                        game.corruption_map[x+xx][y+yy] = 0;
                                     }
                                 }
                             }
@@ -217,9 +217,10 @@ var game = {
                 }
 
                 io.sockets.emit('event corruption', {
-                    map: corruption_map
+                    map: game.corruption_map
                 });
                 logger("Event".grey, "Corruption Spread");
+                logger("Players", JSON.stringify(game.players));
             }
         },
 
@@ -256,6 +257,7 @@ var game = {
 
     // Giant array of map data
     map: [],
+    corruption_map: [],
     getTileData: function(x, y) {
         var tile = game.map[x][y];
         var data = {};
@@ -466,12 +468,15 @@ db.open(function(err, db) {
                     priority: 'server'
                 });
                 _.each(game.players, function(player) {
-                    socket.emit('move',
+                    socket.emit('character info',
                         player
                     );
                 });
                 socket.emit('event time', {
                     time: game.events.daynight.current
+                });
+                socket.emit('event corruption', {
+                    map: game.corruption_map
                 });
             },
             100
