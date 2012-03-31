@@ -700,19 +700,6 @@ $(function() {
                     });
                 });
 
-                // Tell people who and where we are every 15 seconds (temporary solution for a race condition)
-                setInterval(function() {
-                    app.socket.emit('move', {
-                        x: app.engine.player.location.x,
-                        y: app.engine.player.location.y,
-                        direction: app.engine.player.direction
-                    });
-                    app.engine.updateCharacterInfo(
-                        app.engine.player.name,
-                        app.engine.player.picture
-                    );
-                }, 15000);
-
                 // Pres Esc inside of text box, leave the text box
                 $(document).keyup(function(e) {
                     if ($(e.target).is(":input") && e.which == 27) {
@@ -775,6 +762,12 @@ $(function() {
                 setTimeout(function() {
                     app.displayMessage('Help', 'Type /help for some help', 'help');
                     app.displayMessage('Help', 'Type /nick NEWNAME to change your name', 'help');
+                    app.socket.emit('move', {
+                        x: app.engine.player.location.x,
+                        y: app.engine.player.location.y,
+                        direction: app.engine.player.direction
+                    });
+                    app.engine.updateCharacterInfo();
                 }, 500);
 
                 if (app.engine.player.loadData()) {
