@@ -220,7 +220,7 @@ var game = {
                     map: game.corruption_map
                 });
                 logger("Event".grey, "Corruption Spread");
-                logger("Players", JSON.stringify(game.players));
+                logger("Players".magenta, JSON.stringify(game.players)); // temp for debugging
             }
         },
 
