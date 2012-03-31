@@ -347,7 +347,7 @@
       "mineable": true,
       "provides": {
         "id": 1,
-        "quantity": 1
+        "quantity": 2
       },
       "block_player": true,
       "block_npc": true,
@@ -375,7 +375,7 @@
       "mineable": true,
       "provides": {
         "id": 0,
-        "quantity": 1
+        "quantity": 2
       },
       "block_player": true,
       "block_npc": true,
@@ -500,7 +500,7 @@
       "mineable": true,
       "provides": {
         "id": 4,
-        "quantity": 1
+        "quantity": 2
       },
       "block_player": true,
       "block_npc": true,
@@ -528,7 +528,7 @@
       "mineable": true,
       "provides": {
         "id": 5,
-        "quantity": 1
+        "quantity": 2
       },
       "block_player": true,
       "block_npc": true,
@@ -556,7 +556,7 @@
       "mineable": true,
       "provides": {
         "id": 6,
-        "quantity": 1
+        "quantity": 2
       },
       "block_player": true,
       "block_npc": true,
@@ -584,7 +584,7 @@
       "mineable": true,
       "provides": {
         "id": 7,
-        "quantity": 1
+        "quantity": 2
       },
       "block_player": true,
       "block_npc": true,
@@ -612,7 +612,7 @@
       "mineable": true,
       "provides": {
         "id": 8,
-        "quantity": 1
+        "quantity": 2
       },
       "block_player": true,
       "block_npc": true,
