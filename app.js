@@ -277,6 +277,13 @@ var game = {
         return true;
     },
 
+    canNPCSpawn: function(x, y) {
+        if (!game.getTileData(x, y).tile.spawn_npc) {
+            return false;
+        }
+        return true;
+    },
+
     // Array of known player locations
     players: [],
 
@@ -349,9 +356,9 @@ db.open(function(err, db) {
             var coords = {};
             var npc_id;
             while (remaining) {
-                coords.x = Math.floor(Math.random() * 200);
-                coords.y = Math.floor(Math.random() * 200);
-                if (!game.canNPCWalk(coords.x, coords.y)) {
+                coords.x = Math.floor(Math.random() * 199);
+                coords.y = Math.floor(Math.random() * 199);
+                if (!game.canNPCSpawn(coords.x, coords.y)) {
                     continue;
                 }
                 npc_id = Math.floor(Math.random() * 36) + 16;
