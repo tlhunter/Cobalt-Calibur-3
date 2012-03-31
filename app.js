@@ -47,7 +47,7 @@ var game = {
                                     }
                                     break;
                                 case 1: // dirt
-                                    if (Math.random() < 1/30) {
+                                    if (Math.random() < 1/5) {
                                         game.map[x][y][0] = 0; // grass
                                         new_grass++;
                                     }
