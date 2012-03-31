@@ -488,6 +488,12 @@ db.open(function(err, db) {
                         map: game.corruption_map
                     });
                 }
+                if (game.npcs.length) {
+                    // Don't send NPCs if we don't have any
+                    socket.emit('event npcmovement', {
+                        npcs: game.npcs
+                    });
+                }
             },
             100
         );
