@@ -3,13 +3,14 @@
 
 // requires
 var app         = require('express').createServer();
-var io          = require('socket.io').listen(app);
+var io          = require('socket.io').listen(app, { log: false});
 var Db          = require('mongodb').Db;
 var fs          = require('fs');
 var sanitizer   = require('sanitizer');
 var _           = require('underscore');
 var connection  = require('mongodb').Connection;
 var server      = require('mongodb').Server;
+var colors      = require('colors');
 
 // Web server port
 var server_port = parseInt(process.argv[2], 10) || 80;
@@ -72,7 +73,9 @@ var game = {
                             }
                         }
                     }
-                    console.log("New Trees: " + new_trees + ", New Grass: " + new_grass + ", New Sand: " + new_sand);
+                    logger("New Trees".blue, new_trees);
+                    logger("New Grass".blue, new_grass);
+                    logger("New Sand".blue, new_sand);
                     io.sockets.emit('event bigterraform', {});
                 }
 
@@ -83,7 +86,7 @@ var game = {
                 io.sockets.emit('event time', {
                     time: game.events.daynight.current
                 });
-                console.log("Event: Time (" + game.events.daynight.current + ")");
+                logger("Event".grey, "Time: " + game.events.daynight.current + ":00");
             }
         },
 
@@ -93,7 +96,7 @@ var game = {
             eruptions: 2,
             payload: function() {
                 var eruption = function(x, y, ore) {
-                    console.log("Epicenter at: [" + x + "," + y + "] Type: " + ore);
+                    logger("Epicenter".blue, "[" + x + "," + y + "], Type: " + ore);
                     game.map[x+0][y+0] = [ore, 20]; // center point
 
                     // Big Rocks
@@ -176,7 +179,7 @@ var game = {
                     remaining--;
                 }
                 io.sockets.emit('event earthquake', { });
-                console.log("Event: Earthquake");
+                logger("Event".grey, "Earthquake");
             }
         },
 
@@ -204,7 +207,9 @@ var game = {
                         if (_.indexOf(synthetic_ids, game.map[x][y][0]) != -1) {
                             for (var xx = -game.events.corruption.RADIUS; xx <= game.events.corruption.RADIUS; xx++) {
                                 for (var yy = -game.events.corruption.RADIUS; yy <= game.events.corruption.RADIUS; yy++) {
-                                    corruption_map[x+xx][y+yy] = 0;
+                                    if (x+xx >= 0 && x+xx < len_x && y+yy >= 0 && y+yy < len_y) {
+                                        corruption_map[x+xx][y+yy] = 0;
+                                    }
                                 }
                             }
                         }
@@ -214,7 +219,7 @@ var game = {
                 io.sockets.emit('event corruption', {
                     map: corruption_map
                 });
-                console.log("Event: Corruption");
+                logger("Event".grey, "Corruption Spread");
             }
         },
 
@@ -244,7 +249,7 @@ var game = {
                 io.sockets.emit('event npcmovement', {
                     npcs: game.npcs
                 });
-                console.log("Event: NPC Movement");
+                logger("Event".grey, "NPC Move");
             }
         }
     },
@@ -301,25 +306,32 @@ function initializeTimers() {
     });
 }
 
+function logger(title, message) {
+    while (title.length < 26) {
+        title = title + ' ';
+    }
+    console.log(title + '| ' + message);
+}
+
 function buildMap(db) {
-    console.log("Attempting to build the database");
+    logger("MongoDB".blue, "Attempting to build the database");
     var fileContents = fs.readFileSync('map.json','utf8');
     var mapData = JSON.parse(fileContents);
     db.collection('maps', function(err, collection) {
-        console.log("Connecting to the map collection");
+        logger("MongoDB".blue, "Connecting to the map collection");
         if (err) {
-            console.log(err);
+            logger("Error".red, err);
             throw err;
         }
-        console.log("Cool, I connected to the collection");
+        logger("MongoDB".blue, "Cool, I connected to the collection");
         collection.remove({}, function(err, result) {
-            console.log("Removing the entries from the collection");
+            logger("MongoDB".blue, "Removing the entries from the collection");
             collection.insert({map: mapData});
             collection.count(function(err, count) {
-                console.log("Done counting, not sure what I found");
+                logger("MongoDB".blue, "Done counting, not sure what I found");
                 if (count == 1) {
                     game.map = mapData;
-                    console.log("Map was rebuilt from map.json file");
+                    logger("MongoDB".blue, "Map was rebuilt from map.json file");
                 }
             });
         });
@@ -351,23 +363,23 @@ db.open(function(err, db) {
     setInterval(function() {
         db.collection('maps', function(err, collection) {
             if (err) {
-                console.log("MongoDB: Error selecting map collection to save", err);
+                logger("MongoDB".red, "Error selecting map collection to save", err);
             }
             collection.remove({}, function(err, result) {
-                console.log("MongoDB: Deleting previous map... Don't kill server!");
+                logger("MongoDB".yellow, "Deleting previous map... Don't kill server");
                 collection.insert({map: game.map});
                 collection.count(function(err, count) {
                     if (count == 1) {
-                        console.log("MongoDB: Map saved to database");
+                        logger("MongoDB".green, "Map saved to database");
                     } else {
-                        console.log("MongoDB: Error Saving Map");
+                        logger("MongoDB".red, "Error Saving Map");
                     }
                 });
             });
         });
     }, 60000); // Save map to Mongo once every minute
 
-    console.log("Express: Attempting to listen on port " + server_port);
+    logger("Express".magenta, "Attempting to listen on port: " + server_port);
     app.listen(server_port);
 
     // User requests root, return HTML
@@ -420,12 +432,12 @@ db.open(function(err, db) {
     // Builds the map object with data from the mongo db
     db.collection('maps', function(err, collection) {
         if (err) {
-            console.log("MongoDB: Map collection doesn't exist", err);
+            logger("MongoDB".red, "Map collection doesn't exist", err);
             throw err;
         }
         collection.findOne({}, {}, function(err, item) {
             if (err) {
-                console.log("MongoDB: Map collection is empty", err);
+                logger("MongoDB".red, "Map collection is empty", err);
                 throw err;
             }
             if (item != null) {
@@ -433,7 +445,7 @@ db.open(function(err, db) {
                 initializeTimers();
                 return;
             } else {
-                console.log("MongoDB: The map in Mongo is null");
+                logger("MongoDB".red, "The map in Mongo is null");
                 buildMap(db);
                 return;
             }
@@ -441,6 +453,7 @@ db.open(function(err, db) {
     });
 
     io.sockets.on('connection', function (socket) {
+        logger("Player".cyan, "Connected");
         //npc locations
         //corruption zones
 
@@ -461,7 +474,7 @@ db.open(function(err, db) {
                     time: game.events.daynight.current
                 });
             },
-            50
+            100
         );
 
         // Receive chat, send chats to all users
@@ -473,11 +486,12 @@ db.open(function(err, db) {
                 name: name,
                 message: message
             });
-            console.log("Chat", this.id, data);
+            logger("Chat".blue, "Name: " + data.name + ", Message: " + data.message);
         });
 
         // when a user disconnects, remove them from the players array, and let the world know
         socket.on('disconnect', function(data) {
+            logger("Player".cyan, "Disconnected");
             var session_id = this.id;
             var len = game.players.length;
             var player_name;
@@ -496,7 +510,7 @@ db.open(function(err, db) {
 
         // Get an update from the client for their char's name and picture
         socket.on('character info', function(data) {
-            console.log(data);
+            logger("Player".cyan, "Player Info", data);
             var session = this.id;
             var char_name = sanitizer.escape(data.name.substr(0, 12));
             var picture = parseInt(data.picture, 10);
