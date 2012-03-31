@@ -468,7 +468,7 @@ $(function() {
                                 }
                             }
 
-                            if (app.engine.map.corruptionDataLoaded && app.engine.map.corruption[mapX][mapY] === 1) {
+                            if (app.engine.map.corruptionDataLoaded && mapX < app.engine.TOTALTILES_X && mapY < app.engine.TOTALTILES_Y && app.engine.map.corruption[mapX][mapY] === 1) {
                                 var rnd = Math.floor(Math.random() * 3);
                                 if (rnd == 0) {
                                     app.engine.handle.fillStyle = "rgba(15,0,61,0.5)";
