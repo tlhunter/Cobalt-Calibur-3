@@ -475,9 +475,12 @@ db.open(function(err, db) {
                 socket.emit('event time', {
                     time: game.events.daynight.current
                 });
-                socket.emit('event corruption', {
-                    map: game.corruption_map
-                });
+                if (game.corruption_map.length) {
+                    // Don't send corruption if we haven't figured it out yet
+                    socket.emit('event corruption', {
+                        map: game.corruption_map
+                    });
+                }
             },
             100
         );
