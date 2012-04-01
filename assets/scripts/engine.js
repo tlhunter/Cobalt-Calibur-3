@@ -3,8 +3,7 @@
 
 $(function() {
     window.app = {
-        // Make socket connection ASAP
-        socket: io.connect(window.document.location.protocol + "//" + window.document.location.host),
+        socket: null,
 
         // Grab some DOM elements
         $messages: $('#messages'),
@@ -545,6 +544,7 @@ $(function() {
             },
 
             start: function() {
+                app.socket = io.connect(window.document.location.protocol + "//" + window.document.location.host);
                 app.engine.viewport.x = Math.floor(app.engine.TOTALTILES_X / 2) - app.engine.PLAYER_OFFSET_X;
                 app.engine.viewport.y = Math.floor(app.engine.TOTALTILES_Y / 2) - app.engine.PLAYER_OFFSET_Y;
 
