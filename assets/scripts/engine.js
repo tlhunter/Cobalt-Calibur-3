@@ -218,7 +218,7 @@ $(function() {
 
                 // Transmits a socket message with our current location and direction
                 broadcastLocation: function() {
-                    app.socket.emit('move', {
+                    app.socket.emit('character info', {
                         x: app.engine.player.location.x,
                         y: app.engine.player.location.y,
                         direction: app.engine.player.direction
@@ -649,11 +649,6 @@ $(function() {
                     app.engine.players.update(data);
                 });
 
-                app.socket.on('move', function(data) {
-                    if (app.socket.socket.sessionid == data.session) return;
-                    app.engine.players.update(data);
-                });
-
                 app.socket.on('event time', function(data) {
                     app.engine.daytime.setCurrentTime(data.time);
                 });
@@ -739,11 +734,12 @@ $(function() {
                     app.engine.map.render(currentFrame === 0);
                 }, 150);
 
-                // Display helpful command
                 setTimeout(function() {
+                    // Display helpful command
                     app.displayMessage('Help', 'Type /help for some help', 'help');
                     app.displayMessage('Help', 'Type /nick NEWNAME to change your name', 'help');
-                    app.socket.emit('move', {
+                    // Broadcast location
+                    app.socket.emit('character info', {
                         x: app.engine.player.location.x,
                         y: app.engine.player.location.y,
                         direction: app.engine.player.direction

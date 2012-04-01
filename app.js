@@ -220,7 +220,6 @@ var game = {
                     map: game.corruption_map
                 });
                 logger("Event".grey, "Corruption Spread");
-                logger("Players".magenta, JSON.stringify(game.players)); // temp for debugging
             }
         },
 
@@ -531,71 +530,35 @@ db.open(function(err, db) {
 
         // Get an update from the client for their char's name and picture
         socket.on('character info', function(data) {
-            logger("Player".cyan, "Player Info", data);
-            var session = this.id;
-            var char_name = sanitizer.escape(data.name.substr(0, 12));
-            var picture = parseInt(data.picture, 10);
-            if (isNaN(picture) || picture > 15) {
-                picture = 0;
+            data.session = this.id;
+            if (data.name) {
+                data.name = sanitizer.escape(data.name.substr(0, 12));
             }
-            socket.broadcast.emit('character info', {
-                session: session,
-                name: char_name,
-                picture: picture
-            });
+            if (data.picture) {
+                data.picture = parseInt(data.picture, 10);
+                if (isNaN(data.picture) || data.picture > 15) {
+                    data.picture = 0;
+                }
+            }
+            socket.broadcast.emit('character info', data);
             var len = game.players.length;
             var foundPlayer = false;
             for (var i=0; i<len; i++) {
-                if (game.players[i].session == session) {
-                    game.players[i].name = char_name;
-                    game.players[i].picture = data.picture;
+                if (game.players[i].session == data.session) {
+                    _.extend(
+                        game.players[i],
+                        data
+                    );
                     foundPlayer = true;
                     break;
                 }
             }
             if (!foundPlayer) {
-                game.players.push({
-                    session: session,
-                    name: char_name,
-                    picture: data.picture,
-                    direction: 's',
-                    x: 0,
-                    y: 0
-                });
+                game.players.push(data);
             }
         });
 
-        // Receive movement, send to all users
-        socket.on('move', function(data) {
-            var session = this.id;
-            socket.broadcast.emit('move', {
-                session: session,
-                x: data.x,
-                y: data.y,
-                direction: data.direction
-            });
-            // update players table
-            var foundPlayer = false;
-            var len = game.players.length;
-            for (var i=0; i<len; i++) {
-                if (game.players[i].session == session) {
-                    game.players[i].x = data.x;
-                    game.players[i].y = data.y;
-                    foundPlayer = true;
-                    break;
-                }
-            }
-            if (!foundPlayer) {
-                game.players.push({
-                    session: session,
-                    x: data.x,
-                    y: data.y,
-                    direction: data.direction
-                });
-            }
-        });
-
-        // Receive terraform, sent to ALL USERZ!!1
+        // a user made a change to the world
         socket.on('terraform', function(data) {
             socket.broadcast.emit('terraform', {
                 session: this.id,
