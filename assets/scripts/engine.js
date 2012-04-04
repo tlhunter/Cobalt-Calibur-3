@@ -553,9 +553,6 @@ $(function() {
                 app.engine.screen.tilesX = app.$canvas.width() / app.engine.TILEWIDTH;
                 app.engine.screen.tilesY = app.$canvas.height() / app.engine.TILEHEIGHT;
 
-                app.engine.player.name = 'Anon' + Math.floor(Math.random() * 8999 + 1000);
-                app.engine.player.picture = Math.floor(Math.random() * 15) + 1;
-
                 $('#message-box form').submit(function(event) {
                     event.preventDefault();
                     var message = app.$newMessage.val();
@@ -751,6 +748,9 @@ $(function() {
                     app.engine.player.updateViewport();
                     app.engine.player.inventory.resetCounters();
                     app.displayMessage('Client', 'Loaded your saved character', 'client');
+                } else {
+                    app.engine.player.name = 'Anon' + Math.floor(Math.random() * 8999 + 1000);
+                    app.engine.player.picture = Math.floor(Math.random() * 15) + 1;
                 }
 
                 setInterval(function() {
