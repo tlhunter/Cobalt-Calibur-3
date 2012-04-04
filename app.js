@@ -159,7 +159,16 @@ var game = {
                 while (remaining) {
                     coords.x = Math.floor(Math.random() * (len_x - (eruption_radius * 2))) + eruption_radius;
                     coords.y = Math.floor(Math.random() * (len_y - (eruption_radius * 2))) + eruption_radius;
+                    // This is all pretty ugly code... Makes sure the center and four corners aren't synthetic
                     if (_.indexOf(synthetic_ids, game.map[coords.x][coords.y][0]) != -1) {
+                        continue;
+                    } else if (_.indexOf(synthetic_ids, game.map[coords.x+3][coords.y+3][0]) != -1) {
+                        continue;
+                    } else if (_.indexOf(synthetic_ids, game.map[coords.x+3][coords.y-3][0]) != -1) {
+                        continue;
+                    } else if (_.indexOf(synthetic_ids, game.map[coords.x-3][coords.y+3][0]) != -1) {
+                        continue;
+                    } else if (_.indexOf(synthetic_ids, game.map[coords.x-3][coords.y-3][0]) != -1) {
                         continue;
                     }
                     var ore_id = null;

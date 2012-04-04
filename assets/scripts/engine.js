@@ -657,7 +657,7 @@ $(function() {
                     $.get('/map', function(data) {
                         app.engine.map.data = data;
                     });
-                    app.displayMessage('Server', "There has been an earthquake! Check your buildings for damage. New Ore has been added to the world.", 'server');
+                    app.displayMessage('Server', "There has been an earthquake! New Rock and Ore has been added to the world.", 'server');
                     document.getElementById('sound-earthquake').play();
                 });
 
