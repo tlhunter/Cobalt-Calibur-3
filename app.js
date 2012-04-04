@@ -522,6 +522,17 @@ db.open(function(err, db) {
             logger("Chat".blue, "Name: " + data.name + ", Message: " + data.message);
         });
 
+        socket.on('join', function(data) {
+            var session_id = this.id;
+            logger("Player".cyan, "Connected, Name: " + data.name);
+            socket.broadcast.emit('chat', {
+                session: session_id,
+                name: data.name,
+                message: 'Player Connected',
+                priority: 'server'
+            });
+        });
+
         // when a user disconnects, remove them from the players array, and let the world know
         socket.on('disconnect', function(data) {
             logger("Player".cyan, "Disconnected");

@@ -553,6 +553,15 @@ $(function() {
                 app.engine.screen.tilesX = app.$canvas.width() / app.engine.TILEWIDTH;
                 app.engine.screen.tilesY = app.$canvas.height() / app.engine.TILEHEIGHT;
 
+                if (app.engine.player.loadData()) {
+                    app.engine.player.updateViewport();
+                    app.engine.player.inventory.resetCounters();
+                    app.displayMessage('Client', 'Loaded your saved character', 'client');
+                } else {
+                    app.engine.player.name = 'Anon' + Math.floor(Math.random() * 8999 + 1000);
+                    app.engine.player.picture = Math.floor(Math.random() * 15) + 1;
+                }
+
                 $('#message-box form').submit(function(event) {
                     event.preventDefault();
                     var message = app.$newMessage.val();
@@ -623,6 +632,8 @@ $(function() {
                     app.socket.emit('chat', {name: app.engine.player.name, message: message, priority: 0});
                 });
 
+                app.socket.emit('join', {name: app.engine.player.name});
+
                 app.socket.on('chat', function (data) {
                     app.displayMessage(data.name, data.message, data.priority);
                 });
@@ -634,7 +645,7 @@ $(function() {
                 app.socket.on('leave', function(data) {
                     app.engine.players.remove(data.session);
                     var player_name = data.name || 'unknown';
-                    app.displayMessage('Server', data.name + " has left the game", 'server');
+                    app.displayMessage(data.name, "Player Disconnected", 'server');
                 });
 
                 app.socket.on('terraform', function (data) {
@@ -743,15 +754,6 @@ $(function() {
                     });
                     app.engine.updateCharacterInfo();
                 }, 500);
-
-                if (app.engine.player.loadData()) {
-                    app.engine.player.updateViewport();
-                    app.engine.player.inventory.resetCounters();
-                    app.displayMessage('Client', 'Loaded your saved character', 'client');
-                } else {
-                    app.engine.player.name = 'Anon' + Math.floor(Math.random() * 8999 + 1000);
-                    app.engine.player.picture = Math.floor(Math.random() * 15) + 1;
-                }
 
                 setInterval(function() {
                     app.engine.player.saveData();
