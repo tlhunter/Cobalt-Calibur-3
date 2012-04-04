@@ -404,6 +404,10 @@ db.open(function(err, db) {
         res.sendfile(__dirname + '/index.html');
     });
 
+    app.get('/favicon.ico', function (req, res) {
+        res.sendfile(__dirname + '/favicon.ico');
+    });
+
     // User request map, return map JSON from RAM
     app.get('/map', function(req, res) {
         res.send(game.map);
