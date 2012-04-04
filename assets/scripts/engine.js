@@ -755,7 +755,11 @@ $(function() {
 
                 setInterval(function() {
                     app.engine.player.saveData();
-                }, 5000); // save every 5 seconds
+                }, 3000); // save every 3 seconds
+
+                $(window).unload(function() {
+                    app.engine.player.saveData();
+                });
             },
 
             daytime: {
