@@ -4,12 +4,18 @@
 $(function() {
 window.app = {
 	initialize: function() {
-		// Setup a promise thingy
-		// http://jsfiddle.net/jfromaniello/FPqc4/7/light/
-		// Download all of the assets
-		// app.persistance.load() || app.persistance.createNewPlayer()
-		// app.network.bindEvents()
-		// app.audio.initialize();
+        $.when(
+            app.graphics.tilesets.downloadTerrain(),
+            app.graphics.tilesets.downloadAvatars(),
+            app.graphics.tilesets.downloadInventory(),
+            app.environment.downloadTiles(),
+            app.environment.downloadMap()
+        ).done(function() {
+            app.persistence.load() || app.persistence.createNewPlayer();
+            app.audio.initialize();
+            app.network.bindEvents();
+            app.network.connectSocket();
+        });
 	},
 	
 	player: {
@@ -107,6 +113,33 @@ window.app = {
 			terrain: new Image(),
 			avatars: new Image(),
 			inventory: new Image(),
+
+            downloadTerrain: function() {
+                var d = $.Deferred();
+                var tileset = app.graphics.tilesets.terrain;
+                tileset.src = '/assets/tilesets/terrain.png';
+                tileset.onload = function() { d.resolve(); }
+                tileset.onerror = function() { d.reject(); }
+                return d.promise();
+            },
+
+            downloadAvatars: function() {
+                var d = $.Deferred();
+                var tileset = app.graphics.tilesets.characters;
+                tileset.src = '/assets/tilesets/characters.png';
+                tileset.onload = function() { d.resolve(); }
+                tileset.onerror = function() { d.reject(); }
+                return d.promise();
+            },
+
+            downloadInventory: function() {
+                var d = $.Deferred();
+                var tileset = app.graphics.tilesets.inventory;
+                tileset.src = '/assets/tilesets/inventory.png';
+                tileset.onload = function() { d.resolve(); }
+                tileset.onerror = function() { d.reject(); }
+                return d.promise();
+            }
 		},
 		
 		globalAnimationFrame: false,
@@ -191,6 +224,7 @@ window.app = {
 			
 		},
 		
+        // Downloads the map after the app is up and running, usually when big changes occur
 		updateMap: function(callback) {
 			$.get('/map', function(data) {
                 app.environment.map = data;
@@ -199,6 +233,22 @@ window.app = {
 				}
             });
 		},
+
+        // Downloads the tiles for the first time, uses promises
+        downloadTiles: function() {
+            return $.get('/assets/tilesets/data.json').pipe(function(data) {
+                app.environment.tiles = data;
+                return true;
+            });
+        },
+
+        // Downloads the map for the first time, uses promises
+        downloadMap: function() {
+            return $.get('/assets/tilesets/data.json').pipe(function(data) {
+                app.engine.tilesets.descriptors = data;
+                return true;
+            });
+        },
 		
 		doesLocationBlockPlayer: function(x, y) {
 			
