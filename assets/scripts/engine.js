@@ -3,6 +3,7 @@
 
 $(function() {
     window.app = {
+        god: false,
         socket: null,
 
         // Grab some DOM elements
@@ -230,7 +231,7 @@ $(function() {
                 mineFacingTile: function() {
                     var tileData = app.engine.player.getFacingTile();
                     var coords = tileData.location;
-                    if (coords.x >= 96 && coords.x <= 104 && coords.y >= 96 && coords.y <= 104) {
+                    if (!app.god && coords.x >= 96 && coords.x <= 104 && coords.y >= 96 && coords.y <= 104) {
                         app.displayMessage('Client', 'You cannot change the spawn location.', 'client');
                         return false;
                     }
@@ -257,7 +258,7 @@ $(function() {
                 placeItem: function(terrainIndex) {
                     var replaceTile = app.engine.player.getFacingTile();
                     var coords = replaceTile.location;
-                    if (coords.x >= 96 && coords.x <= 104 && coords.y >= 96 && coords.y <= 104) {
+                    if (!app.god && coords.x >= 96 && coords.x <= 104 && coords.y >= 96 && coords.y <= 104) {
                         app.displayMessage('Client', 'You cannot change the spawn location.', 'client');
                         return false;
                     }
