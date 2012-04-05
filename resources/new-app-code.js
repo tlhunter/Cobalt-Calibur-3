@@ -27,30 +27,141 @@ window.app = {
 			},
 			direction: 's',
 			move: function(direction) {
-			
+                var coords = app.player.position.coordinates;
+                var dir = app.player.position.direction;
+                switch (direction) {
+                    case 'n':
+                        if (coords.y <= 0 || !app.player.canMoveTo(coords.x, coords.y - 1)) {
+                            dir = direction;
+                            app.audio.play('move-fail');
+                            return false;
+                        }
+                        coords.y--;
+                        break;
+                    case 'e':
+                        if (coords.x >= app.environment.MAP_WIDTH_TILE - 1 || !app.player.canMoveTo(coords.x + 1, coords.y)) {
+                            dir = direction;
+                            app.audio.play('move-fail');
+                            return false;
+                        }
+                        coords.x++;
+                        break;
+                    case 's':
+                        if (coords.y >= app.environment.MAP_HEIGHT_TILE - 1 || !app.player.canMoveTo(coords.x, coords.y + 1)) {
+                            dir = direction;
+                            app.audio.play('move-fail');
+                            return false;
+                        }
+                        coords.y++;
+                        break;
+                    case 'w':
+                        if (coords.x <= 0 || !app.player.canMoveTo(coords.x - 1, coords.y)) {
+                            dir = direction;
+                            app.audio.play('move-fail');
+                            return false;
+                        }
+                        coords.x--;
+                        break;
+                    default:
+                        return null;
+                        break;
+                }
+
+                app.player.killIfInCorruption(coords);
+                app.graphics.selfAnimationFrame = !app.graphics.selfAnimationFrame;
+                app.graphics.updateViewport();
+
+                app.network.send.move(coords.x, coords.y, direction);
 			},
+
 			setExactLocation: function(x, y) {
-				
+                app.player.position.coordinates.x = x;
+                app.player.position.coordinates.y = y;
+
+                app.graphics.updateViewport();
+
+                app.network.send.move(x, y, 's');
 			},
+
 			setDirection: function(direction) {
-				
-			}
+                app.player.position.direction = direction;
+			},
+
+            getFacingTile: function() {
+                var coords = app.player.position.coordinates;
+                var data = {};
+                switch(app.player.position.direction) {
+                    case 'n':
+                        data.coordinates = {x: coords.x, y: coords.y - 1};
+                        break;
+                    case 'e':
+                        data.coordinates = {x: coords.x + 1, y: coords.y};
+                        break;
+                    case 's':
+                        data.coordinates = {x: coords.x, y: coords.y + 1};
+                        break;
+                    case 'w':
+                        data.coordinates = {x: coords.x - 1, y: coords.y};
+                        break;
+                    default:
+                        break;
+                }
+
+                _.extend(
+                    data,
+                    app.environment.map.getTileData(data.coordinates.x, data.coordinates.y)
+                );
+
+                return data;
+            },
+
+            canMoveTo: function(x, y) {
+                if (app.environment.map.getTileData(x, y).tile.block_player) {
+                    return false;
+                }
+                return true;
+            },
 		},
+
 		inventory: {
-			data: [],
-			update: function(item, amount) {
-				
-			},
-			updatCounter: function(item) {
-				
-			},
+            data: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            update: function(index, amount) {
+                var data = app.player.inventory.data;
+                if (amount < 0) {
+                    if (data[index] >= -amount) {
+                        data[index] += amount;
+                        $('#inventory-'+index).stop().css({fontSize: '8px'}).animate({ fontSize : '15px' }).html(data[index]);
+                        return true;
+                    }
+                    return false;
+                } else {
+                    data[index] += amount;
+                    $('#inventory-'+index).stop().css({fontSize: '22px'}).animate({ fontSize : '15px' }).html(data[index]);
+                    return true;
+                }
+            },
 			updateAllCounters: function() {
-			
+                var len = app.player.inventory.data.length;
+                for (var i = 0; i < len; i++) {
+                    $('#inventory-'+i).html(app.player.inventory.data[i]);
+                }
 			}
 		},
 		kill: function() {
 			
-		}
+		},
+        killIfInCorruption: function(coords) {
+            if (app.environment.map.corruption[coords.x][coords.y]) {
+                if (Math.random() < 1/10) {
+                    app.player.kill("You were killed by corruption");
+                    app.socket.emit('chat', {
+                        name: app.engine.player.name,
+                        message: "Killed by Corruption",
+                        priority: 0
+                    });
+                }
+            }
+        }
 	},
 	
 	players: {
