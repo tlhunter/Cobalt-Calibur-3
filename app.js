@@ -45,7 +45,7 @@ var game = {
                         for (var x = 0; x < len_x; x++) {
                             switch(game.map[x][y][0]) {
                                 case 0: // grass
-                                    if (Math.random() < 1/1000) {
+                                    if (Math.random() < 1/4000) {
                                         game.map[x][y] = [4, 20]; // tree, 20 health
                                         new_trees++;
                                     }
@@ -92,7 +92,7 @@ var game = {
 
         earthquake: {
             handle: null,
-            interval: 73 * 60 * 1000,
+            interval: 7.1 * 24 * 60 * 1000,
             eruptions: 2,
             payload: function() {
                 var eruption = function(x, y, ore) {
