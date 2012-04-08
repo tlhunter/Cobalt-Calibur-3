@@ -121,6 +121,58 @@ window.app = {
                 }
                 return true;
             },
+
+            mineFacingTile: function() {
+                var tileData = app.player.getFacingTile();
+                var coords = tileData.coordinates;
+                if (!app.god && coords.x >= 96 && coords.x <= 104 && coords.y >= 96 && coords.y <= 104) {
+                    app.chat.message('Client', 'You cannot change the spawn location.', 'client');
+                    return false;
+                }
+                var mineable = tileData.tile.mineable;
+                if (!mineable) {
+                    app.audio.play('mine-fail');
+                    return false;
+                }
+                //var health = tileData.health;
+                var becomes = tileData.tile.becomes;
+                var provides = tileData.tile.provides;
+                //console.log(tileData, becomes, provides);
+                app.environment.map.data[coords.x][coords.y][0] = becomes;
+                app.network.send.terraform(coords.x, coords.y, becomes);
+                app.player.inventory.update(provides.id, provides.quantity);
+                app.audio.play('mine');
+            },
+
+            // Attempts to create and then place the specified tile
+            placeItem: function(terrainIndex) {
+                var replaceTile = app.player.getFacingTile();
+                var coords = replaceTile.coordinates;
+                if (!app.god && coords.x >= 96 && coords.x <= 104 && coords.y >= 96 && coords.y <= 104) {
+                    app.chat.message('Client', 'You cannot change the spawn location.', 'client');
+                    return false;
+                }
+                if (!replaceTile.tile.replaceable) {
+                    app.chat.message('Client', 'This object cannot be built over.', 'client');
+                    return false;
+                }
+                var item = app.environment.tilesets.data.terrain[terrainIndex];
+                // provides is also the cost of manufacturing the tile
+                if (app.engine.player.inventory.update(item.provides.id, -item.provides.quantity)) {
+                    document.getElementById('sound-build').play();
+                    app.engine.map.data[coords.x][coords.y][0] = terrainIndex;
+                    app.socket.emit('terraform', {
+                        x: coords.x,
+                        y: coords.y,
+                        tile: [terrainIndex, null]
+                    });
+                        return true;
+                } else {
+                    app.chat.message('Client', "You don't have the inventory to build this.", 'client');
+                    return false;
+                }
+            },
+
 		},
 
 		inventory: {

@@ -56,12 +56,12 @@ $(function() {
                         case 'n':
                             if (app.engine.player.location.y <= 0) {
                                 app.engine.player.setDirection(d);
-                                app.engine.player.thud();
+                                app.audio.play('walk-fail');
                                 return false;
                             }
                             if (!app.engine.player.canMoveTo(app.engine.player.location.x, app.engine.player.location.y - 1)) {
                                 app.engine.player.setDirection(d);
-                                app.engine.player.thud();
+                                app.audio.play('walk-fail');
                                 return false;
                             }
                             app.engine.player.location.y--;
@@ -69,12 +69,12 @@ $(function() {
                         case 'e':
                             if (app.engine.player.location.x >= app.engine.TOTALTILES_X - 1) {
                                 app.engine.player.setDirection(d);
-                                app.engine.player.thud();
+                                app.audio.play('walk-fail');
                                 return false;
                             }
                             if (!app.engine.player.canMoveTo(app.engine.player.location.x + 1, app.engine.player.location.y)) {
                                 app.engine.player.setDirection(d);
-                                app.engine.player.thud();
+                                app.audio.play('walk-fail');
                                 return false;
                             }
                             app.engine.player.location.x++;
@@ -82,12 +82,12 @@ $(function() {
                         case 's':
                             if (app.engine.player.location.y >= app.engine.TOTALTILES_Y - 1) {
                                 app.engine.player.setDirection(d);
-                                app.engine.player.thud();
+                                app.audio.play('walk-fail');
                                 return false;
                             }
                             if (!app.engine.player.canMoveTo(app.engine.player.location.x, app.engine.player.location.y + 1)) {
                                 app.engine.player.setDirection(d);
-                                app.engine.player.thud();
+                                app.audio.play('walk-fail');
                                 return false;
                             }
                             app.engine.player.location.y++;
@@ -95,12 +95,12 @@ $(function() {
                         case 'w':
                             if (app.engine.player.location.x <= 0) {
                                 app.engine.player.setDirection(d);
-                                app.engine.player.thud();
+                                app.audio.play('walk-fail');
                                 return false;
                             }
                             if (!app.engine.player.canMoveTo(app.engine.player.location.x - 1, app.engine.player.location.y)) {
                                 app.engine.player.setDirection(d);
-                                app.engine.player.thud();
+                                app.audio.play('walk-fail');
                                 return false;
                             }
                             app.engine.player.location.x--;
@@ -110,6 +110,7 @@ $(function() {
                             return;
                             break;
                     }
+                    app.audio.play('walk');
 
                     // check if we're in corruption, if so, 1/5 chance to kill()
                     var loc = app.engine.player.location;
@@ -151,10 +152,6 @@ $(function() {
                             $('#inventory-'+i).html(app.engine.player.inventory.data[i]);
                         }
                     },
-                },
-
-                thud: function() {
-                    document.getElementById('sound-thud').play();
                 },
 
                 // Forces an XY location
@@ -237,7 +234,7 @@ $(function() {
                     }
                     var mineable = tileData.tile.mineable;
                     if (!mineable) {
-                        document.getElementById('sound-mine-fail').play();
+                        app.audio.play('mine-fail');
                         return false;
                     }
                     //var health = tileData.health;
@@ -251,7 +248,7 @@ $(function() {
                         tile: [becomes, null]
                     });
                     app.engine.player.inventory.update(provides.id, provides.quantity);
-                    document.getElementById('sound-mine').play();
+                    app.audio.play('mine');
                 },
 
                 // Attempts to create and then place the specified tile
@@ -269,7 +266,7 @@ $(function() {
                     var item = app.engine.tilesets.descriptors.terrain[terrainIndex];
                     // provides is also the cost of manufacturing the tile
                     if (app.engine.player.inventory.update(item.provides.id, -item.provides.quantity)) {
-                        document.getElementById('sound-build').play();
+                        app.audio.play('build');
                         app.engine.map.data[coords.x][coords.y][0] = terrainIndex;
                         app.socket.emit('terraform', {
                             x: coords.x,
@@ -284,7 +281,7 @@ $(function() {
                 },
 
                 kill: function(message) {
-                    document.getElementById('sound-die').play();
+                    app.audio.play('death');
                     app.engine.player.direction = 's';
                     app.engine.player.setLocation(100, 100);
                     app.engine.player.updateViewport();
@@ -546,6 +543,9 @@ $(function() {
 
             start: function() {
                 app.socket = io.connect(window.document.location.protocol + "//" + window.document.location.host);
+
+                app.audio.initialize();
+
                 app.engine.viewport.x = Math.floor(app.engine.TOTALTILES_X / 2) - app.engine.PLAYER_OFFSET_X;
                 app.engine.viewport.y = Math.floor(app.engine.TOTALTILES_Y / 2) - app.engine.PLAYER_OFFSET_Y;
 
@@ -636,6 +636,9 @@ $(function() {
                 app.socket.emit('join', {name: app.engine.player.name});
 
                 app.socket.on('chat', function (data) {
+                    if (typeof data.priority == "undefined") {
+                        app.audio.play('chat');
+                    }
                     app.displayMessage(data.name, data.message, data.priority);
                 });
 
@@ -667,7 +670,7 @@ $(function() {
                         app.engine.map.data = data;
                     });
                     app.displayMessage('Server', "There has been an earthquake! New Rock and Ore has been added to the world.", 'server');
-                    document.getElementById('sound-earthquake').play();
+                    app.audio.play('earthquake');
                 });
 
                 app.socket.on('event npcmovement', function(data) {
@@ -842,6 +845,63 @@ $(function() {
                 .append("<div class='message " + priority + "'><span class='username'>" + label + ": </span><span class='content'>" + message + "</span></div>")
                 .animate({scrollTop: this.$messages[0].scrollHeight});
         },
+
+        audio: {
+            data: {
+                'mine': null,
+                'mine-fail': null,
+                'build': null,
+                'build-fail': null,
+                'walk': null,
+                'walk-fail': null,
+                'death': null,
+                'earthquake': null,
+                'chat': null,
+            },
+            
+            // Stores
+            volume: {
+                sound: 1.0,
+                music: 1.0
+            },
+            
+            // Creates the audio elements
+            initialize: function() {
+                var self = app.audio;
+                _.each(self.data, function(data, key) {
+                    app.audio.data[key] = document.getElementById('sound-' + key);
+                });
+            },
+            
+            // Sets the volume for the type of audio
+            setVolume: function(type, vol) {
+                var self = app.audio;
+                if (_.has(self.volume, type)) {
+                    vol = parseFloat(vol);
+                    if (vol < 0) {
+                        vol = 0.0;
+                    } else if (vol > 1) {
+                        vol = 1.0;
+                    }
+                    self.volume[type] = vol;
+                    return true;
+                }
+                return false;
+            },
+            
+            // Plays the specified sound
+            play: function(name) {
+                var self = app.audio;
+                var sound = null;
+                if (_.has(self.data, name)) {
+                    sound = self.data[name];
+                    sound.volume = self.volume.sound;
+                    sound.play();
+                    return true;
+                }
+                return false;
+            }
+        }
 
     };
 
