@@ -7,8 +7,6 @@ $(function() {
         socket: null,
 
         // Grab some DOM elements
-        $messages: $('#messages'),
-        $newMessage: $('#message-input'),
         $canvas: $('#map'),
 
         // Build main object
@@ -228,7 +226,7 @@ $(function() {
                 var tileData = app.player.getFacingTile();
                 var coords = tileData.location;
                 if (!app.god && coords.x >= 96 && coords.x <= 104 && coords.y >= 96 && coords.y <= 104) {
-                    app.displayMessage('Client', 'You cannot change the spawn location.', 'client');
+                    app.chat.message('Client', 'You cannot change the spawn location.', 'client');
                     return false;
                 }
                 var mineable = tileData.tile.mineable;
@@ -255,11 +253,11 @@ $(function() {
                 var replaceTile = app.player.getFacingTile();
                 var coords = replaceTile.location;
                 if (!app.god && coords.x >= 96 && coords.x <= 104 && coords.y >= 96 && coords.y <= 104) {
-                    app.displayMessage('Client', 'You cannot change the spawn location.', 'client');
+                    app.chat.message('Client', 'You cannot change the spawn location.', 'client');
                     return false;
                 }
                 if (!replaceTile.tile.replaceable) {
-                    app.displayMessage('Client', 'This object cannot be built over.', 'client');
+                    app.chat.message('Client', 'This object cannot be built over.', 'client');
                     return false;
                 }
                 var item = app.tilesets.descriptors.terrain[terrainIndex];
@@ -274,7 +272,7 @@ $(function() {
                     });
                         return true;
                 } else {
-                    app.displayMessage('Client', "You don't have the inventory to build this.", 'client');
+                    app.chat.message('Client', "You don't have the inventory to build this.", 'client');
                     return false;
                 }
             },
@@ -284,7 +282,7 @@ $(function() {
                 app.player.direction = 's';
                 app.player.setLocation(100, 100);
                 app.player.updateViewport();
-                app.displayMessage('Client', message, 'client');
+                app.chat.message('Client', message, 'client');
                 app.player.saveData();
             },
 
@@ -556,7 +554,7 @@ $(function() {
             if (app.player.loadData()) {
                 app.player.updateViewport();
                 app.player.inventory.resetCounters();
-                app.displayMessage('Client', 'Loaded your saved character', 'client');
+                app.chat.message('Client', 'Loaded your saved character', 'client');
             } else {
                 app.player.name = 'Anon' + Math.floor(Math.random() * 8999 + 1000);
                 app.player.picture = Math.floor(Math.random() * 15) + 1;
@@ -564,25 +562,25 @@ $(function() {
 
             $('#message-box form').submit(function(event) {
                 event.preventDefault();
-                var message = app.$newMessage.val();
-                app.$newMessage.val('');
+                var message = app.chat.$input.val();
+                app.chat.clear();
                 if (message === '/clear') {
-                    app.$messages.empty();
+                    app.chat.clear();
                     return;
                 } else if (message === '/help') {
-                    app.displayMessage('Help', '-{Keys}----------------------------', 'help');
-                    app.displayMessage('Help', 'Use the WASD keys to move', 'help');
-                    app.displayMessage('Help', 'Use the WASD keys + SHIFT to turn', 'help');
-                    app.displayMessage('Help', 'Press F to mine the facing object', 'help');
-                    app.displayMessage('Help', 'Press T or / to enter the chat box', 'help');
-                    app.displayMessage('Help', 'Press Esc to leave the chat box', 'help');
-                    app.displayMessage('Help', '-{Commands}------------------------', 'help');
-                    app.displayMessage('Help', '/nick <em>name</em>: change your name', 'help');
-                    app.displayMessage('Help', '/pic <em>1-16</em>: change your avatar', 'help');
-                    app.displayMessage('Help', '/who: get a list of players', 'help');
-                    app.displayMessage('Help', '/gps: get coordinates', 'help');
-                    app.displayMessage('Help', '/clear: reset message area', 'help');
-                    app.displayMessage('Help', '/kill: commit suicide', 'help');
+                    app.chat.message('Help', '-{Keys}----------------------------', 'help');
+                    app.chat.message('Help', 'Use the WASD keys to move', 'help');
+                    app.chat.message('Help', 'Use the WASD keys + SHIFT to turn', 'help');
+                    app.chat.message('Help', 'Press F to mine the facing object', 'help');
+                    app.chat.message('Help', 'Press T or / to enter the chat box', 'help');
+                    app.chat.message('Help', 'Press Esc to leave the chat box', 'help');
+                    app.chat.message('Help', '-{Commands}------------------------', 'help');
+                    app.chat.message('Help', '/nick <em>name</em>: change your name', 'help');
+                    app.chat.message('Help', '/pic <em>1-16</em>: change your avatar', 'help');
+                    app.chat.message('Help', '/who: get a list of players', 'help');
+                    app.chat.message('Help', '/gps: get coordinates', 'help');
+                    app.chat.message('Help', '/clear: reset message area', 'help');
+                    app.chat.message('Help', '/kill: commit suicide', 'help');
                     return;
                 } else if (message.indexOf('/nick ') === 0) {
                     var playerName = message.substr(6);
@@ -602,9 +600,9 @@ $(function() {
                     // change picture
                     return;
                 } else if (message === '/who') {
-                    app.displayMessage("Client", "Found " + app.players.locations.length + " players", 'client');
+                    app.chat.message("Client", "Found " + app.players.locations.length + " players", 'client');
                     _.each(app.players.locations, function(player) {
-                        app.displayMessage("Client", player.name, 'client');
+                        app.chat.message("Client", player.name, 'client');
                     });
                     return;
                 } else if (message === '/kill') {
@@ -612,7 +610,7 @@ $(function() {
                         app.socket.emit('chat', {name: app.player.name, message: "*Committed Suicide*", priority: 0});
                     return;
                 } else if (message === '/gps') {
-                    app.displayMessage("Client", "Coordinates: [" + (app.player.location.x) + "," + (app.player.location.y) + "]", 'client');
+                    app.chat.message("Client", "Coordinates: [" + (app.player.location.x) + "," + (app.player.location.y) + "]", 'client');
                     return;
                 } else if (message.indexOf('/tile ') === 0) {
                     var tile = parseInt(message.substr(6), 10);
@@ -628,7 +626,7 @@ $(function() {
                     });
                     return;
                 }
-                app.displayMessage(app.player.name, message, 'self');
+                app.chat.message(app.player.name, message, 'self');
                 app.socket.emit('chat', {name: app.player.name, message: message, priority: 0});
             });
 
@@ -638,17 +636,17 @@ $(function() {
                 if (typeof data.priority == "undefined") {
                     app.audio.play('chat');
                 }
-                app.displayMessage(data.name, data.message, data.priority);
+                app.chat.message(data.name, data.message, data.priority);
             });
 
             app.socket.on('disconnect', function(data) {
-                app.displayMessage('Server', 'Disconnected', 'server');
+                app.chat.message('Server', 'Disconnected', 'server');
             });
 
             app.socket.on('leave', function(data) {
                 app.players.remove(data.session);
                 var player_name = data.name || 'unknown';
-                app.displayMessage(data.name, "Player Disconnected", 'server');
+                app.chat.message(data.name, "Player Disconnected", 'server');
             });
 
             app.socket.on('terraform', function (data) {
@@ -668,7 +666,7 @@ $(function() {
                 $.get('/map', function(data) {
                     app.map.data = data;
                 });
-                app.displayMessage('Server', "There has been an earthquake! New Rock and Ore has been added to the world.", 'server');
+                app.chat.message('Server', "There has been an earthquake! New Rock and Ore has been added to the world.", 'server');
                 app.audio.play('earthquake');
             });
 
@@ -747,8 +745,8 @@ $(function() {
 
             setTimeout(function() {
                 // Display helpful command
-                app.displayMessage('Help', 'Type /help for some help', 'help');
-                app.displayMessage('Help', 'Type /nick NEWNAME to change your name', 'help');
+                app.chat.message('Help', 'Type /help for some help', 'help');
+                app.chat.message('Help', 'Type /nick NEWNAME to change your name', 'help');
                 // Broadcast location
                 app.socket.emit('character info', {
                     x: app.player.location.x,
@@ -837,11 +835,17 @@ $(function() {
             });
         },
 
-        // Displays a message in the message box, and scrolls to the bottom
-        displayMessage: function(label, message, priority) {
-            this.$messages
-                .append("<div class='message " + priority + "'><span class='username'>" + label + ": </span><span class='content'>" + message + "</span></div>")
-                .animate({scrollTop: this.$messages[0].scrollHeight});
+        chat: {
+            $output: $('#messages'),
+            $input: $('#message-input'),
+            message: function(who, message, priority) {
+                app.chat.$output
+                    .append("<div class='message " + priority + "'><span class='username'>" + who + ": </span><span class='content'>" + message + "</span></div>")
+                    .animate({scrollTop: this.$output[0].scrollHeight});
+            },
+            clear: function() {
+                app.chat.$input.val('');
+            },
         },
 
         audio: {
@@ -903,33 +907,33 @@ $(function() {
 
     };
 
-    app.displayMessage('Client', 'Downloading assets...', 'client');
+    app.chat.message('Client', 'Downloading assets...', 'client');
 
     // load Character, Inventory, Terrain descriptors
     $.get('/assets/tilesets/data.json', function(data) {
-        app.displayMessage('Client', 'Tileset Descriptors done.', 'client');
+        app.chat.message('Client', 'Tileset Descriptors done.', 'client');
         app.tilesets.descriptors = data;
     });
 
     // load background sprites
     app.tilesets.terrain.src = '/assets/tilesets/terrain.png';
     app.tilesets.terrain.onload = function() {
-        app.displayMessage('Client', 'Tileset Terrain done.', 'client');
+        app.chat.message('Client', 'Tileset Terrain done.', 'client');
     }
     // load characters sprites
     app.tilesets.characters.src = '/assets/tilesets/characters.png';
     app.tilesets.characters.onload = function() {
-        app.displayMessage('Client', 'Tileset Characters done.', 'client');
+        app.chat.message('Client', 'Tileset Characters done.', 'client');
     }
 
     // load inventory sprites
     app.tilesets.inventory.src = '/assets/tilesets/inventory.png';
     app.tilesets.inventory.onload = function() {
-        app.displayMessage('Client', 'Tileset Inventory done.', 'client');
+        app.chat.message('Client', 'Tileset Inventory done.', 'client');
     }
 
     $.get('/map', function(data) {
-        app.displayMessage('Client', 'Map data done.', 'client');
+        app.chat.message('Client', 'Map data done.', 'client');
         app.map.data = data;
         app.start();
     });
