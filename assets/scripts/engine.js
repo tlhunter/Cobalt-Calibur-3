@@ -560,75 +560,7 @@ $(function() {
                 app.player.picture = Math.floor(Math.random() * 15) + 1;
             }
 
-            $('#message-box form').submit(function(event) {
-                event.preventDefault();
-                var message = app.chat.$input.val();
-                app.chat.clear();
-                if (message === '/clear') {
-                    app.chat.clear();
-                    return;
-                } else if (message === '/help') {
-                    app.chat.message('Help', '-{Keys}----------------------------', 'help');
-                    app.chat.message('Help', 'Use the WASD keys to move', 'help');
-                    app.chat.message('Help', 'Use the WASD keys + SHIFT to turn', 'help');
-                    app.chat.message('Help', 'Press F to mine the facing object', 'help');
-                    app.chat.message('Help', 'Press T or / to enter the chat box', 'help');
-                    app.chat.message('Help', 'Press Esc to leave the chat box', 'help');
-                    app.chat.message('Help', '-{Commands}------------------------', 'help');
-                    app.chat.message('Help', '/nick <em>name</em>: change your name', 'help');
-                    app.chat.message('Help', '/pic <em>1-16</em>: change your avatar', 'help');
-                    app.chat.message('Help', '/who: get a list of players', 'help');
-                    app.chat.message('Help', '/gps: get coordinates', 'help');
-                    app.chat.message('Help', '/clear: reset message area', 'help');
-                    app.chat.message('Help', '/kill: commit suicide', 'help');
-                    return;
-                } else if (message.indexOf('/nick ') === 0) {
-                    var playerName = message.substr(6);
-                    app.player.name = playerName;
-                    app.updateCharacterInfo();
-                    return;
-                } else if (message.indexOf('/pic ') === 0) {
-                    var picIndex = parseInt(message.substr(5), 10);
-                    if (isNaN(picIndex)) {
-                        picIndex = 1;
-                    }
-                    if (picIndex > 16) {
-                        picIndex = 1;
-                    }
-                    app.player.picture = picIndex;
-                    app.updateCharacterInfo();
-                    // change picture
-                    return;
-                } else if (message === '/who') {
-                    app.chat.message("Client", "Found " + app.players.locations.length + " players", 'client');
-                    _.each(app.players.locations, function(player) {
-                        app.chat.message("Client", player.name, 'client');
-                    });
-                    return;
-                } else if (message === '/kill') {
-                    app.player.kill('Committed Suicide');
-                        app.socket.emit('chat', {name: app.player.name, message: "*Committed Suicide*", priority: 0});
-                    return;
-                } else if (message === '/gps') {
-                    app.chat.message("Client", "Coordinates: [" + (app.player.location.x) + "," + (app.player.location.y) + "]", 'client');
-                    return;
-                } else if (message.indexOf('/tile ') === 0) {
-                    var tile = parseInt(message.substr(6), 10);
-                    if (isNaN(tile)) {
-                        return;
-                    }
-                    var coords = app.player.getFacingTile().location;
-                    app.map.data[coords.x][coords.y][0] = tile;
-                    app.socket.emit('terraform', {
-                        x: coords.x,
-                        y: coords.y,
-                        tile: [tile, null]
-                    });
-                    return;
-                }
-                app.chat.message(app.player.name, message, 'self');
-                app.socket.emit('chat', {name: app.player.name, message: message, priority: 0});
-            });
+            app.chat.initialize();
 
             app.socket.emit('join', {name: app.player.name});
 
@@ -844,8 +776,82 @@ $(function() {
                     .animate({scrollTop: this.$output[0].scrollHeight});
             },
             clear: function() {
+                app.chat.$output.empty();
+            },
+            clearInput: function() {
                 app.chat.$input.val('');
             },
+            initialize: function() {
+                $('#message-box form').submit(function(event) {
+                    event.preventDefault();
+                    var message = app.chat.$input.val();
+                    app.chat.clearInput();
+                    if (message === '/clear') {
+                        app.chat.clear();
+                        return;
+                    } else if (message === '/help') {
+                        app.chat.message('Help', '-{Keys}----------------------------', 'help');
+                        app.chat.message('Help', 'Use the WASD keys to move', 'help');
+                        app.chat.message('Help', 'Use the WASD keys + SHIFT to turn', 'help');
+                        app.chat.message('Help', 'Press F to mine the facing object', 'help');
+                        app.chat.message('Help', 'Press T or / to enter the chat box', 'help');
+                        app.chat.message('Help', 'Press Esc to leave the chat box', 'help');
+                        app.chat.message('Help', '-{Commands}------------------------', 'help');
+                        app.chat.message('Help', '/nick <em>name</em>: change your name', 'help');
+                        app.chat.message('Help', '/pic <em>1-16</em>: change your avatar', 'help');
+                        app.chat.message('Help', '/who: get a list of players', 'help');
+                        app.chat.message('Help', '/gps: get coordinates', 'help');
+                        app.chat.message('Help', '/clear: reset message area', 'help');
+                        app.chat.message('Help', '/kill: commit suicide', 'help');
+                        return;
+                    } else if (message.indexOf('/nick ') === 0) {
+                        var playerName = message.substr(6);
+                        app.player.name = playerName;
+                        app.updateCharacterInfo();
+                        return;
+                    } else if (message.indexOf('/pic ') === 0) {
+                        var picIndex = parseInt(message.substr(5), 10);
+                        if (isNaN(picIndex)) {
+                            picIndex = 1;
+                        }
+                        if (picIndex > 16) {
+                            picIndex = 1;
+                        }
+                        app.player.picture = picIndex;
+                        app.updateCharacterInfo();
+                        // change picture
+                        return;
+                    } else if (message === '/who') {
+                        app.chat.message("Client", "Found " + app.players.locations.length + " players", 'client');
+                        _.each(app.players.locations, function(player) {
+                            app.chat.message("Client", player.name, 'client');
+                        });
+                        return;
+                    } else if (message === '/kill') {
+                        app.player.kill('Committed Suicide');
+                            app.socket.emit('chat', {name: app.player.name, message: "*Committed Suicide*", priority: 0});
+                        return;
+                    } else if (message === '/gps') {
+                        app.chat.message("Client", "Coordinates: [" + (app.player.location.x) + "," + (app.player.location.y) + "]", 'client');
+                        return;
+                    } else if (message.indexOf('/tile ') === 0) {
+                        var tile = parseInt(message.substr(6), 10);
+                        if (isNaN(tile)) {
+                            return;
+                        }
+                        var coords = app.player.getFacingTile().location;
+                        app.map.data[coords.x][coords.y][0] = tile;
+                        app.socket.emit('terraform', {
+                            x: coords.x,
+                            y: coords.y,
+                            tile: [tile, null]
+                        });
+                        return;
+                    }
+                    app.chat.message(app.player.name, message, 'self');
+                    app.socket.emit('chat', {name: app.player.name, message: message, priority: 0});
+                });
+            }
         },
 
         audio: {
