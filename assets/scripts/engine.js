@@ -25,6 +25,41 @@ window.app = {
         app.network.send.join(app.player.name);
 
         // Character keypress
+        app.initializeKeybindings();
+
+        // global animation and map redraw function
+        // Tried using requestAnimationFrame, but that is slow and choppy
+        var currentFrame = 0;
+        setInterval(function() {
+            currentFrame++;
+            if (currentFrame % 3 == 0) {
+                currentFrame = 0;
+                // redraw every 150 ms, but change animation every 450 ms
+                app.animFrameGlobal = !app.animFrameGlobal;
+                app.player.killIfNpcNearby();
+            }
+            app.map.render(currentFrame === 0);
+        }, 150);
+
+        setTimeout(function() {
+            // Display helpful command
+            app.chat.message('Help', 'Type /help for some help', 'help');
+            app.chat.message('Help', 'Type /nick NEWNAME to change your name', 'help');
+            // Broadcast location
+            app.network.send.move(app.player.coordinates.x, app.player.coordinates.x, app.player.direction);
+            app.network.send.character(app.player.name, app.player.picture);
+        }, 500);
+
+        setInterval(function() {
+            app.persistence.save();
+        }, 3000); // save every 3 seconds
+
+        $(window).unload(function() {
+            app.persistence.save();
+        });
+    },
+
+    initializeKeybindings: function() {
         $(document).keypress(function(e) {
             if ($(e.target).is(":input")) {
                 return;
@@ -58,37 +93,6 @@ window.app = {
             } else if (e.which == 102) { // f
                 app.player.mineFacingTile();
             }
-        });
-
-        // global animation and map redraw function
-        // Tried using requestAnimationFrame, but that is slow and choppy
-        var currentFrame = 0;
-        setInterval(function() {
-            currentFrame++;
-            if (currentFrame % 3 == 0) {
-                currentFrame = 0;
-                // redraw every 150 ms, but change animation every 450 ms
-                app.animFrameGlobal = !app.animFrameGlobal;
-                app.player.killIfNpcNearby();
-            }
-            app.map.render(currentFrame === 0);
-        }, 150);
-
-        setTimeout(function() {
-            // Display helpful command
-            app.chat.message('Help', 'Type /help for some help', 'help');
-            app.chat.message('Help', 'Type /nick NEWNAME to change your name', 'help');
-            // Broadcast location
-            app.network.send.move(app.player.coordinates.x, app.player.coordinates.x, app.player.direction);
-            app.network.send.character(app.player.name, app.player.picture);
-        }, 500);
-
-        setInterval(function() {
-            app.persistence.save();
-        }, 3000); // save every 3 seconds
-
-        $(window).unload(function() {
-            app.persistence.save();
         });
     },
 
