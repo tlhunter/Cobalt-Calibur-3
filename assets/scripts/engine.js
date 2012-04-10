@@ -618,7 +618,7 @@ window.app = {
             var mapX = 0;
             var mapY = 0;
             var tile;
-            if (redrawNametags) app.nametags.hide();
+            if (redrawNametags) app.graphics.nametags.hide();
 
             for (j=0; j<app.screen.tilesY; j++) {
                 for (i=0; i < app.screen.tilesX; i++) {
@@ -638,7 +638,7 @@ window.app = {
                             if (isNaN(picture_id)) {
                                 picture_id = 56;
                             }
-                            if (redrawNametags) app.nametags.add(player.name, i, j);
+                            if (redrawNametags) app.graphics.nametags.add(player.name, i, j);
                             app.tile.drawPlayer(i, j, index, picture_id);
                         }
                     }
@@ -650,7 +650,7 @@ window.app = {
                             var index = app.map.getCharacterFrame(npc.d, app.animFrameGlobal);
 
                             var npc_name = app.tilesets.descriptors.characters[npc.id].name;
-                            if (redrawNametags) app.nametags.add(npc_name, i, j);
+                            if (redrawNametags) app.graphics.nametags.add(npc_name, i, j);
                             app.tile.drawPlayer(i, j, index, npc.id);
                         }
                     }
@@ -671,10 +671,10 @@ window.app = {
 
             // Draw this player
             var index = app.map.getCharacterFrame(app.player.direction, app.animFrameMe);
-            if (redrawNametags) app.nametags.add(app.player.name, app.PLAYER_OFFSET_X, app.PLAYER_OFFSET_Y);
+            if (redrawNametags) app.graphics.nametags.add(app.player.name, app.PLAYER_OFFSET_X, app.PLAYER_OFFSET_Y);
             app.tile.drawPlayer(app.PLAYER_OFFSET_X, app.PLAYER_OFFSET_Y, index, app.player.picture);
 
-            if (redrawNametags) app.nametags.show();
+            if (redrawNametags) app.graphics.nametags.show();
 
             app.daytime.drawDayLight();
         },
@@ -780,31 +780,33 @@ window.app = {
         },
     },
 
-    // Nametags are displayed in HTML in a layer above canvas (for now at least, not sure which is faster)
-    nametags: {
-        $tags: $('#nametags'),
+    graphics: {
+        // Nametags are displayed in HTML in a layer above canvas
+        nametags: {
+            $tags: $('#nametags'),
 
-        // adds a player name, provided the X and Y coords of the player
-        add: function(name, x, y) {
-            var x_pixel = (x - 4) * app.TILEWIDTH + 7; // 7 is left margin or something
-            var y_pixel = (y - 1) * app.TILEHEIGHT + 2;
-            var $tags = app.nametags.$tags;
-            var $name = $('<div class="name"><span>' + name + '</span></div>');
-            $name.css({
-                left: x_pixel,
-                top: y_pixel
-            });
-            $tags.append($name);
-        },
+            // adds a player name, provided the X and Y coords of the player
+            add: function(name, x, y) {
+                var x_pixel = (x - 4) * app.TILEWIDTH + 7; // 7 is left margin or something
+                var y_pixel = (y - 1) * app.TILEHEIGHT + 2;
+                var $tags = app.graphics.nametags.$tags;
+                var $name = $('<div class="name"><span>' + name + '</span></div>');
+                $name.css({
+                    left: x_pixel,
+                    top: y_pixel
+                });
+                $tags.append($name);
+            },
 
-        // hide (for efficient DOM redraws) and clear entries
-        hide: function() {
-            app.nametags.$tags.hide().empty();
-        },
+            // hide (for efficient DOM redraws) and clear entries
+            hide: function() {
+                app.graphics.nametags.$tags.hide().empty();
+            },
 
-        // show list again
-        show: function() {
-            app.nametags.$tags.show();
+            // show list again
+            show: function() {
+                app.graphics.nametags.$tags.show();
+            }
         }
     },
 
