@@ -80,7 +80,7 @@ window.app = {
             app.chat.message('Help', 'Type /nick NEWNAME to change your name', 'help');
             // Broadcast location
             app.network.send.move(app.player.location.x, app.player.location.x, app.player.direction);
-            app.updateCharacterInfo();
+            app.network.send.character(app.player.name, app.player.picture);
         }, 500);
 
         setInterval(function() {
@@ -427,13 +427,23 @@ window.app = {
         },
 
         createNewPlayer: function() {
-            app.player.inventory.data = [0, 0, 0, 0, 0, 0, 0];
+            app.player.inventory.data = [0, 0, 0, 0, 0, 0, 0, 0, 0];
             app.player.direction = 's';
             app.player.location = {x: 100, y: 100};
             app.player.name = 'Anon' + Math.floor(Math.random() * 8999 + 1000);
             app.player.picture = Math.floor(Math.random() * 15) + 1;
             app.chat.message('Client', 'Creating a character for the first time', 'client');
+        },
+
+        destroy: function() {
+            app.player = null;
+            localStorage.setItem('data', null);
+            $(window).unload(function() {
+                app.persistence.destroy();
+            });
+            location.reload(true);
         }
+
     },
 
     // Functions and data regarding the other players
@@ -798,11 +808,6 @@ window.app = {
         }
     },
 
-    // run this when we make a local change to alert other players and server
-    updateCharacterInfo: function() {
-        app.network.send.character(app.player.name, app.player.picture);
-    },
-
     chat: {
         $output: $('#messages'),
         $input: $('#message-input'),
@@ -843,7 +848,7 @@ window.app = {
                 } else if (message.indexOf('/nick ') === 0) {
                     var playerName = message.substr(6);
                     app.player.name = playerName;
-                    app.updateCharacterInfo();
+                    app.network.send.character(app.player.name, app.player.picture);
                     return;
                 } else if (message.indexOf('/pic ') === 0) {
                     var picIndex = parseInt(message.substr(5), 10);
@@ -854,7 +859,7 @@ window.app = {
                         picIndex = 1;
                     }
                     app.player.picture = picIndex;
-                    app.updateCharacterInfo();
+                    app.network.send.character(app.player.name, app.player.picture);
                     // change picture
                     return;
                 } else if (message === '/who') {
