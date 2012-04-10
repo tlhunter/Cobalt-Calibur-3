@@ -5,9 +5,18 @@ $(function() {
 window.app = {
 	initialize: function() {
         $.when(
-            app.graphics.tilesets.downloadTerrain(),
-            app.graphics.tilesets.downloadAvatars(),
-            app.graphics.tilesets.downloadInventory(),
+            app.graphics.tilesets.download(
+                '/assets/tilesets/inventory.png',
+                app.graphics.tilesets.inventory
+            ),
+            app.graphics.tilesets.download(
+                '/assets/tilesets/characters.png',
+                app.graphics.tilesets.avatars
+            ),
+            app.graphics.tilesets.download(
+                '/assets/tilesets/terrain.png',
+                app.graphics.tilesets.terrain
+            ),
             app.environment.downloadTiles(),
             app.environment.downloadMap()
         ).done(function() {
@@ -277,28 +286,9 @@ window.app = {
 			avatars: new Image(),
 			inventory: new Image(),
 
-            downloadTerrain: function() {
+            download: function(url, tileset) {
                 var d = $.Deferred();
-                var tileset = app.graphics.tilesets.terrain;
-                tileset.src = '/assets/tilesets/terrain.png';
-                tileset.onload = function() { d.resolve(); }
-                tileset.onerror = function() { d.reject(); }
-                return d.promise();
-            },
-
-            downloadAvatars: function() {
-                var d = $.Deferred();
-                var tileset = app.graphics.tilesets.characters;
-                tileset.src = '/assets/tilesets/characters.png';
-                tileset.onload = function() { d.resolve(); }
-                tileset.onerror = function() { d.reject(); }
-                return d.promise();
-            },
-
-            downloadInventory: function() {
-                var d = $.Deferred();
-                var tileset = app.graphics.tilesets.inventory;
-                tileset.src = '/assets/tilesets/inventory.png';
+                tileset.src = url;
                 tileset.onload = function() { d.resolve(); }
                 tileset.onerror = function() { d.reject(); }
                 return d.promise();
