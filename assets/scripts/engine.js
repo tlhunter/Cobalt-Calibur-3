@@ -17,7 +17,7 @@ window.app = {
         app.screen.tilesY = app.$canvas.height() / app.TILEHEIGHT;
 
         app.persistence.load() || app.persistence.createNewPlayer();
-        app.player.updateViewport();
+        app.graphics.updateViewport();
         app.player.inventory.resetCounters();
 
         app.chat.initialize();
@@ -207,7 +207,7 @@ window.app = {
             }
 
             app.animFrameMe = !app.animFrameMe;
-            app.player.updateViewport();
+            app.graphics.updateViewport();
 
             app.player.setDirection(d); // broadcasts location
         },
@@ -244,7 +244,7 @@ window.app = {
             app.player.location.x = x;
             app.player.location.y = y;
 
-            app.player.updateViewport();
+            app.graphics.updateViewport();
 
             app.player.broadcastLocation();
         },
@@ -283,12 +283,6 @@ window.app = {
             );
 
             return data;
-        },
-
-        // Updates the viewport based on the players current location
-        updateViewport: function() {
-            app.viewport.x = app.player.location.x - app.PLAYER_OFFSET_X;
-            app.viewport.y = app.player.location.y - app.PLAYER_OFFSET_Y;
         },
 
         canMoveTo: function(x, y) {
@@ -355,7 +349,7 @@ window.app = {
             app.audio.play('death');
             app.player.direction = 's';
             app.player.setLocation(100, 100);
-            app.player.updateViewport();
+            app.graphics.updateViewport();
             app.chat.message('Client', message, 'client');
             app.persistence.save();
         },
@@ -807,7 +801,13 @@ window.app = {
             show: function() {
                 app.graphics.nametags.$tags.show();
             }
-        }
+        },
+
+        // Updates the viewport based on the players current location
+        updateViewport: function() {
+            app.viewport.x = app.player.location.x - app.PLAYER_OFFSET_X;
+            app.viewport.y = app.player.location.y - app.PLAYER_OFFSET_Y;
+        },
     },
 
     chat: {
