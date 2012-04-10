@@ -4,7 +4,6 @@
 $(function() {
 window.app = {
     god: false,
-    socket: null,
 
     // Grab some DOM elements
     $canvas: $('#map'),
@@ -114,7 +113,7 @@ window.app = {
             if (app.map.corruptionDataLoaded && app.map.corruption[loc.x][loc.y]) {
                 if (Math.random() < 1/10) {
                     app.player.kill("You were killed by corruption");
-                    app.socket.emit('chat', {name: app.player.name, message: "*Killed by Corruption*", priority: 0});
+                    app.network.send.chat(app.player.name, "*Killed by Corruption*");
                 }
             }
 
@@ -210,14 +209,8 @@ window.app = {
             return true;
         },
 
-        // Transmits a socket message with our current location and direction
         broadcastLocation: function() {
-            app.socket.emit('character info', {
-                x: app.player.location.x,
-                y: app.player.location.y,
-                direction: app.player.direction
-            });
-
+            app.network.send.move(app.player.location.x, app.player.location.y, app.player.direction);
             app.map.render(true);
         },
 
@@ -239,11 +232,7 @@ window.app = {
             var provides = tileData.tile.provides;
             //console.log(tileData, becomes, provides);
             app.map.data[coords.x][coords.y][0] = becomes;
-            app.socket.emit('terraform', {
-                x: coords.x,
-                y: coords.y,
-                tile: [becomes, null]
-            });
+            app.network.send.terraform(coords.x, coords.y, becomes);
             app.player.inventory.update(provides.id, provides.quantity);
             app.audio.play('mine');
         },
@@ -265,12 +254,8 @@ window.app = {
             if (app.player.inventory.update(item.provides.id, -item.provides.quantity)) {
                 app.audio.play('build');
                 app.map.data[coords.x][coords.y][0] = terrainIndex;
-                app.socket.emit('terraform', {
-                    x: coords.x,
-                    y: coords.y,
-                    tile: [terrainIndex, null]
-                });
-                    return true;
+                app.network.send.terraform(coords.x, coords.y, terrainIndex);
+                return true;
             } else {
                 app.chat.message('Client', "You don't have the inventory to build this.", 'client');
                 return false;
@@ -384,6 +369,114 @@ window.app = {
             }
         }
     },
+
+	network: {
+		socket: null,
+		connectSocket: function() {
+			app.network.socket = io.connect(window.document.location.protocol + "//" + window.document.location.host);
+		},
+		send: {
+			// Player types a message to be sent, probably don't need name value anymore
+			chat: function(message) {
+				app.network.socket.emit('chat', {
+					name: app.player.name,
+					message: message,
+					priority: 0
+				});
+			},
+			// Player moves to a new location
+			move: function(newX, newY, newDirection) {
+				app.network.socket.emit('character info', {
+                    x: newX,
+                    y: newY,
+                    direction: newDirection
+                });
+			},
+			// Player builds a tile or mines a tile
+			terraform: function(x, y, tile) {
+				app.network.socket.emit('terraform', {
+                    x: x,
+                    y: y,
+                    tile: [tile, null]
+                });
+			},
+			// Player dies
+			death: function(name, method) {
+				app.network.socket.emit('chat', {
+					name: name,
+					message: message,
+					priority: 'server'
+				});
+			},
+			// Player changes either their name or their picture
+			character: function(name, picture) {
+				app.network.socket.emit('character info', {
+                    name: name,
+                    picture: picture
+                });
+			},
+
+            join: function(name) {
+                app.network.socket.emit('join', {
+                    name: name
+                });
+            }
+		},
+		
+		bindEvents: function() {
+            app.network.socket.on('chat', function (data) {
+                if (typeof data.priority == "undefined") {
+                    app.audio.play('chat');
+                }
+                app.chat.message(data.name, data.message, data.priority);
+            });
+            app.network.socket.on('disconnect', function(data) {
+                app.chat.message('Server', 'Disconnected', 'server');
+            });
+
+            app.network.socket.on('leave', function(data) {
+                app.players.remove(data.session);
+                var player_name = data.name || 'unknown';
+                app.chat.message(data.name, "Player Disconnected", 'server');
+            });
+
+            app.network.socket.on('terraform', function (data) {
+                app.map.data[data.x][data.y] = data.tile;
+            });
+
+            app.network.socket.on('character info', function(data) {
+                if (app.network.socket.socket.sessionid == data.dession) return;
+                app.players.update(data);
+            });
+
+            app.network.socket.on('event time', function(data) {
+                app.daytime.setCurrentTime(data.time);
+            });
+
+            app.network.socket.on('event earthquake', function(data) {
+                $.get('/map', function(data) {
+                    app.map.data = data;
+                });
+                app.chat.message('Server', "There has been an earthquake! New Rock and Ore has been added to the world.", 'server');
+                app.audio.play('earthquake');
+            });
+
+            app.network.socket.on('event npcmovement', function(data) {
+                app.npc.updateData(data.npcs);
+            });
+
+            app.network.socket.on('event corruption', function(data) {
+                app.map.corruptionDataLoaded = true;
+                app.map.corruption = data.map;
+            });
+
+            app.network.socket.on('event bigterraform', function(data) {
+                $.get('/map', function(data) {
+                    app.map.data = data;
+                });
+            });
+		}
+	},
 
     // Functions and data regarding the map
     map: {
@@ -539,7 +632,7 @@ window.app = {
     },
 
     start: function() {
-        app.socket = io.connect(window.document.location.protocol + "//" + window.document.location.host);
+        app.network.connectSocket();
 
         app.audio.initialize();
 
@@ -561,61 +654,8 @@ window.app = {
         }
 
         app.chat.initialize();
-
-        app.socket.emit('join', {name: app.player.name});
-
-        app.socket.on('chat', function (data) {
-            if (typeof data.priority == "undefined") {
-                app.audio.play('chat');
-            }
-            app.chat.message(data.name, data.message, data.priority);
-        });
-
-        app.socket.on('disconnect', function(data) {
-            app.chat.message('Server', 'Disconnected', 'server');
-        });
-
-        app.socket.on('leave', function(data) {
-            app.players.remove(data.session);
-            var player_name = data.name || 'unknown';
-            app.chat.message(data.name, "Player Disconnected", 'server');
-        });
-
-        app.socket.on('terraform', function (data) {
-            app.map.data[data.x][data.y] = data.tile;
-        });
-
-        app.socket.on('character info', function(data) {
-            if (app.socket.socket.sessionid == data.dession) return;
-            app.players.update(data);
-        });
-
-        app.socket.on('event time', function(data) {
-            app.daytime.setCurrentTime(data.time);
-        });
-
-        app.socket.on('event earthquake', function(data) {
-            $.get('/map', function(data) {
-                app.map.data = data;
-            });
-            app.chat.message('Server', "There has been an earthquake! New Rock and Ore has been added to the world.", 'server');
-            app.audio.play('earthquake');
-        });
-
-        app.socket.on('event npcmovement', function(data) {
-            app.npc.updateData(data.npcs);
-        });
-
-        app.socket.on('event corruption', function(data) {
-            app.map.corruptionDataLoaded = true;
-            app.map.corruption = data.map;
-        });
-
-        app.socket.on('event bigterraform', function(data) {
-            $.get('/map', function(data) {
-                app.map.data = data;
-            });
-        });
+        app.network.bindEvents();
+        app.network.send.join(app.player.name);
 
         // Pres Esc inside of text box, leave the text box
         $(document).keyup(function(e) {
@@ -680,11 +720,7 @@ window.app = {
             app.chat.message('Help', 'Type /help for some help', 'help');
             app.chat.message('Help', 'Type /nick NEWNAME to change your name', 'help');
             // Broadcast location
-            app.socket.emit('character info', {
-                x: app.player.location.x,
-                y: app.player.location.y,
-                direction: app.player.direction
-            });
+            app.network.send.move(app.player.location.x, app.player.location.x, app.player.direction);
             app.updateCharacterInfo();
         }, 500);
 
@@ -761,10 +797,7 @@ window.app = {
 
     // run this when we make a local change to alert other players and server
     updateCharacterInfo: function() {
-        app.socket.emit('character info', {
-            name: app.player.name,
-            picture: app.player.picture
-        });
+        app.network.send.character(app.player.name, app.player.picture);
     },
 
     chat: {
@@ -829,7 +862,7 @@ window.app = {
                     return;
                 } else if (message === '/kill') {
                     app.player.kill('Committed Suicide');
-                        app.socket.emit('chat', {name: app.player.name, message: "*Committed Suicide*", priority: 0});
+                        app.network.send.chat(app.player.name, "*Committed Suicide*");
                     return;
                 } else if (message === '/gps') {
                     app.chat.message("Client", "Coordinates: [" + (app.player.location.x) + "," + (app.player.location.y) + "]", 'client');
@@ -841,15 +874,11 @@ window.app = {
                     }
                     var coords = app.player.getFacingTile().location;
                     app.map.data[coords.x][coords.y][0] = tile;
-                    app.socket.emit('terraform', {
-                        x: coords.x,
-                        y: coords.y,
-                        tile: [tile, null]
-                    });
+                    app.network.send.terraform(coords.x, coords.y, tile);
                     return;
                 }
                 app.chat.message(app.player.name, message, 'self');
-                app.socket.emit('chat', {name: app.player.name, message: message, priority: 0});
+                app.network.send.chat(app.player.name, message);
             });
         }
     },
