@@ -17,7 +17,7 @@ window.app = {
             app.network.connectSocket();
         });
 	},
-	
+
 	player: {
 		name: '',
 		position: {
@@ -200,7 +200,7 @@ window.app = {
 			}
 		},
 		kill: function() {
-			
+
 		},
         killIfInCorruption: function(coords) {
             if (app.environment.map.corruption[coords.x][coords.y]) {
@@ -215,45 +215,45 @@ window.app = {
             }
         }
 	},
-	
+
 	players: {
 		data: [],
 		update: function(data) {
-			
+
 		},
 		remove: function(data) {
-			
+
 		},
 		drawAll: function() {
-			
+
 		}
 	},
-	
+
 	npcs: {
 		data: [],
 		updateAllData: function(data) {
 			app.npcs.data = data;
 		},
 		drawAll: function() {
-			
+
 		}
 	},
-	
+
 	persistence: {
 		save: function(data, value) {
-			
+
 		},
 		load: function() {
-			
+
 		},
 		createNewPlayer: function() {
-			
+
 		}
 	},
-	
+
 	graphics: {
 		screen: {
-			
+
 		},
 		TILE_WIDTH_PIXEL: 16,
         TILE_HEIGHT_PIXEL: 16,
@@ -264,14 +264,14 @@ window.app = {
 
 			WIDTH_TILE: 17,
 			HEIGHT_TILE: 17,
-			
+
 			PLAYER_OFFSET_LEFT_TILE: 8,
 		    PLAYER_OFFSET_TOP_TILE: 8,
-			
+
 			x: null,
 			y: null
 		},
-	
+
 		tilesets: {
 			terrain: new Image(),
 			avatars: new Image(),
@@ -304,18 +304,18 @@ window.app = {
                 return d.promise();
             }
 		},
-		
+
 		globalAnimationFrame: false,
 		selfAnimationFrame: false,
-		
+
 		$canvas: $('canvas#map'),
 		context: document.getElementById('map').getContext('2d'),
-		
+
 		updateViewport: function(player_x, player_y) {
-			
+
 		}
 	},
-	
+
 	network: {
 		socket: null,
 		connectSocket: function() {
@@ -362,12 +362,12 @@ window.app = {
                 });
 			}
 		},
-		
+
 		bindEvents: function() {
 			// setup all of the event bindings
 		}
 	},
-	
+
 	environment: {
         MAP_WIDTH_TILE: 200,
         MAP_HEIGHT_TILE: 200,
@@ -377,16 +377,16 @@ window.app = {
 		corruption: [], // corruption map
 		corruptionLoaded: false, // bandaid
 		time: 8, // current time
-		
+
 		updateTime: function(newTime) {
 			app.environment.time = newTime;
 			// Set a transparent background color on a layer above the canvas
 		},
-		
+
 		updateTile: function(x, y, newTile) {
-			
+
 		},
-		
+
         // Downloads the map after the app is up and running, usually when big changes occur
 		updateMap: function(callback) {
 			$.get('/map', function(data) {
@@ -412,28 +412,28 @@ window.app = {
                 return true;
             });
         },
-		
+
 		doesLocationBlockPlayer: function(x, y) {
-			
+
 		},
-		
+
 		getLocationData: function(x, y) {
-			
+
 		},
-		
+
 		attemptMineTile: function(x, y) {
-			
+
 		},
-		
+
 		attemptPlaceItem: function(x, y, tile_id) {
-			
+
 		},
-		
+
 		updateCorruption: function(data) {
 			app.environment.corruption = data;
 			app.environment.corruptionLoaded = true;
 		},
-		
+
 		isLocationValid: function(coords) {
 			if (coords.x >= 0 && coords.y >= 0 && coords.x < app.environment.MAP_WIDTH_TILE && coords.y < app.environment.MAP_HEIGHT_TILE) {
 				return true;
@@ -441,21 +441,21 @@ window.app = {
 			return false;
 		}
 	},
-	
+
 	chat: {
 		$messageOutput: $('#messages'),
         $messageInput: $('#message-input'),
 		message: function(who, message, priority) {
-			
+
 		},
 		clear: function() {
-			
+
 		},
 		initialize: function() {
 			// bindings
 		}
 	},
-	
+
 	audio: {
 		data: {
 			'mine': null,
@@ -468,13 +468,13 @@ window.app = {
 			'earthquake': null,
 			'chat': null,
 		},
-		
+
 		// Stores
 		volume: {
 			sound: 1.0,
 			music: 1.0
 		},
-		
+
 		// Creates the audio elements
 		initialize: function() {
 			var self = app.audio;
@@ -482,7 +482,7 @@ window.app = {
 				data = document.getElementById('sound-' + key);
 			});
 		},
-		
+
 		// Sets the volume for the type of audio
 		setVolume: function(type, vol) {
 			var self = app.audio;
@@ -498,7 +498,7 @@ window.app = {
 			}
 			return false;
 		},
-		
+
 		// Plays the specified sound
 		play: function(name) {
 			var self = app.audio;

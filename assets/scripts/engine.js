@@ -312,8 +312,8 @@ window.app = {
     },
 
     // handles saving and loading data to local storage. One day this won't be needed at all.
-	persistence: {
-		save: function() {
+    persistence: {
+        save: function() {
             localStorage.setObject('data', {
                 inventory: app.player.inventory.data,
                 direction: app.player.direction,
@@ -321,10 +321,10 @@ window.app = {
                 name: app.player.name,
                 picture: app.player.picture,
             });
-		},
+        },
 
-		load: function() {
-			var persistentData = localStorage.getObject('data');
+        load: function() {
+            var persistentData = localStorage.getObject('data');
             if (persistentData) {
                 app.player.inventory.data = persistentData.inventory;
                 app.player.direction = persistentData.direction;
@@ -335,17 +335,17 @@ window.app = {
                 return true;
             }
             return false;
-		},
+        },
 
-		createNewPlayer: function() {
+        createNewPlayer: function() {
             app.player.inventory.data = [0, 0, 0, 0, 0, 0, 0];
             app.player.direction = 's';
             app.player.location = {x: 100, y: 100};
             app.player.name = 'Anon' + Math.floor(Math.random() * 8999 + 1000);
             app.player.picture = Math.floor(Math.random() * 15) + 1;
             app.chat.message('Client', 'Creating a character for the first time', 'client');
-		}
-	},
+        }
+    },
 
     // Functions and data regarding the other players
     players: {
@@ -383,60 +383,60 @@ window.app = {
         }
     },
 
-	network: {
-		socket: null,
-		connectSocket: function() {
-			app.network.socket = io.connect(window.document.location.protocol + "//" + window.document.location.host);
-		},
-		send: {
-			// Player types a message to be sent, probably don't need name value anymore
-			chat: function(message) {
-				app.network.socket.emit('chat', {
-					name: app.player.name,
-					message: message,
-					priority: 0
-				});
-			},
-			// Player moves to a new location
-			move: function(newX, newY, newDirection) {
-				app.network.socket.emit('character info', {
+    network: {
+        socket: null,
+        connectSocket: function() {
+            app.network.socket = io.connect(window.document.location.protocol + "//" + window.document.location.host);
+        },
+        send: {
+            // Player types a message to be sent, probably don't need name value anymore
+            chat: function(message) {
+                app.network.socket.emit('chat', {
+                    name: app.player.name,
+                    message: message,
+                    priority: 0
+                });
+            },
+            // Player moves to a new location
+            move: function(newX, newY, newDirection) {
+                app.network.socket.emit('character info', {
                     x: newX,
                     y: newY,
                     direction: newDirection
                 });
-			},
-			// Player builds a tile or mines a tile
-			terraform: function(x, y, tile) {
-				app.network.socket.emit('terraform', {
+            },
+            // Player builds a tile or mines a tile
+            terraform: function(x, y, tile) {
+                app.network.socket.emit('terraform', {
                     x: x,
                     y: y,
                     tile: [tile, null]
                 });
-			},
-			// Player dies
-			death: function(name, method) {
-				app.network.socket.emit('chat', {
-					name: name,
-					message: message,
-					priority: 'server'
-				});
-			},
-			// Player changes either their name or their picture
-			character: function(name, picture) {
-				app.network.socket.emit('character info', {
+            },
+            // Player dies
+            death: function(name, method) {
+                app.network.socket.emit('chat', {
+                    name: name,
+                    message: message,
+                    priority: 'server'
+                });
+            },
+            // Player changes either their name or their picture
+            character: function(name, picture) {
+                app.network.socket.emit('character info', {
                     name: name,
                     picture: picture
                 });
-			},
+            },
 
             join: function(name) {
                 app.network.socket.emit('join', {
                     name: name
                 });
             }
-		},
-		
-		bindEvents: function() {
+        },
+
+        bindEvents: function() {
             app.network.socket.on('chat', function (data) {
                 if (typeof data.priority == "undefined") {
                     app.audio.play('chat');
@@ -488,8 +488,8 @@ window.app = {
                     app.map.data = data;
                 });
             });
-		}
-	},
+        }
+    },
 
     // Functions and data regarding the map
     map: {
@@ -903,13 +903,13 @@ window.app = {
             'earthquake': null,
             'chat': null,
         },
-        
+
         // Stores
         volume: {
             sound: 1.0,
             music: 1.0
         },
-        
+
         // Creates the audio elements
         initialize: function() {
             var self = app.audio;
@@ -917,7 +917,7 @@ window.app = {
                 app.audio.data[key] = document.getElementById('sound-' + key);
             });
         },
-        
+
         // Sets the volume for the type of audio
         setVolume: function(type, vol) {
             var self = app.audio;
@@ -933,7 +933,7 @@ window.app = {
             }
             return false;
         },
-        
+
         // Plays the specified sound
         play: function(name) {
             var self = app.audio;
