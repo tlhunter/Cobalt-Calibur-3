@@ -437,36 +437,39 @@ window.app = {
         },
 
         bindEvents: function() {
-            app.network.socket.on('chat', function (data) {
+            var socket = app.network.socket;
+
+            socket.on('chat', function (data) {
                 if (typeof data.priority == "undefined") {
                     app.audio.play('chat');
                 }
                 app.chat.message(data.name, data.message, data.priority);
             });
-            app.network.socket.on('disconnect', function(data) {
+
+            socket.on('disconnect', function(data) {
                 app.chat.message('Server', 'Disconnected', 'server');
             });
 
-            app.network.socket.on('leave', function(data) {
+            socket.on('leave', function(data) {
                 app.players.remove(data.session);
                 var player_name = data.name || 'unknown';
                 app.chat.message(data.name, "Player Disconnected", 'server');
             });
 
-            app.network.socket.on('terraform', function (data) {
+            socket.on('terraform', function (data) {
                 app.map.data[data.x][data.y] = data.tile;
             });
 
-            app.network.socket.on('character info', function(data) {
-                if (app.network.socket.socket.sessionid == data.dession) return;
+            socket.on('character info', function(data) {
+                if (socket.socket.sessionid == data.dession) return;
                 app.players.update(data);
             });
 
-            app.network.socket.on('event time', function(data) {
+            socket.on('event time', function(data) {
                 app.daytime.setCurrentTime(data.time);
             });
 
-            app.network.socket.on('event earthquake', function(data) {
+            socket.on('event earthquake', function(data) {
                 $.get('/map', function(data) {
                     app.map.data = data;
                 });
@@ -474,16 +477,16 @@ window.app = {
                 app.audio.play('earthquake');
             });
 
-            app.network.socket.on('event npcmovement', function(data) {
+            socket.on('event npcmovement', function(data) {
                 app.npc.updateData(data.npcs);
             });
 
-            app.network.socket.on('event corruption', function(data) {
+            socket.on('event corruption', function(data) {
                 app.map.corruptionDataLoaded = true;
                 app.map.corruption = data.map;
             });
 
-            app.network.socket.on('event bigterraform', function(data) {
+            socket.on('event bigterraform', function(data) {
                 $.get('/map', function(data) {
                     app.map.data = data;
                 });
