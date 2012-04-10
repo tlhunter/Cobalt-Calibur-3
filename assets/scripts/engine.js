@@ -79,7 +79,7 @@ window.app = {
             app.chat.message('Help', 'Type /help for some help', 'help');
             app.chat.message('Help', 'Type /nick NEWNAME to change your name', 'help');
             // Broadcast location
-            app.network.send.move(app.player.location.x, app.player.location.x, app.player.direction);
+            app.network.send.move(app.player.coordinates.x, app.player.coordinates.x, app.player.direction);
             app.network.send.character(app.player.name, app.player.picture);
         }, 500);
 
@@ -130,7 +130,7 @@ window.app = {
         name: '',
 
         // Coordinates of player
-        location: {
+        coordinates: {
             x: 100,
             y: 100
         },
@@ -139,56 +139,56 @@ window.app = {
         move: function(d) {
             switch (d) {
                 case 'n':
-                    if (app.player.location.y <= 0) {
+                    if (app.player.coordinates.y <= 0) {
                         app.player.setDirection(d);
                         app.audio.play('walk-fail');
                         return false;
                     }
-                    if (!app.player.canMoveTo(app.player.location.x, app.player.location.y - 1)) {
+                    if (!app.player.canMoveTo(app.player.coordinates.x, app.player.coordinates.y - 1)) {
                         app.player.setDirection(d);
                         app.audio.play('walk-fail');
                         return false;
                     }
-                    app.player.location.y--;
+                    app.player.coordinates.y--;
                     break;
                 case 'e':
-                    if (app.player.location.x >= app.TOTALTILES_X - 1) {
+                    if (app.player.coordinates.x >= app.TOTALTILES_X - 1) {
                         app.player.setDirection(d);
                         app.audio.play('walk-fail');
                         return false;
                     }
-                    if (!app.player.canMoveTo(app.player.location.x + 1, app.player.location.y)) {
+                    if (!app.player.canMoveTo(app.player.coordinates.x + 1, app.player.coordinates.y)) {
                         app.player.setDirection(d);
                         app.audio.play('walk-fail');
                         return false;
                     }
-                    app.player.location.x++;
+                    app.player.coordinates.x++;
                     break;
                 case 's':
-                    if (app.player.location.y >= app.TOTALTILES_Y - 1) {
+                    if (app.player.coordinates.y >= app.TOTALTILES_Y - 1) {
                         app.player.setDirection(d);
                         app.audio.play('walk-fail');
                         return false;
                     }
-                    if (!app.player.canMoveTo(app.player.location.x, app.player.location.y + 1)) {
+                    if (!app.player.canMoveTo(app.player.coordinates.x, app.player.coordinates.y + 1)) {
                         app.player.setDirection(d);
                         app.audio.play('walk-fail');
                         return false;
                     }
-                    app.player.location.y++;
+                    app.player.coordinates.y++;
                     break;
                 case 'w':
-                    if (app.player.location.x <= 0) {
+                    if (app.player.coordinates.x <= 0) {
                         app.player.setDirection(d);
                         app.audio.play('walk-fail');
                         return false;
                     }
-                    if (!app.player.canMoveTo(app.player.location.x - 1, app.player.location.y)) {
+                    if (!app.player.canMoveTo(app.player.coordinates.x - 1, app.player.coordinates.y)) {
                         app.player.setDirection(d);
                         app.audio.play('walk-fail');
                         return false;
                     }
-                    app.player.location.x--;
+                    app.player.coordinates.x--;
                     break;
                 default:
                     console.log("Invalid Direction", d);
@@ -198,7 +198,7 @@ window.app = {
             app.audio.play('walk');
 
             // check if we're in corruption, if so, 1/5 chance to kill()
-            var loc = app.player.location;
+            var loc = app.player.coordinates;
             if (app.map.corruptionDataLoaded && app.map.corruption[loc.x][loc.y]) {
                 if (Math.random() < 1/10) {
                     app.player.kill("You were killed by corruption");
@@ -241,8 +241,8 @@ window.app = {
 
         // Forces an XY location
         setLocation: function(x, y) {
-            app.player.location.x = x;
-            app.player.location.y = y;
+            app.player.coordinates.x = x;
+            app.player.coordinates.y = y;
 
             app.graphics.updateViewport();
 
@@ -257,20 +257,20 @@ window.app = {
 
         // Gets information about the tile we are facing
         getFacingTile: function() {
-            var coords = app.player.location;
+            var coords = app.player.coordinates;
             var data = {};
             switch(app.player.direction) {
                 case 'n':
-                    data.location = {x: coords.x, y: coords.y - 1};
+                    data.coordinates = {x: coords.x, y: coords.y - 1};
                     break;
                 case 'e':
-                    data.location = {x: coords.x + 1, y: coords.y};
+                    data.coordinates = {x: coords.x + 1, y: coords.y};
                     break;
                 case 's':
-                    data.location = {x: coords.x, y: coords.y + 1};
+                    data.coordinates = {x: coords.x, y: coords.y + 1};
                     break;
                 case 'w':
-                    data.location = {x: coords.x - 1, y: coords.y};
+                    data.coordinates = {x: coords.x - 1, y: coords.y};
                     break;
                 default:
                     console.log("Invalid Direction", app.player.direction);
@@ -279,7 +279,7 @@ window.app = {
 
             _.extend(
                 data,
-                app.map.getTileData(data.location.x, data.location.y)
+                app.map.getTileData(data.coordinates.x, data.coordinates.y)
             );
 
             return data;
@@ -293,14 +293,14 @@ window.app = {
         },
 
         broadcastLocation: function() {
-            app.network.send.move(app.player.location.x, app.player.location.y, app.player.direction);
+            app.network.send.move(app.player.coordinates.x, app.player.coordinates.y, app.player.direction);
             app.map.render(true);
         },
 
         // Mines the facing tile, adjusts inventory
         mineFacingTile: function() {
             var tileData = app.player.getFacingTile();
-            var coords = tileData.location;
+            var coords = tileData.coordinates;
             if (!app.god && coords.x >= 96 && coords.x <= 104 && coords.y >= 96 && coords.y <= 104) {
                 app.chat.message('Client', 'You cannot change the spawn location.', 'client');
                 return false;
@@ -323,7 +323,7 @@ window.app = {
         // Attempts to create and then place the specified tile
         placeItem: function(terrainIndex) {
             var replaceTile = app.player.getFacingTile();
-            var coords = replaceTile.location;
+            var coords = replaceTile.coordinates;
             if (!app.god && coords.x >= 96 && coords.x <= 104 && coords.y >= 96 && coords.y <= 104) {
                 app.chat.message('Client', 'You cannot change the spawn location.', 'client');
                 return false;
@@ -355,7 +355,7 @@ window.app = {
         },
 
         killIfNpcNearby: function() {
-            var loc = app.player.location;
+            var loc = app.player.coordinates;
             var len = app.npc.data.length;
             for (var l = 0; l < len; l++) {
                 var npc = app.npc.data[l];
@@ -400,7 +400,7 @@ window.app = {
             localStorage.setObject('data', {
                 inventory: app.player.inventory.data,
                 direction: app.player.direction,
-                location: app.player.location,
+                location: app.player.coordinates,
                 name: app.player.name,
                 picture: app.player.picture,
             });
@@ -411,7 +411,7 @@ window.app = {
             if (persistentData) {
                 app.player.inventory.data = persistentData.inventory;
                 app.player.direction = persistentData.direction;
-                app.player.location = persistentData.location;
+                app.player.coordinates = persistentData.location;
                 app.player.name = persistentData.name;
                 app.player.picture = persistentData.picture;
                 app.chat.message('Client', 'Loaded your saved character', 'client');
@@ -423,7 +423,7 @@ window.app = {
         createNewPlayer: function() {
             app.player.inventory.data = [0, 0, 0, 0, 0, 0, 0, 0, 0];
             app.player.direction = 's';
-            app.player.location = {x: 100, y: 100};
+            app.player.coordinates = {x: 100, y: 100};
             app.player.name = 'Anon' + Math.floor(Math.random() * 8999 + 1000);
             app.player.picture = Math.floor(Math.random() * 15) + 1;
             app.chat.message('Client', 'Creating a character for the first time', 'client');
@@ -805,8 +805,8 @@ window.app = {
 
         // Updates the viewport based on the players current location
         updateViewport: function() {
-            app.viewport.x = app.player.location.x - app.PLAYER_OFFSET_X;
-            app.viewport.y = app.player.location.y - app.PLAYER_OFFSET_Y;
+            app.viewport.x = app.player.coordinates.x - app.PLAYER_OFFSET_X;
+            app.viewport.y = app.player.coordinates.y - app.PLAYER_OFFSET_Y;
         },
     },
 
@@ -875,14 +875,14 @@ window.app = {
                         app.network.send.chat(app.player.name, "*Committed Suicide*");
                     return;
                 } else if (message === '/gps') {
-                    app.chat.message("Client", "Coordinates: [" + (app.player.location.x) + "," + (app.player.location.y) + "]", 'client');
+                    app.chat.message("Client", "Coordinates: [" + (app.player.coordinates.x) + "," + (app.player.coordinates.y) + "]", 'client');
                     return;
                 } else if (message.indexOf('/tile ') === 0) {
                     var tile = parseInt(message.substr(6), 10);
                     if (isNaN(tile)) {
                         return;
                     }
-                    var coords = app.player.getFacingTile().location;
+                    var coords = app.player.getFacingTile().coordinates;
                     app.map.data[coords.x][coords.y][0] = tile;
                     app.network.send.terraform(coords.x, coords.y, tile);
                     return;
