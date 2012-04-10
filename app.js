@@ -234,23 +234,23 @@ var game = {
 
         npcmovement: {
             handle: null,
-            interval: 5 * 1000,
+            interval: 4 * 1000,
             payload: function() {
 
                 var len = game.npcs.length;
                 for(var i = 0; i < len; i++) {
                     var npc = game.npcs[i];
-                    var new_direction = Math.floor(Math.random() * 6);
-                    if (new_direction == 1 && npc.x < 199 && game.canNPCWalk(npc.x+1, npc.y)) {
+                    var new_direction = Math.floor(Math.random() * 5);
+                    if (new_direction == 0 && npc.x < 199 && game.canNPCWalk(npc.x+1, npc.y)) {
                         npc.x++;
                         npc.d = 'e';
-                    } else if (new_direction == 2 && npc.x > 0 && game.canNPCWalk(npc.x-1, npc.y)) {
+                    } else if (new_direction == 1 && npc.x > 0 && game.canNPCWalk(npc.x-1, npc.y)) {
                         npc.x--;
                         npc.d = 'w';
-                    } else if (new_direction == 3 && npc.y < 199 && game.canNPCWalk(npc.x, npc.y+1)) {
+                    } else if (new_direction == 2 && npc.y < 199 && game.canNPCWalk(npc.x, npc.y+1)) {
                         npc.y++;
                         npc.d = 's';
-                    } else if (new_direction == 4 && npc.y > 0 && game.canNPCWalk(npc.x, npc.y-1)) {
+                    } else if (new_direction == 3 && npc.y > 0 && game.canNPCWalk(npc.x, npc.y-1)) {
                         npc.y--;
                         npc.d = 'n';
                     }
