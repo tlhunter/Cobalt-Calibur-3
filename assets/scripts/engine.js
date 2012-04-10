@@ -657,14 +657,6 @@ window.app = {
         app.network.bindEvents();
         app.network.send.join(app.player.name);
 
-        // Pres Esc inside of text box, leave the text box
-        $(document).keyup(function(e) {
-            if ($(e.target).is(":input") && e.which == 27) {
-                e.preventDefault();
-                $('#message-input').blur();
-            };
-        });
-
         // Character keypress
         $(document).keypress(function(e) {
             if ($(e.target).is(":input")) {
@@ -879,6 +871,14 @@ window.app = {
                 }
                 app.chat.message(app.player.name, message, 'self');
                 app.network.send.chat(app.player.name, message);
+            });
+
+            // Pres Esc inside of text box, leave the text box
+            $(document).keyup(function(e) {
+                if ($(e.target).is(":input") && e.which == 27) {
+                    e.preventDefault();
+                    $('#message-input').blur();
+                };
             });
         }
     },
