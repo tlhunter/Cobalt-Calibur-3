@@ -3,6 +3,95 @@
 
 $(function() {
 window.app = {
+    initialize: function() {
+        app.network.connectSocket();
+
+        app.audio.initialize();
+
+        app.viewport.x = Math.floor(app.TOTALTILES_X / 2) - app.PLAYER_OFFSET_X;
+        app.viewport.y = Math.floor(app.TOTALTILES_Y / 2) - app.PLAYER_OFFSET_Y;
+
+        app.screen.width  = app.$canvas.width();
+        app.screen.height = app.$canvas.height();
+        app.screen.tilesX = app.$canvas.width() / app.TILEWIDTH;
+        app.screen.tilesY = app.$canvas.height() / app.TILEHEIGHT;
+
+        app.persistence.load() || app.persistence.createNewPlayer();
+        app.player.updateViewport();
+        app.player.inventory.resetCounters();
+
+        app.chat.initialize();
+        app.network.bindEvents();
+        app.network.send.join(app.player.name);
+
+        // Character keypress
+        $(document).keypress(function(e) {
+            if ($(e.target).is(":input")) {
+                return;
+            }
+
+            if (e.which == 119) { // w
+                app.player.move('n');
+            } else if (e.which == 97) { // a
+                app.player.move('w');
+            } else if (e.which == 115) { // s
+                app.player.move('s');
+            } else if (e.which == 100) { // d
+                app.player.move('e');
+            } else if (e.which == 87) { // W
+                app.player.setDirection('n');
+            } else if (e.which == 65) { // A
+                app.player.setDirection('w');
+            } else if (e.which == 83) { // S
+                app.player.setDirection('s');
+            } else if (e.which == 68) { // D
+                app.player.setDirection('e');
+            } else if (e.which == 116) { // T
+                e.preventDefault(); // keeps us from getting a t in the box
+                $('#message-input').focus();
+            } else if (e.which == 47) { // /
+                $('#message-input').focus();
+            } else if (e.which >= 49 && e.which <= 54) { // 1 - 6
+                var numberPressed = e.which - 48;
+                var terrainIndex = numberPressed + 8;
+                app.player.placeItem(terrainIndex);
+            } else if (e.which == 102) { // f
+                app.player.mineFacingTile();
+            }
+        });
+
+        // global animation and map redraw function
+        // Tried using requestAnimationFrame, but that is slow and choppy
+        var currentFrame = 0;
+        setInterval(function() {
+            currentFrame++;
+            if (currentFrame % 3 == 0) {
+                currentFrame = 0;
+                // redraw every 150 ms, but change animation every 450 ms
+                app.animFrameGlobal = !app.animFrameGlobal;
+                app.player.killIfNpcNearby();
+            }
+            app.map.render(currentFrame === 0);
+        }, 150);
+
+        setTimeout(function() {
+            // Display helpful command
+            app.chat.message('Help', 'Type /help for some help', 'help');
+            app.chat.message('Help', 'Type /nick NEWNAME to change your name', 'help');
+            // Broadcast location
+            app.network.send.move(app.player.location.x, app.player.location.x, app.player.direction);
+            app.updateCharacterInfo();
+        }, 500);
+
+        setInterval(function() {
+            app.persistence.save();
+        }, 3000); // save every 3 seconds
+
+        $(window).unload(function() {
+            app.persistence.save();
+        });
+    },
+
     god: false,
 
     // Grab some DOM elements
@@ -647,95 +736,6 @@ window.app = {
         }
     },
 
-    start: function() {
-        app.network.connectSocket();
-
-        app.audio.initialize();
-
-        app.viewport.x = Math.floor(app.TOTALTILES_X / 2) - app.PLAYER_OFFSET_X;
-        app.viewport.y = Math.floor(app.TOTALTILES_Y / 2) - app.PLAYER_OFFSET_Y;
-
-        app.screen.width  = app.$canvas.width();
-        app.screen.height = app.$canvas.height();
-        app.screen.tilesX = app.$canvas.width() / app.TILEWIDTH;
-        app.screen.tilesY = app.$canvas.height() / app.TILEHEIGHT;
-
-        app.persistence.load() || app.persistence.createNewPlayer();
-        app.player.updateViewport();
-        app.player.inventory.resetCounters();
-
-        app.chat.initialize();
-        app.network.bindEvents();
-        app.network.send.join(app.player.name);
-
-        // Character keypress
-        $(document).keypress(function(e) {
-            if ($(e.target).is(":input")) {
-                return;
-            }
-
-            if (e.which == 119) { // w
-                app.player.move('n');
-            } else if (e.which == 97) { // a
-                app.player.move('w');
-            } else if (e.which == 115) { // s
-                app.player.move('s');
-            } else if (e.which == 100) { // d
-                app.player.move('e');
-            } else if (e.which == 87) { // W
-                app.player.setDirection('n');
-            } else if (e.which == 65) { // A
-                app.player.setDirection('w');
-            } else if (e.which == 83) { // S
-                app.player.setDirection('s');
-            } else if (e.which == 68) { // D
-                app.player.setDirection('e');
-            } else if (e.which == 116) { // T
-                e.preventDefault(); // keeps us from getting a t in the box
-                $('#message-input').focus();
-            } else if (e.which == 47) { // /
-                $('#message-input').focus();
-            } else if (e.which >= 49 && e.which <= 54) { // 1 - 6
-                var numberPressed = e.which - 48;
-                var terrainIndex = numberPressed + 8;
-                app.player.placeItem(terrainIndex);
-            } else if (e.which == 102) { // f
-                app.player.mineFacingTile();
-            }
-        });
-
-        // global animation and map redraw function
-        // Tried using requestAnimationFrame, but that is slow and choppy
-        var currentFrame = 0;
-        setInterval(function() {
-            currentFrame++;
-            if (currentFrame % 3 == 0) {
-                currentFrame = 0;
-                // redraw every 150 ms, but change animation every 450 ms
-                app.animFrameGlobal = !app.animFrameGlobal;
-                app.player.killIfNpcNearby();
-            }
-            app.map.render(currentFrame === 0);
-        }, 150);
-
-        setTimeout(function() {
-            // Display helpful command
-            app.chat.message('Help', 'Type /help for some help', 'help');
-            app.chat.message('Help', 'Type /nick NEWNAME to change your name', 'help');
-            // Broadcast location
-            app.network.send.move(app.player.location.x, app.player.location.x, app.player.direction);
-            app.updateCharacterInfo();
-        }, 500);
-
-        setInterval(function() {
-            app.persistence.save();
-        }, 3000); // save every 3 seconds
-
-        $(window).unload(function() {
-            app.persistence.save();
-        });
-    },
-
     daytime: {
         // integer representing hour of day
         currentTime: 8,
@@ -981,7 +981,7 @@ app.tilesets.inventory.onload = function() {
 $.get('/map', function(data) {
     app.chat.message('Client', 'Map data done.', 'client');
     app.map.data = data;
-    app.start();
+    app.initialize();
 });
 });
 
