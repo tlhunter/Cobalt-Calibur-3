@@ -268,7 +268,7 @@ window.app = {
             app.player.setLocation(100, 100);
             app.player.updateViewport();
             app.chat.message('Client', message, 'client');
-            app.player.saveData();
+            app.persistence.save();
         },
 
         killIfNpcNearby: function() {
@@ -285,29 +285,6 @@ window.app = {
                     }
                 }
             }
-        },
-
-        saveData: function() {
-            localStorage.setObject('data', {
-                inventory: app.player.inventory.data,
-                direction: app.player.direction,
-                location: app.player.location,
-                name: app.player.name,
-                picture: app.player.picture,
-            });
-        },
-
-        loadData: function() {
-            var persistentData = localStorage.getObject('data');
-            if (persistentData) {
-                app.player.inventory.data = persistentData.inventory;
-                app.player.direction = persistentData.direction;
-                app.player.location = persistentData.location;
-                app.player.name = persistentData.name;
-                app.player.picture = persistentData.picture;
-                return true;
-            }
-            return false;
         },
     },
 
@@ -333,6 +310,42 @@ window.app = {
             app.npc.data = data;
         }
     },
+
+    // handles saving and loading data to local storage. One day this won't be needed at all.
+	persistence: {
+		save: function() {
+            localStorage.setObject('data', {
+                inventory: app.player.inventory.data,
+                direction: app.player.direction,
+                location: app.player.location,
+                name: app.player.name,
+                picture: app.player.picture,
+            });
+		},
+
+		load: function() {
+			var persistentData = localStorage.getObject('data');
+            if (persistentData) {
+                app.player.inventory.data = persistentData.inventory;
+                app.player.direction = persistentData.direction;
+                app.player.location = persistentData.location;
+                app.player.name = persistentData.name;
+                app.player.picture = persistentData.picture;
+                app.chat.message('Client', 'Loaded your saved character', 'client');
+                return true;
+            }
+            return false;
+		},
+
+		createNewPlayer: function() {
+            app.player.inventory.data = [0, 0, 0, 0, 0, 0, 0];
+            app.player.direction = 's';
+            app.player.location = {x: 100, y: 100};
+            app.player.name = 'Anon' + Math.floor(Math.random() * 8999 + 1000);
+            app.player.picture = Math.floor(Math.random() * 15) + 1;
+            app.chat.message('Client', 'Creating a character for the first time', 'client');
+		}
+	},
 
     // Functions and data regarding the other players
     players: {
@@ -644,14 +657,9 @@ window.app = {
         app.screen.tilesX = app.$canvas.width() / app.TILEWIDTH;
         app.screen.tilesY = app.$canvas.height() / app.TILEHEIGHT;
 
-        if (app.player.loadData()) {
-            app.player.updateViewport();
-            app.player.inventory.resetCounters();
-            app.chat.message('Client', 'Loaded your saved character', 'client');
-        } else {
-            app.player.name = 'Anon' + Math.floor(Math.random() * 8999 + 1000);
-            app.player.picture = Math.floor(Math.random() * 15) + 1;
-        }
+        app.persistence.load() || app.persistence.createNewPlayer();
+        app.player.updateViewport();
+        app.player.inventory.resetCounters();
 
         app.chat.initialize();
         app.network.bindEvents();
@@ -717,11 +725,11 @@ window.app = {
         }, 500);
 
         setInterval(function() {
-            app.player.saveData();
+            app.persistence.save();
         }, 3000); // save every 3 seconds
 
         $(window).unload(function() {
-            app.player.saveData();
+            app.persistence.save();
         });
     },
 
