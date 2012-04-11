@@ -383,7 +383,7 @@ window.app = {
     npc: {
         data: [],
 
-        updateData: function(data) {
+        update: function(data) {
             app.npc.data = data;
         }
     },
@@ -565,7 +565,7 @@ window.app = {
             });
 
             socket.on('event npcmovement', function(data) {
-                app.npc.updateData(data.npcs);
+                app.npc.update(data.npcs);
             });
 
             socket.on('event corruption', function(data) {
@@ -652,7 +652,7 @@ window.app = {
                         } else if (rnd == 2) {
                             app.graphics.handle.fillStyle = "rgba(47,24,99,0.6)";
                         }
-                        app.map.drawCorruptionTile(i, j);
+                        app.graphics.drawCorruption(i, j);
                     }
                 }
             }
@@ -665,16 +665,6 @@ window.app = {
             if (redrawNametags) app.graphics.nametags.show();
 
             app.environment.daytime.draw();
-        },
-
-        drawCorruptionTile: function(x, y) {
-            // Set the fill color before running function for efficiency
-            app.graphics.handle.fillRect(
-                x * app.graphics.TILE_WIDTH_PIXEL,
-                y * app.graphics.TILE_HEIGHT_PIXEL,
-                app.graphics.TILE_WIDTH_PIXEL,
-                app.graphics.TILE_HEIGHT_PIXEL
-            );
         },
 
         getCharacterFrame: function(direction, altFrame) {
@@ -790,6 +780,15 @@ window.app = {
                 app.graphics.TILE_HEIGHT_PIXEL,
                 x_pixel,
                 y_pixel,
+                app.graphics.TILE_WIDTH_PIXEL,
+                app.graphics.TILE_HEIGHT_PIXEL
+            );
+        },
+        drawCorruption: function(x, y) {
+            // Set the fill color before running function for efficiency
+            app.graphics.handle.fillRect(
+                x * app.graphics.TILE_WIDTH_PIXEL,
+                y * app.graphics.TILE_HEIGHT_PIXEL,
                 app.graphics.TILE_WIDTH_PIXEL,
                 app.graphics.TILE_HEIGHT_PIXEL
             );
