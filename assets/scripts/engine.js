@@ -307,6 +307,7 @@ window.app = {
             var tileData = app.player.getFacingTile();
             var coords = tileData.coordinates;
             if (!app.player.god && coords.x >= 96 && coords.x <= 104 && coords.y >= 96 && coords.y <= 104) {
+                app.audio.play('mine-fail');
                 app.chat.message('Client', 'You cannot change the spawn location.', 'client');
                 return false;
             }
@@ -330,10 +331,12 @@ window.app = {
             var replaceTile = app.player.getFacingTile();
             var coords = replaceTile.coordinates;
             if (!app.player.god && coords.x >= 96 && coords.x <= 104 && coords.y >= 96 && coords.y <= 104) {
+                document.getElementById('sound-build-fail').play();
                 app.chat.message('Client', 'You cannot change the spawn location.', 'client');
                 return false;
             }
             if (!replaceTile.tile.replaceable) {
+                document.getElementById('sound-build-fail').play();
                 app.chat.message('Client', 'This object cannot be built over.', 'client');
                 return false;
             }

@@ -135,6 +135,7 @@ window.app = {
                 var tileData = app.player.getFacingTile();
                 var coords = tileData.coordinates;
                 if (!app.god && coords.x >= 96 && coords.x <= 104 && coords.y >= 96 && coords.y <= 104) {
+                    app.audio.play('mine-fail');
                     app.chat.message('Client', 'You cannot change the spawn location.', 'client');
                     return false;
                 }
@@ -159,10 +160,11 @@ window.app = {
                 var coords = replaceTile.coordinates;
                 if (!app.god && coords.x >= 96 && coords.x <= 104 && coords.y >= 96 && coords.y <= 104) {
                     app.chat.message('Client', 'You cannot change the spawn location.', 'client');
+                    document.getElementById('sound-build-fail').play();
                     return false;
                 }
                 if (!replaceTile.tile.replaceable) {
-                    app.chat.message('Client', 'This object cannot be built over.', 'client');
+                    document.getElementById('sound-build-fail').play();
                     return false;
                 }
                 var item = app.environment.tilesets.data.terrain[terrainIndex];
@@ -177,7 +179,7 @@ window.app = {
                     });
                         return true;
                 } else {
-                    app.chat.message('Client', "You don't have the inventory to build this.", 'client');
+                    document.getElementById('sound-build-fail').play();
                     return false;
                 }
             },
