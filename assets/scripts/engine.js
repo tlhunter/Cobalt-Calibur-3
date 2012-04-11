@@ -610,7 +610,7 @@ window.app = {
                     mapX = i + app.graphics.viewport.x;
                     mapY = j + app.graphics.viewport.y;
                     tile = (app.map.data[mapX] && app.map.data[mapX][mapY]) ? app.map.data[mapX][mapY] : null;
-                    app.tile.draw(i, j, tile);
+                    app.graphics.drawTile(i, j, tile);
 
                     var len = app.players.locations.length;
                     for (var k = 0; k < len; k++) {
@@ -624,7 +624,7 @@ window.app = {
                                 picture_id = 56;
                             }
                             if (redrawNametags) app.graphics.nametags.add(player.name, i, j);
-                            app.tile.drawPlayer(i, j, index, picture_id);
+                            app.graphics.drawAvatar(i, j, index, picture_id);
                         }
                     }
 
@@ -636,7 +636,7 @@ window.app = {
 
                             var npc_name = app.graphics.tilesets.descriptors.characters[npc.id].name;
                             if (redrawNametags) app.graphics.nametags.add(npc_name, i, j);
-                            app.tile.drawPlayer(i, j, index, npc.id);
+                            app.graphics.drawAvatar(i, j, index, npc.id);
                         }
                     }
 
@@ -657,7 +657,7 @@ window.app = {
             // Draw this player
             var index = app.map.getCharacterFrame(app.player.direction, app.graphics.selfAnimationFrame);
             if (redrawNametags) app.graphics.nametags.add(app.player.name, app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE, app.graphics.viewport.PLAYER_OFFSET_TOP_TILE);
-            app.tile.drawPlayer(app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE, app.graphics.viewport.PLAYER_OFFSET_TOP_TILE, index, app.player.picture);
+            app.graphics.drawAvatar(app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE, app.graphics.viewport.PLAYER_OFFSET_TOP_TILE, index, app.player.picture);
 
             if (redrawNametags) app.graphics.nametags.show();
 
@@ -691,43 +691,6 @@ window.app = {
             }
 
             return index;
-        }
-    },
-    tile: {
-        draw: function(x, y, tile) {
-            var x_pixel = x * app.graphics.TILE_WIDTH_PIXEL;
-            var y_pixel = y * app.graphics.TILE_HEIGHT_PIXEL;
-
-            if (tile == null || isNaN(tile[0])) {
-                return;
-            }
-
-            app.graphics.handle.drawImage(
-                app.graphics.tilesets.terrain,
-                0,
-                tile[0] * app.graphics.TILE_HEIGHT_PIXEL,
-                app.graphics.TILE_WIDTH_PIXEL,
-                app.graphics.TILE_HEIGHT_PIXEL,
-                x_pixel,
-                y_pixel,
-                app.graphics.TILE_WIDTH_PIXEL,
-                app.graphics.TILE_HEIGHT_PIXEL
-            );
-        },
-        drawPlayer: function(x, y, tile_x, tile_y) {
-            var x_pixel = x * app.graphics.TILE_WIDTH_PIXEL;
-            var y_pixel = y * app.graphics.TILE_HEIGHT_PIXEL;
-            app.graphics.handle.drawImage(
-                app.graphics.tilesets.characters,
-                tile_x * app.graphics.TILE_WIDTH_PIXEL,
-                tile_y * app.graphics.TILE_HEIGHT_PIXEL,
-                app.graphics.TILE_WIDTH_PIXEL,
-                app.graphics.TILE_HEIGHT_PIXEL,
-                x_pixel,
-                y_pixel,
-                app.graphics.TILE_WIDTH_PIXEL,
-                app.graphics.TILE_HEIGHT_PIXEL
-            );
         }
     },
 
@@ -792,6 +755,41 @@ window.app = {
             show: function() {
                 app.graphics.nametags.$tags.show();
             }
+        },
+        drawAvatar: function(x, y, tile_x, tile_y) {
+            var x_pixel = x * app.graphics.TILE_WIDTH_PIXEL;
+            var y_pixel = y * app.graphics.TILE_HEIGHT_PIXEL;
+            app.graphics.handle.drawImage(
+                app.graphics.tilesets.characters,
+                tile_x * app.graphics.TILE_WIDTH_PIXEL,
+                tile_y * app.graphics.TILE_HEIGHT_PIXEL,
+                app.graphics.TILE_WIDTH_PIXEL,
+                app.graphics.TILE_HEIGHT_PIXEL,
+                x_pixel,
+                y_pixel,
+                app.graphics.TILE_WIDTH_PIXEL,
+                app.graphics.TILE_HEIGHT_PIXEL
+            );
+        },
+        drawTile: function(x, y, tile) {
+            var x_pixel = x * app.graphics.TILE_WIDTH_PIXEL;
+            var y_pixel = y * app.graphics.TILE_HEIGHT_PIXEL;
+
+            if (tile == null || isNaN(tile[0])) {
+                return;
+            }
+
+            app.graphics.handle.drawImage(
+                app.graphics.tilesets.terrain,
+                0,
+                tile[0] * app.graphics.TILE_HEIGHT_PIXEL,
+                app.graphics.TILE_WIDTH_PIXEL,
+                app.graphics.TILE_HEIGHT_PIXEL,
+                x_pixel,
+                y_pixel,
+                app.graphics.TILE_WIDTH_PIXEL,
+                app.graphics.TILE_HEIGHT_PIXEL
+            );
         },
     },
 
