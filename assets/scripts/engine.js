@@ -8,16 +8,8 @@ window.app = {
 
         app.audio.initialize();
 
-        app.viewport.x = Math.floor(app.TOTALTILES_X / 2) - app.PLAYER_OFFSET_X;
-        app.viewport.y = Math.floor(app.TOTALTILES_Y / 2) - app.PLAYER_OFFSET_Y;
-
-        app.screen.width  = app.graphics.$canvas.width();
-        app.screen.height = app.graphics.$canvas.height();
-        app.screen.tilesX = app.graphics.$canvas.width() / app.TILEWIDTH;
-        app.screen.tilesY = app.graphics.$canvas.height() / app.TILEHEIGHT;
-
         app.persistence.load() || app.persistence.createNewPlayer();
-        app.graphics.updateViewport();
+        app.graphics.viewport.update();
         app.player.inventory.resetCounters();
 
         app.chat.initialize();
@@ -35,7 +27,7 @@ window.app = {
             if (currentFrame % 3 == 0) {
                 currentFrame = 0;
                 // redraw every 150 ms, but change animation every 450 ms
-                app.animFrameGlobal = !app.animFrameGlobal;
+                app.graphics.globalAnimationFrame = !app.graphics.globalAnimationFrame;
                 app.player.killIfNpcNearby();
             }
             app.map.render(currentFrame === 0);
@@ -96,27 +88,10 @@ window.app = {
         });
     },
 
-    // Images containing our tilesets
-    tilesets: {
-        terrain: new Image(),
-        characters: new Image(),
-        inventory: new Image(),
-        descriptors: {}
+    environment: {
+        MAP_WIDTH_TILE: 200,
+        MAP_HEIGHT_TILE: 200
     },
-
-    // Animation frame data
-    animFrameGlobal: false,
-    animFrameMe: false,
-
-    // Dimensions of a single tile
-    TILEWIDTH: 16,
-    TILEHEIGHT: 16,
-    TOTALTILES_X: 200,
-    TOTALTILES_Y: 200,
-
-    // Character distance from upper left corner of viewport
-    PLAYER_OFFSET_X: 8,
-    PLAYER_OFFSET_Y: 8,
 
     player: {
         direction: 's',
@@ -147,7 +122,7 @@ window.app = {
                     app.player.coordinates.y--;
                     break;
                 case 'e':
-                    if (app.player.coordinates.x >= app.TOTALTILES_X - 1) {
+                    if (app.player.coordinates.x >= app.environment.MAP_WIDTH_TILE - 1) {
                         app.player.setDirection(d);
                         app.audio.play('walk-fail');
                         return false;
@@ -160,7 +135,7 @@ window.app = {
                     app.player.coordinates.x++;
                     break;
                 case 's':
-                    if (app.player.coordinates.y >= app.TOTALTILES_Y - 1) {
+                    if (app.player.coordinates.y >= app.environment.MAP_HEIGHT_TILE - 1) {
                         app.player.setDirection(d);
                         app.audio.play('walk-fail');
                         return false;
@@ -201,8 +176,8 @@ window.app = {
                 }
             }
 
-            app.animFrameMe = !app.animFrameMe;
-            app.graphics.updateViewport();
+            app.graphics.selfAnimationFrame = !app.graphics.selfAnimationFrame;
+            app.graphics.viewport.update();
 
             app.player.setDirection(d); // broadcasts location
         },
@@ -239,7 +214,7 @@ window.app = {
             app.player.coordinates.x = x;
             app.player.coordinates.y = y;
 
-            app.graphics.updateViewport();
+            app.graphics.viewport.update();
 
             app.player.broadcastLocation();
         },
@@ -327,7 +302,7 @@ window.app = {
                 app.chat.message('Client', 'This object cannot be built over.', 'client');
                 return false;
             }
-            var item = app.tilesets.descriptors.terrain[terrainIndex];
+            var item = app.graphics.tilesets.descriptors.terrain[terrainIndex];
             // provides is also the cost of manufacturing the tile
             if (app.player.inventory.update(item.provides.id, -item.provides.quantity)) {
                 app.audio.play('build');
@@ -344,7 +319,7 @@ window.app = {
             app.audio.play('death');
             app.player.direction = 's';
             app.player.setLocation(100, 100);
-            app.graphics.updateViewport();
+            app.graphics.viewport.update();
             app.chat.message('Client', message, 'client');
             app.persistence.save();
         },
@@ -357,27 +332,13 @@ window.app = {
                 for (var i = -1; i <= 1; i++) {
                     for (var j = -1; j <= 1; j++) {
                         if (npc.x == loc.x+i && npc.y == loc.y+j) {
-                            app.player.kill("Killed by " + app.tilesets.descriptors.characters[npc.id].name);
+                            app.player.kill("Killed by " + app.graphics.tilesets.descriptors.characters[npc.id].name);
                             break;
                         }
                     }
                 }
             }
         },
-    },
-
-    // Data regarding the canvas tag
-    screen: {
-        width: 0,       // The pixel width of the canvas
-        height: 0,      // The pixel height of the canvas
-        tilesX: 0,      // The number of X tiles
-        tilesY: 0,      // The number of Y tiles
-    },
-
-    // Data regarding the viewport (window into the map)
-    viewport: {
-        x: null,          // The viewport left tile
-        y: null,          // The viewport top tile
     },
 
     // NPC stuff
@@ -591,7 +552,7 @@ window.app = {
             var tile = app.map.data[x][y];
             var data = {};
             if (tile && typeof tile[0] != 'undefined') {
-                data.tile = app.tilesets.descriptors.terrain[tile[0]];
+                data.tile = app.graphics.tilesets.descriptors.terrain[tile[0]];
             }
             if (tile && typeof tile[1] != 'undefined') {
                 data.health = tile[1];
@@ -601,7 +562,7 @@ window.app = {
         render: function(redrawNametags) {
             // immediately draw canvas as black
             app.graphics.handle.fillStyle = "rgb(0,0,0)";
-            app.graphics.handle.fillRect(0, 0, app.screen.width, app.screen.height);
+            app.graphics.handle.fillRect(0, 0, app.graphics.viewport.WIDTH_PIXEL, app.graphics.viewport.HEIGHT_PIXEL);
 
             var i, j;
             var mapX = 0;
@@ -609,10 +570,10 @@ window.app = {
             var tile;
             if (redrawNametags) app.graphics.nametags.hide();
 
-            for (j=0; j<app.screen.tilesY; j++) {
-                for (i=0; i < app.screen.tilesX; i++) {
-                    mapX = i + app.viewport.x;
-                    mapY = j + app.viewport.y;
+            for (j=0; j<app.graphics.viewport.WIDTH_TILE; j++) {
+                for (i=0; i < app.graphics.viewport.HEIGHT_TILE; i++) {
+                    mapX = i + app.graphics.viewport.x;
+                    mapY = j + app.graphics.viewport.y;
                     tile = (app.map.data[mapX] && app.map.data[mapX][mapY]) ? app.map.data[mapX][mapY] : null;
                     app.tile.draw(i, j, tile);
 
@@ -620,7 +581,7 @@ window.app = {
                     for (var k = 0; k < len; k++) {
                         var player = app.players.locations[k];
                         if (player.x == mapX && player.y == mapY) {
-                            var index = app.map.getCharacterFrame(player.direction, app.animFrameGlobal);
+                            var index = app.map.getCharacterFrame(player.direction, app.graphics.globalAnimationFrame);
 
                             var player_name = player.name || '???';
                             var picture_id = player.picture;
@@ -636,15 +597,15 @@ window.app = {
                     for (var l = 0; l < len; l++) {
                         var npc = app.npc.data[l];
                         if (npc.x == mapX && npc.y == mapY) {
-                            var index = app.map.getCharacterFrame(npc.d, app.animFrameGlobal);
+                            var index = app.map.getCharacterFrame(npc.d, app.graphics.globalAnimationFrame);
 
-                            var npc_name = app.tilesets.descriptors.characters[npc.id].name;
+                            var npc_name = app.graphics.tilesets.descriptors.characters[npc.id].name;
                             if (redrawNametags) app.graphics.nametags.add(npc_name, i, j);
                             app.tile.drawPlayer(i, j, index, npc.id);
                         }
                     }
 
-                    if (app.map.corruptionDataLoaded && mapX >= 0 && mapX < app.TOTALTILES_X && mapY >= 0 && mapY < app.TOTALTILES_Y && app.map.corruption[mapX][mapY] === 1) {
+                    if (app.map.corruptionDataLoaded && mapX >= 0 && mapX < app.environment.MAP_WIDTH_TILE && mapY >= 0 && mapY < app.environment.MAP_HEIGHT_TILE && app.map.corruption[mapX][mapY] === 1) {
                         var rnd = Math.floor(Math.random() * 3);
                         if (rnd == 0) {
                             app.graphics.handle.fillStyle = "rgba(15,0,61,0.5)";
@@ -659,9 +620,9 @@ window.app = {
             }
 
             // Draw this player
-            var index = app.map.getCharacterFrame(app.player.direction, app.animFrameMe);
-            if (redrawNametags) app.graphics.nametags.add(app.player.name, app.PLAYER_OFFSET_X, app.PLAYER_OFFSET_Y);
-            app.tile.drawPlayer(app.PLAYER_OFFSET_X, app.PLAYER_OFFSET_Y, index, app.player.picture);
+            var index = app.map.getCharacterFrame(app.player.direction, app.graphics.selfAnimationFrame);
+            if (redrawNametags) app.graphics.nametags.add(app.player.name, app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE, app.graphics.viewport.PLAYER_OFFSET_TOP_TILE);
+            app.tile.drawPlayer(app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE, app.graphics.viewport.PLAYER_OFFSET_TOP_TILE, index, app.player.picture);
 
             if (redrawNametags) app.graphics.nametags.show();
 
@@ -671,10 +632,10 @@ window.app = {
         drawCorruptionTile: function(x, y) {
             // Set the fill color before running function for efficiency
             app.graphics.handle.fillRect(
-                x * app.TILEWIDTH,
-                y * app.TILEHEIGHT,
-                app.TILEWIDTH,
-                app.TILEHEIGHT
+                x * app.graphics.TILE_WIDTH_PIXEL,
+                y * app.graphics.TILE_HEIGHT_PIXEL,
+                app.graphics.TILE_WIDTH_PIXEL,
+                app.graphics.TILE_HEIGHT_PIXEL
             );
         },
 
@@ -699,38 +660,38 @@ window.app = {
     },
     tile: {
         draw: function(x, y, tile) {
-            var x_pixel = x * app.TILEWIDTH;
-            var y_pixel = y * app.TILEHEIGHT;
+            var x_pixel = x * app.graphics.TILE_WIDTH_PIXEL;
+            var y_pixel = y * app.graphics.TILE_HEIGHT_PIXEL;
 
             if (tile == null || isNaN(tile[0])) {
                 return;
             }
 
             app.graphics.handle.drawImage(
-                app.tilesets.terrain,
+                app.graphics.tilesets.terrain,
                 0,
-                tile[0] * app.TILEHEIGHT,
-                app.TILEWIDTH,
-                app.TILEHEIGHT,
+                tile[0] * app.graphics.TILE_HEIGHT_PIXEL,
+                app.graphics.TILE_WIDTH_PIXEL,
+                app.graphics.TILE_HEIGHT_PIXEL,
                 x_pixel,
                 y_pixel,
-                app.TILEWIDTH,
-                app.TILEHEIGHT
+                app.graphics.TILE_WIDTH_PIXEL,
+                app.graphics.TILE_HEIGHT_PIXEL
             );
         },
         drawPlayer: function(x, y, tile_x, tile_y) {
-            var x_pixel = x * app.TILEWIDTH;
-            var y_pixel = y * app.TILEHEIGHT;
+            var x_pixel = x * app.graphics.TILE_WIDTH_PIXEL;
+            var y_pixel = y * app.graphics.TILE_HEIGHT_PIXEL;
             app.graphics.handle.drawImage(
-                app.tilesets.characters,
-                tile_x * app.TILEWIDTH,
-                tile_y * app.TILEHEIGHT,
-                app.TILEWIDTH,
-                app.TILEHEIGHT,
+                app.graphics.tilesets.characters,
+                tile_x * app.graphics.TILE_WIDTH_PIXEL,
+                tile_y * app.graphics.TILE_HEIGHT_PIXEL,
+                app.graphics.TILE_WIDTH_PIXEL,
+                app.graphics.TILE_HEIGHT_PIXEL,
                 x_pixel,
                 y_pixel,
-                app.TILEWIDTH,
-                app.TILEHEIGHT
+                app.graphics.TILE_WIDTH_PIXEL,
+                app.graphics.TILE_HEIGHT_PIXEL
             );
         }
     },
@@ -764,12 +725,43 @@ window.app = {
             }
             if (color) {
                 app.graphics.handle.fillStyle = color;
-                app.graphics.handle.fillRect(0, 0, app.screen.width, app.screen.height);
+                app.graphics.handle.fillRect(0, 0, app.graphics.viewport.WIDTH_PIXEL, app.graphics.viewport.HEIGHT_PIXEL);
             }
         },
     },
 
     graphics: {
+		TILE_WIDTH_PIXEL: 16,
+        TILE_HEIGHT_PIXEL: 16,
+
+		viewport: {
+            update: function() {
+                app.graphics.viewport.x = app.player.coordinates.x - app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE;
+                app.graphics.viewport.y = app.player.coordinates.y - app.graphics.viewport.PLAYER_OFFSET_TOP_TILE;
+            },
+
+			WIDTH_PIXEL: 272,
+			HEIGHT_PIXEL: 272,
+
+			WIDTH_TILE: 17,
+			HEIGHT_TILE: 17,
+
+			PLAYER_OFFSET_LEFT_TILE: 8,
+		    PLAYER_OFFSET_TOP_TILE: 8,
+
+			x: null,
+			y: null
+		},
+
+        tilesets: {
+            terrain: new Image(),
+            characters: new Image(),
+            inventory: new Image(),
+            descriptors: {}
+        },
+
+        globalAnimationFrame: false,
+        selfAnimationFrame: false,
         $canvas: $('#map'),
         handle: document.getElementById('map').getContext('2d'),
 
@@ -779,8 +771,8 @@ window.app = {
 
             // adds a player name, provided the X and Y coords of the player
             add: function(name, x, y) {
-                var x_pixel = (x - 4) * app.TILEWIDTH + 7; // 7 is left margin or something
-                var y_pixel = (y - 1) * app.TILEHEIGHT + 2;
+                var x_pixel = (x - 4) * app.graphics.TILE_WIDTH_PIXEL + 7; // 7 is left margin or something
+                var y_pixel = (y - 1) * app.graphics.TILE_HEIGHT_PIXEL + 2;
                 var $tags = app.graphics.nametags.$tags;
                 var $name = $('<div class="name"><span>' + name + '</span></div>');
                 $name.css({
@@ -799,12 +791,6 @@ window.app = {
             show: function() {
                 app.graphics.nametags.$tags.show();
             }
-        },
-
-        // Updates the viewport based on the players current location
-        updateViewport: function() {
-            app.viewport.x = app.player.coordinates.x - app.PLAYER_OFFSET_X;
-            app.viewport.y = app.player.coordinates.y - app.PLAYER_OFFSET_Y;
         },
     },
 
@@ -963,23 +949,23 @@ app.chat.message('Client', 'Downloading assets...', 'client');
 // load Character, Inventory, Terrain descriptors
 $.get('/assets/tilesets/data.json', function(data) {
     app.chat.message('Client', 'Tileset Descriptors done.', 'client');
-    app.tilesets.descriptors = data;
+    app.graphics.tilesets.descriptors = data;
 });
 
 // load background sprites
-app.tilesets.terrain.src = '/assets/tilesets/terrain.png';
-app.tilesets.terrain.onload = function() {
+app.graphics.tilesets.terrain.src = '/assets/tilesets/terrain.png';
+app.graphics.tilesets.terrain.onload = function() {
     app.chat.message('Client', 'Tileset Terrain done.', 'client');
 }
 // load characters sprites
-app.tilesets.characters.src = '/assets/tilesets/characters.png';
-app.tilesets.characters.onload = function() {
+app.graphics.tilesets.characters.src = '/assets/tilesets/characters.png';
+app.graphics.tilesets.characters.onload = function() {
     app.chat.message('Client', 'Tileset Characters done.', 'client');
 }
 
 // load inventory sprites
-app.tilesets.inventory.src = '/assets/tilesets/inventory.png';
-app.tilesets.inventory.onload = function() {
+app.graphics.tilesets.inventory.src = '/assets/tilesets/inventory.png';
+app.graphics.tilesets.inventory.onload = function() {
     app.chat.message('Client', 'Tileset Inventory done.', 'client');
 }
 
