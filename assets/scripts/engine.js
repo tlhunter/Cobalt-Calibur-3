@@ -30,7 +30,7 @@ window.app = {
                 app.graphics.globalAnimationFrame = !app.graphics.globalAnimationFrame;
                 app.player.killIfNpcNearby();
             }
-            app.map.render(currentFrame === 0);
+            app.environment.map.render(currentFrame === 0);
         }, 150);
 
         setTimeout(function() {
@@ -92,10 +92,97 @@ window.app = {
         MAP_WIDTH_TILE: 200,
         MAP_HEIGHT_TILE: 200,
 
+        map: {
+            data: [],
+            getTileData: function(x, y) {
+                var tile = app.environment.map.data[x][y];
+                var data = {};
+                if (tile && typeof tile[0] != 'undefined') {
+                    data.tile = app.graphics.tilesets.descriptors.terrain[tile[0]];
+                }
+                if (tile && typeof tile[1] != 'undefined') {
+                    data.health = tile[1];
+                }
+                return data;
+            },
+            render: function(redrawNametags) {
+                // immediately draw canvas as black
+                app.graphics.handle.fillStyle = "rgb(0,0,0)";
+                app.graphics.handle.fillRect(0, 0, app.graphics.viewport.WIDTH_PIXEL, app.graphics.viewport.HEIGHT_PIXEL);
+
+                var i, j;
+                var mapX = 0;
+                var mapY = 0;
+                var tile;
+                if (redrawNametags) app.graphics.nametags.hide();
+
+                for (j=0; j<app.graphics.viewport.WIDTH_TILE; j++) {
+                    for (i=0; i < app.graphics.viewport.HEIGHT_TILE; i++) {
+                        mapX = i + app.graphics.viewport.x;
+                        mapY = j + app.graphics.viewport.y;
+                        tile = (app.environment.map.data[mapX] && app.environment.map.data[mapX][mapY]) ? app.environment.map.data[mapX][mapY] : null;
+                        app.graphics.drawTile(i, j, tile);
+
+                        var len = app.players.locations.length;
+                        for (var k = 0; k < len; k++) {
+                            var player = app.players.locations[k];
+                            if (player.x == mapX && player.y == mapY) {
+                                var index = app.graphics.getAvatarFrame(player.direction, app.graphics.globalAnimationFrame);
+
+                                var player_name = player.name || '???';
+                                var picture_id = player.picture;
+                                if (isNaN(picture_id)) {
+                                    picture_id = 56;
+                                }
+                                if (redrawNametags) app.graphics.nametags.add(player.name, i, j);
+                                app.graphics.drawAvatar(i, j, index, picture_id);
+                            }
+                        }
+
+                        var len = app.npc.data.length;
+                        for (var l = 0; l < len; l++) {
+                            var npc = app.npc.data[l];
+                            if (npc.x == mapX && npc.y == mapY) {
+                                var index = app.graphics.getAvatarFrame(npc.d, app.graphics.globalAnimationFrame);
+
+                                var npc_name = app.graphics.tilesets.descriptors.characters[npc.id].name;
+                                if (redrawNametags) app.graphics.nametags.add(npc_name, i, j);
+                                app.graphics.drawAvatar(i, j, index, npc.id);
+                            }
+                        }
+
+                        if (app.environment.corruption.loaded && mapX >= 0 && mapX < app.environment.MAP_WIDTH_TILE && mapY >= 0 && mapY < app.environment.MAP_HEIGHT_TILE && app.environment.corruption.data[mapX][mapY] === 1) {
+                            var rnd = Math.floor(Math.random() * 3);
+                            if (rnd == 0) {
+                                app.graphics.handle.fillStyle = "rgba(15,0,61,0.5)";
+                            } else if (rnd == 1) {
+                                app.graphics.handle.fillStyle = "rgba(36,14,88,0.7)";
+                            } else if (rnd == 2) {
+                                app.graphics.handle.fillStyle = "rgba(47,24,99,0.6)";
+                            }
+                            app.graphics.drawCorruption(i, j);
+                        }
+                    }
+                }
+
+                // Draw this player
+                var index = app.graphics.getAvatarFrame(app.player.direction, app.graphics.selfAnimationFrame);
+                if (redrawNametags) app.graphics.nametags.add(app.player.name, app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE, app.graphics.viewport.PLAYER_OFFSET_TOP_TILE);
+                app.graphics.drawAvatar(app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE, app.graphics.viewport.PLAYER_OFFSET_TOP_TILE, index, app.player.picture);
+
+                if (redrawNametags) app.graphics.nametags.show();
+
+                app.environment.daytime.draw();
+            },
+
+        },
+
         corruption: {
             data: [],
             loaded: false,
-            update: function() {
+            update: function(data) {
+                app.environment.corruption.loaded = true;
+                app.environment.corruption.data = data;
             }
         },
 
@@ -290,14 +377,14 @@ window.app = {
 
             _.extend(
                 data,
-                app.map.getTileData(data.coordinates.x, data.coordinates.y)
+                app.environment.map.getTileData(data.coordinates.x, data.coordinates.y)
             );
 
             return data;
         },
 
         canMoveTo: function(x, y) {
-            if (app.map.getTileData(x, y).tile.block_player) {
+            if (app.environment.map.getTileData(x, y).tile.block_player) {
                 return false;
             }
             return true;
@@ -305,7 +392,7 @@ window.app = {
 
         broadcastLocation: function() {
             app.network.send.move(app.player.coordinates.x, app.player.coordinates.y, app.player.direction);
-            app.map.render(true);
+            app.environment.map.render(true);
         },
 
         // Mines the facing tile, adjusts inventory
@@ -326,7 +413,7 @@ window.app = {
             var becomes = tileData.tile.becomes;
             var provides = tileData.tile.provides;
             //console.log(tileData, becomes, provides);
-            app.map.data[coords.x][coords.y][0] = becomes;
+            app.environment.map.data[coords.x][coords.y][0] = becomes;
             app.network.send.terraform(coords.x, coords.y, becomes);
             app.player.inventory.update(provides.id, provides.quantity);
             app.audio.play('mine');
@@ -350,7 +437,7 @@ window.app = {
             // provides is also the cost of manufacturing the tile
             if (app.player.inventory.update(item.provides.id, -item.provides.quantity)) {
                 app.audio.play('build');
-                app.map.data[coords.x][coords.y][0] = terrainIndex;
+                app.environment.map.data[coords.x][coords.y][0] = terrainIndex;
                 app.network.send.terraform(coords.x, coords.y, terrainIndex);
                 return true;
             } else {
@@ -550,7 +637,7 @@ window.app = {
             });
 
             socket.on('terraform', function (data) {
-                app.map.data[data.x][data.y] = data.tile;
+                app.environment.map.data[data.x][data.y] = data.tile;
             });
 
             socket.on('character info', function(data) {
@@ -564,7 +651,7 @@ window.app = {
 
             socket.on('event earthquake', function(data) {
                 $.get('/map', function(data) {
-                    app.map.data = data;
+                    app.environment.map.data = data;
                 });
                 app.chat.message('Server', "There has been an earthquake! New Rock and Ore has been added to the world.", 'server');
                 app.audio.play('earthquake');
@@ -575,121 +662,18 @@ window.app = {
             });
 
             socket.on('event corruption', function(data) {
-                app.environment.corruption.loaded = true;
-                app.environment.corruption.data = data.map;
+                app.environment.corruption.update(data.map);
             });
 
             socket.on('event bigterraform', function(data) {
                 $.get('/map', function(data) {
-                    app.map.data = data;
+                    app.environment.map.data = data;
                 });
             });
         }
     },
 
     // Functions and data regarding the map
-    map: {
-        data: [],
-        getTileData: function(x, y) {
-            var tile = app.map.data[x][y];
-            var data = {};
-            if (tile && typeof tile[0] != 'undefined') {
-                data.tile = app.graphics.tilesets.descriptors.terrain[tile[0]];
-            }
-            if (tile && typeof tile[1] != 'undefined') {
-                data.health = tile[1];
-            }
-            return data;
-        },
-        render: function(redrawNametags) {
-            // immediately draw canvas as black
-            app.graphics.handle.fillStyle = "rgb(0,0,0)";
-            app.graphics.handle.fillRect(0, 0, app.graphics.viewport.WIDTH_PIXEL, app.graphics.viewport.HEIGHT_PIXEL);
-
-            var i, j;
-            var mapX = 0;
-            var mapY = 0;
-            var tile;
-            if (redrawNametags) app.graphics.nametags.hide();
-
-            for (j=0; j<app.graphics.viewport.WIDTH_TILE; j++) {
-                for (i=0; i < app.graphics.viewport.HEIGHT_TILE; i++) {
-                    mapX = i + app.graphics.viewport.x;
-                    mapY = j + app.graphics.viewport.y;
-                    tile = (app.map.data[mapX] && app.map.data[mapX][mapY]) ? app.map.data[mapX][mapY] : null;
-                    app.graphics.drawTile(i, j, tile);
-
-                    var len = app.players.locations.length;
-                    for (var k = 0; k < len; k++) {
-                        var player = app.players.locations[k];
-                        if (player.x == mapX && player.y == mapY) {
-                            var index = app.map.getCharacterFrame(player.direction, app.graphics.globalAnimationFrame);
-
-                            var player_name = player.name || '???';
-                            var picture_id = player.picture;
-                            if (isNaN(picture_id)) {
-                                picture_id = 56;
-                            }
-                            if (redrawNametags) app.graphics.nametags.add(player.name, i, j);
-                            app.graphics.drawAvatar(i, j, index, picture_id);
-                        }
-                    }
-
-                    var len = app.npc.data.length;
-                    for (var l = 0; l < len; l++) {
-                        var npc = app.npc.data[l];
-                        if (npc.x == mapX && npc.y == mapY) {
-                            var index = app.map.getCharacterFrame(npc.d, app.graphics.globalAnimationFrame);
-
-                            var npc_name = app.graphics.tilesets.descriptors.characters[npc.id].name;
-                            if (redrawNametags) app.graphics.nametags.add(npc_name, i, j);
-                            app.graphics.drawAvatar(i, j, index, npc.id);
-                        }
-                    }
-
-                    if (app.environment.corruption.loaded && mapX >= 0 && mapX < app.environment.MAP_WIDTH_TILE && mapY >= 0 && mapY < app.environment.MAP_HEIGHT_TILE && app.environment.corruption.data[mapX][mapY] === 1) {
-                        var rnd = Math.floor(Math.random() * 3);
-                        if (rnd == 0) {
-                            app.graphics.handle.fillStyle = "rgba(15,0,61,0.5)";
-                        } else if (rnd == 1) {
-                            app.graphics.handle.fillStyle = "rgba(36,14,88,0.7)";
-                        } else if (rnd == 2) {
-                            app.graphics.handle.fillStyle = "rgba(47,24,99,0.6)";
-                        }
-                        app.graphics.drawCorruption(i, j);
-                    }
-                }
-            }
-
-            // Draw this player
-            var index = app.map.getCharacterFrame(app.player.direction, app.graphics.selfAnimationFrame);
-            if (redrawNametags) app.graphics.nametags.add(app.player.name, app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE, app.graphics.viewport.PLAYER_OFFSET_TOP_TILE);
-            app.graphics.drawAvatar(app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE, app.graphics.viewport.PLAYER_OFFSET_TOP_TILE, index, app.player.picture);
-
-            if (redrawNametags) app.graphics.nametags.show();
-
-            app.environment.daytime.draw();
-        },
-
-        getCharacterFrame: function(direction, altFrame) {
-            var index = 0;
-            if (direction == 'n') {
-                index = 4;
-            } else if (direction == 'e') {
-                index = 2;
-            } else if (direction == 's') {
-                index = 0;
-            } else if (direction == 'w') {
-                index = 6;
-            }
-
-            if (altFrame) {
-                index++;
-            }
-
-            return index;
-        }
-    },
 
     graphics: {
 		TILE_WIDTH_PIXEL: 16,
@@ -797,6 +781,24 @@ window.app = {
                 app.graphics.TILE_HEIGHT_PIXEL
             );
         },
+        getAvatarFrame: function(direction, altFrame) {
+            var index = 0;
+            if (direction == 'n') {
+                index = 4;
+            } else if (direction == 'e') {
+                index = 2;
+            } else if (direction == 's') {
+                index = 0;
+            } else if (direction == 'w') {
+                index = 6;
+            }
+
+            if (altFrame) {
+                index++;
+            }
+
+            return index;
+        }
     },
 
     chat: {
@@ -872,7 +874,7 @@ window.app = {
                         return;
                     }
                     var coords = app.player.getFacingTile().coordinates;
-                    app.map.data[coords.x][coords.y][0] = tile;
+                    app.environment.map.data[coords.x][coords.y][0] = tile;
                     app.network.send.terraform(coords.x, coords.y, tile);
                     return;
                 }
@@ -976,7 +978,7 @@ app.graphics.tilesets.inventory.onload = function() {
 
 $.get('/map', function(data) {
     app.chat.message('Client', 'Map data done.', 'client');
-    app.map.data = data;
+    app.environment.map.data = data;
     app.initialize();
 });
 });
