@@ -89,10 +89,9 @@ window.app = {
     },
 
     environment: {
-        MAP_WIDTH_TILE: 200,
-        MAP_HEIGHT_TILE: 200,
-
         map: {
+            WIDTH_TILE: 200,
+            HEIGHT_TILE: 200,
             data: [],
             getTileData: function(x, y) {
                 var tile = app.environment.map.data[x][y];
@@ -151,7 +150,7 @@ window.app = {
                             }
                         }
 
-                        if (app.environment.corruption.loaded && mapX >= 0 && mapX < app.environment.MAP_WIDTH_TILE && mapY >= 0 && mapY < app.environment.MAP_HEIGHT_TILE && app.environment.corruption.data[mapX][mapY] === 1) {
+                        if (app.environment.corruption.loaded && mapX >= 0 && mapX < app.environment.map.WIDTH_TILE && mapY >= 0 && mapY < app.environment.map.HEIGHT_TILE && app.environment.corruption.data[mapX][mapY] === 1) {
                             var rnd = Math.floor(Math.random() * 3);
                             if (rnd == 0) {
                                 app.graphics.handle.fillStyle = "rgba(15,0,61,0.5)";
@@ -172,7 +171,7 @@ window.app = {
 
                 if (redrawNametags) app.graphics.nametags.show();
 
-                app.environment.daytime.draw();
+                app.environment.daylight.draw();
             },
 
         },
@@ -186,18 +185,18 @@ window.app = {
             }
         },
 
-        daytime: {
+        daylight: {
             // integer representing hour of day
             currentTime: 8,
 
             set: function(time) {
-                app.environment.daytime.currentTime = time;
+                app.environment.daylight.currentTime = time;
                 $('#clock').html(time + ':00');
             },
 
             draw: function() {
                 var color = null;
-                var time = app.environment.daytime.currentTime;
+                var time = app.environment.daylight.currentTime;
                 if (time < 5) { // night
                     color = "rgba(0, 0, 0, 0.65)";
                 } else if (time < 7) { // dusk
@@ -364,7 +363,7 @@ window.app = {
         },
 
         canMoveTo: function(x, y) {
-            if (x < 0 || y < 0 || x >= app.environment.MAP_WIDTH_TILE || y >= app.environment.MAP_HEIGHT_TILE) {
+            if (x < 0 || y < 0 || x >= app.environment.map.WIDTH_TILE || y >= app.environment.map.HEIGHT_TILE) {
                 return false;
             }
             if (app.environment.map.getTileData(x, y).tile.block_player) {
@@ -629,7 +628,7 @@ window.app = {
             });
 
             socket.on('event time', function(data) {
-                app.environment.daytime.set(data.time);
+                app.environment.daylight.set(data.time);
             });
 
             socket.on('event earthquake', function(data) {
