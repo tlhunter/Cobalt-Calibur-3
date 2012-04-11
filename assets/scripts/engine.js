@@ -11,10 +11,10 @@ window.app = {
         app.viewport.x = Math.floor(app.TOTALTILES_X / 2) - app.PLAYER_OFFSET_X;
         app.viewport.y = Math.floor(app.TOTALTILES_Y / 2) - app.PLAYER_OFFSET_Y;
 
-        app.screen.width  = app.$canvas.width();
-        app.screen.height = app.$canvas.height();
-        app.screen.tilesX = app.$canvas.width() / app.TILEWIDTH;
-        app.screen.tilesY = app.$canvas.height() / app.TILEHEIGHT;
+        app.screen.width  = app.graphics.$canvas.width();
+        app.screen.height = app.graphics.$canvas.height();
+        app.screen.tilesX = app.graphics.$canvas.width() / app.TILEWIDTH;
+        app.screen.tilesY = app.graphics.$canvas.height() / app.TILEHEIGHT;
 
         app.persistence.load() || app.persistence.createNewPlayer();
         app.graphics.updateViewport();
@@ -96,13 +96,6 @@ window.app = {
         });
     },
 
-    god: false,
-
-    // Grab some DOM elements
-    $canvas: $('#map'),
-
-    // Build main object
-
     // Images containing our tilesets
     tilesets: {
         terrain: new Image(),
@@ -114,9 +107,6 @@ window.app = {
     // Animation frame data
     animFrameGlobal: false,
     animFrameMe: false,
-
-    // Stores our canvas context object
-    handle: document.getElementById('map').getContext('2d'),
 
     // Dimensions of a single tile
     TILEWIDTH: 16,
@@ -132,6 +122,7 @@ window.app = {
         direction: 's',
         picture: 0,
         name: '',
+        god: false,
 
         // Coordinates of player
         coordinates: {
@@ -305,7 +296,7 @@ window.app = {
         mineFacingTile: function() {
             var tileData = app.player.getFacingTile();
             var coords = tileData.coordinates;
-            if (!app.god && coords.x >= 96 && coords.x <= 104 && coords.y >= 96 && coords.y <= 104) {
+            if (!app.player.god && coords.x >= 96 && coords.x <= 104 && coords.y >= 96 && coords.y <= 104) {
                 app.chat.message('Client', 'You cannot change the spawn location.', 'client');
                 return false;
             }
@@ -328,7 +319,7 @@ window.app = {
         placeItem: function(terrainIndex) {
             var replaceTile = app.player.getFacingTile();
             var coords = replaceTile.coordinates;
-            if (!app.god && coords.x >= 96 && coords.x <= 104 && coords.y >= 96 && coords.y <= 104) {
+            if (!app.player.god && coords.x >= 96 && coords.x <= 104 && coords.y >= 96 && coords.y <= 104) {
                 app.chat.message('Client', 'You cannot change the spawn location.', 'client');
                 return false;
             }
@@ -609,8 +600,8 @@ window.app = {
         },
         render: function(redrawNametags) {
             // immediately draw canvas as black
-            app.handle.fillStyle = "rgb(0,0,0)";
-            app.handle.fillRect(0, 0, app.screen.width, app.screen.height);
+            app.graphics.handle.fillStyle = "rgb(0,0,0)";
+            app.graphics.handle.fillRect(0, 0, app.screen.width, app.screen.height);
 
             var i, j;
             var mapX = 0;
@@ -656,11 +647,11 @@ window.app = {
                     if (app.map.corruptionDataLoaded && mapX >= 0 && mapX < app.TOTALTILES_X && mapY >= 0 && mapY < app.TOTALTILES_Y && app.map.corruption[mapX][mapY] === 1) {
                         var rnd = Math.floor(Math.random() * 3);
                         if (rnd == 0) {
-                            app.handle.fillStyle = "rgba(15,0,61,0.5)";
+                            app.graphics.handle.fillStyle = "rgba(15,0,61,0.5)";
                         } else if (rnd == 1) {
-                            app.handle.fillStyle = "rgba(36,14,88,0.7)";
+                            app.graphics.handle.fillStyle = "rgba(36,14,88,0.7)";
                         } else if (rnd == 2) {
-                            app.handle.fillStyle = "rgba(47,24,99,0.6)";
+                            app.graphics.handle.fillStyle = "rgba(47,24,99,0.6)";
                         }
                         app.map.drawCorruptionTile(i, j);
                     }
@@ -679,7 +670,7 @@ window.app = {
 
         drawCorruptionTile: function(x, y) {
             // Set the fill color before running function for efficiency
-            app.handle.fillRect(
+            app.graphics.handle.fillRect(
                 x * app.TILEWIDTH,
                 y * app.TILEHEIGHT,
                 app.TILEWIDTH,
@@ -715,7 +706,7 @@ window.app = {
                 return;
             }
 
-            app.handle.drawImage(
+            app.graphics.handle.drawImage(
                 app.tilesets.terrain,
                 0,
                 tile[0] * app.TILEHEIGHT,
@@ -730,7 +721,7 @@ window.app = {
         drawPlayer: function(x, y, tile_x, tile_y) {
             var x_pixel = x * app.TILEWIDTH;
             var y_pixel = y * app.TILEHEIGHT;
-            app.handle.drawImage(
+            app.graphics.handle.drawImage(
                 app.tilesets.characters,
                 tile_x * app.TILEWIDTH,
                 tile_y * app.TILEHEIGHT,
@@ -772,13 +763,16 @@ window.app = {
                 color = "rgba(0, 0, 0, 0.65)";
             }
             if (color) {
-                app.handle.fillStyle = color;
-                app.handle.fillRect(0, 0, app.screen.width, app.screen.height);
+                app.graphics.handle.fillStyle = color;
+                app.graphics.handle.fillRect(0, 0, app.screen.width, app.screen.height);
             }
         },
     },
 
     graphics: {
+        $canvas: $('#map'),
+        handle: document.getElementById('map').getContext('2d'),
+
         // Nametags are displayed in HTML in a layer above canvas
         nametags: {
             $tags: $('#nametags'),
