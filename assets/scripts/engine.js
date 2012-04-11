@@ -132,7 +132,7 @@ window.app = {
                                 var player_name = player.name || '???';
                                 var picture_id = player.picture;
                                 if (isNaN(picture_id)) {
-                                    picture_id = 56;
+                                    picture_id = 0;
                                 }
                                 if (redrawNametags) app.graphics.nametags.add(player.name, i, j);
                                 app.graphics.drawAvatar(i, j, index, picture_id);
@@ -236,14 +236,10 @@ window.app = {
 
         // Attempts to move the character in the nesw direction we specify
         move: function(d) {
+            var coords = app.player.coordinates;
             switch (d) {
                 case 'n':
-                    if (app.player.coordinates.y <= 0) {
-                        app.player.setDirection(d);
-                        app.audio.play('walk-fail');
-                        return false;
-                    }
-                    if (!app.player.canMoveTo(app.player.coordinates.x, app.player.coordinates.y - 1)) {
+                    if (!app.player.canMoveTo(coords.x, coords.y - 1)) {
                         app.player.setDirection(d);
                         app.audio.play('walk-fail');
                         return false;
@@ -251,12 +247,7 @@ window.app = {
                     app.player.coordinates.y--;
                     break;
                 case 'e':
-                    if (app.player.coordinates.x >= app.environment.MAP_WIDTH_TILE - 1) {
-                        app.player.setDirection(d);
-                        app.audio.play('walk-fail');
-                        return false;
-                    }
-                    if (!app.player.canMoveTo(app.player.coordinates.x + 1, app.player.coordinates.y)) {
+                    if (!app.player.canMoveTo(coords.x + 1, coords.y)) {
                         app.player.setDirection(d);
                         app.audio.play('walk-fail');
                         return false;
@@ -264,12 +255,7 @@ window.app = {
                     app.player.coordinates.x++;
                     break;
                 case 's':
-                    if (app.player.coordinates.y >= app.environment.MAP_HEIGHT_TILE - 1) {
-                        app.player.setDirection(d);
-                        app.audio.play('walk-fail');
-                        return false;
-                    }
-                    if (!app.player.canMoveTo(app.player.coordinates.x, app.player.coordinates.y + 1)) {
+                    if (!app.player.canMoveTo(coords.x, coords.y + 1)) {
                         app.player.setDirection(d);
                         app.audio.play('walk-fail');
                         return false;
@@ -277,12 +263,7 @@ window.app = {
                     app.player.coordinates.y++;
                     break;
                 case 'w':
-                    if (app.player.coordinates.x <= 0) {
-                        app.player.setDirection(d);
-                        app.audio.play('walk-fail');
-                        return false;
-                    }
-                    if (!app.player.canMoveTo(app.player.coordinates.x - 1, app.player.coordinates.y)) {
+                    if (!app.player.canMoveTo(coords.x - 1, coords.y)) {
                         app.player.setDirection(d);
                         app.audio.play('walk-fail');
                         return false;
@@ -296,8 +277,7 @@ window.app = {
             }
             app.audio.play('walk');
 
-            var loc = app.player.coordinates;
-            if (app.environment.corruption.loaded && app.environment.corruption.data[loc.x][loc.y]) {
+            if (app.environment.corruption.loaded && app.environment.corruption.data[coords.x][coords.y]) {
                 if (Math.random() < 1/8) {
                     app.player.kill("You were killed by corruption");
                     app.network.send.chat(app.player.name, "*Killed by Corruption*");
@@ -384,6 +364,9 @@ window.app = {
         },
 
         canMoveTo: function(x, y) {
+            if (x < 0 || y < 0 || x >= app.environment.MAP_WIDTH_TILE || y >= app.environment.MAP_HEIGHT_TILE) {
+                return false;
+            }
             if (app.environment.map.getTileData(x, y).tile.block_player) {
                 return false;
             }
