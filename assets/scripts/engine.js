@@ -92,6 +92,13 @@ window.app = {
         MAP_WIDTH_TILE: 200,
         MAP_HEIGHT_TILE: 200,
 
+        corruption: {
+            data: [],
+            loaded: false,
+            update: function() {
+            }
+        },
+
         daytime: {
             // integer representing hour of day
             currentTime: 8,
@@ -202,10 +209,9 @@ window.app = {
             }
             app.audio.play('walk');
 
-            // check if we're in corruption, if so, 1/5 chance to kill()
             var loc = app.player.coordinates;
-            if (app.map.corruptionDataLoaded && app.map.corruption[loc.x][loc.y]) {
-                if (Math.random() < 1/10) {
+            if (app.environment.corruption.loaded && app.environment.corruption.data[loc.x][loc.y]) {
+                if (Math.random() < 1/8) {
                     app.player.kill("You were killed by corruption");
                     app.network.send.chat(app.player.name, "*Killed by Corruption*");
                 }
@@ -569,8 +575,8 @@ window.app = {
             });
 
             socket.on('event corruption', function(data) {
-                app.map.corruptionDataLoaded = true;
-                app.map.corruption = data.map;
+                app.environment.corruption.loaded = true;
+                app.environment.corruption.data = data.map;
             });
 
             socket.on('event bigterraform', function(data) {
@@ -584,8 +590,6 @@ window.app = {
     // Functions and data regarding the map
     map: {
         data: [],
-        corruption: [],
-        corruptionDataLoaded: false,
         getTileData: function(x, y) {
             var tile = app.map.data[x][y];
             var data = {};
@@ -643,7 +647,7 @@ window.app = {
                         }
                     }
 
-                    if (app.map.corruptionDataLoaded && mapX >= 0 && mapX < app.environment.MAP_WIDTH_TILE && mapY >= 0 && mapY < app.environment.MAP_HEIGHT_TILE && app.map.corruption[mapX][mapY] === 1) {
+                    if (app.environment.corruption.loaded && mapX >= 0 && mapX < app.environment.MAP_WIDTH_TILE && mapY >= 0 && mapY < app.environment.MAP_HEIGHT_TILE && app.environment.corruption.data[mapX][mapY] === 1) {
                         var rnd = Math.floor(Math.random() * 3);
                         if (rnd == 0) {
                             app.graphics.handle.fillStyle = "rgba(15,0,61,0.5)";
