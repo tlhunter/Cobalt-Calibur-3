@@ -90,7 +90,42 @@ window.app = {
 
     environment: {
         MAP_WIDTH_TILE: 200,
-        MAP_HEIGHT_TILE: 200
+        MAP_HEIGHT_TILE: 200,
+
+        daytime: {
+            // integer representing hour of day
+            currentTime: 8,
+
+            set: function(time) {
+                app.environment.daytime.currentTime = time;
+                $('#clock').html(time + ':00');
+            },
+
+            draw: function() {
+                var color = null;
+                var time = app.environment.daytime.currentTime;
+                if (time < 5) { // night
+                    color = "rgba(0, 0, 0, 0.65)";
+                } else if (time < 7) { // dusk
+                    color = "rgba(0, 13, 54, 0.5)";
+                } else if (time < 8) { // dusk
+                    color = "rgba(0, 13, 54, 0.25)";
+                } else if (time < 17) { // day
+                    color = null;
+                } else if (time < 18) { //dawn
+                    color = "rgba(54,22,0, 0.25)";
+                } else if (time < 20) { //dawn
+                    color = "rgba(54,22,0, 0.5)";
+                } else {
+                    color = "rgba(0, 0, 0, 0.65)";
+                }
+                if (color) {
+                    app.graphics.handle.fillStyle = color;
+                    app.graphics.handle.fillRect(0, 0, app.graphics.viewport.WIDTH_PIXEL, app.graphics.viewport.HEIGHT_PIXEL);
+                }
+            },
+        },
+
     },
 
     player: {
@@ -515,7 +550,7 @@ window.app = {
             });
 
             socket.on('event time', function(data) {
-                app.daytime.setCurrentTime(data.time);
+                app.environment.daytime.set(data.time);
             });
 
             socket.on('event earthquake', function(data) {
@@ -626,7 +661,7 @@ window.app = {
 
             if (redrawNametags) app.graphics.nametags.show();
 
-            app.daytime.drawDayLight();
+            app.environment.daytime.draw();
         },
 
         drawCorruptionTile: function(x, y) {
@@ -694,40 +729,6 @@ window.app = {
                 app.graphics.TILE_HEIGHT_PIXEL
             );
         }
-    },
-
-    daytime: {
-        // integer representing hour of day
-        currentTime: 8,
-
-        setCurrentTime: function(time) {
-            app.daytime.currentTime = time;
-            $('#clock').html(time + ':00');
-        },
-
-        drawDayLight: function() {
-            var color = null;
-            var time = app.daytime.currentTime;
-            if (time < 5) { // night
-                color = "rgba(0, 0, 0, 0.65)";
-            } else if (time < 7) { // dusk
-                color = "rgba(0, 13, 54, 0.5)";
-            } else if (time < 8) { // dusk
-                color = "rgba(0, 13, 54, 0.25)";
-            } else if (time < 17) { // day
-                color = null;
-            } else if (time < 18) { //dawn
-                color = "rgba(54,22,0, 0.25)";
-            } else if (time < 20) { //dawn
-                color = "rgba(54,22,0, 0.5)";
-            } else {
-                color = "rgba(0, 0, 0, 0.65)";
-            }
-            if (color) {
-                app.graphics.handle.fillStyle = color;
-                app.graphics.handle.fillRect(0, 0, app.graphics.viewport.WIDTH_PIXEL, app.graphics.viewport.HEIGHT_PIXEL);
-            }
-        },
     },
 
     graphics: {
