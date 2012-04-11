@@ -10,7 +10,7 @@ window.app = {
 
         app.persistence.load() || app.persistence.createNewPlayer();
         app.graphics.viewport.update();
-        app.player.inventory.resetCounters();
+        app.player.inventory.render();
 
         app.chat.initialize();
         app.network.bindEvents();
@@ -38,7 +38,7 @@ window.app = {
             app.chat.message('Help', 'Type /help for some help', 'help');
             app.chat.message('Help', 'Type /nick NEWNAME to change your name', 'help');
             // Broadcast location
-            app.network.send.move(app.player.coordinates.x, app.player.coordinates.x, app.player.direction);
+            app.network.send.move(app.player.coordinates, app.player.direction);
             app.network.send.character(app.player.name, app.player.picture);
         }, 500);
 
@@ -93,7 +93,7 @@ window.app = {
             WIDTH_TILE: 200,
             HEIGHT_TILE: 200,
             data: [],
-            getTileData: function(x, y) {
+            getTile: function(x, y) {
                 var tile = app.environment.map.data[x][y];
                 var data = {};
                 if (tile && typeof tile[0] != 'undefined') {
@@ -122,9 +122,10 @@ window.app = {
                         tile = (app.environment.map.data[mapX] && app.environment.map.data[mapX][mapY]) ? app.environment.map.data[mapX][mapY] : null;
                         app.graphics.drawTile(i, j, tile);
 
-                        var len = app.players.locations.length;
+                        // Draw Players
+                        var len = app.players.data.length;
                         for (var k = 0; k < len; k++) {
-                            var player = app.players.locations[k];
+                            var player = app.players.data[k];
                             if (player.x == mapX && player.y == mapY) {
                                 var index = app.graphics.getAvatarFrame(player.direction, app.graphics.globalAnimationFrame);
 
@@ -138,6 +139,7 @@ window.app = {
                             }
                         }
 
+                        // Draw NPCs
                         var len = app.npc.data.length;
                         for (var l = 0; l < len; l++) {
                             var npc = app.npc.data[l];
@@ -150,6 +152,7 @@ window.app = {
                             }
                         }
 
+                        // Draw Corruption
                         if (app.environment.corruption.loaded && mapX >= 0 && mapX < app.environment.map.WIDTH_TILE && mapY >= 0 && mapY < app.environment.map.HEIGHT_TILE && app.environment.corruption.data[mapX][mapY] === 1) {
                             var rnd = Math.floor(Math.random() * 3);
                             if (rnd == 0) {
@@ -187,16 +190,16 @@ window.app = {
 
         daylight: {
             // integer representing hour of day
-            currentTime: 8,
+            time: 8,
 
-            set: function(time) {
-                app.environment.daylight.currentTime = time;
+            setTime: function(time) {
+                app.environment.daylight.time = time;
                 $('#clock').html(time + ':00');
             },
 
             draw: function() {
                 var color = null;
-                var time = app.environment.daylight.currentTime;
+                var time = app.environment.daylight.time;
                 if (time < 5) { // night
                     color = "rgba(0, 0, 0, 0.65)";
                 } else if (time < 7) { // dusk
@@ -212,6 +215,7 @@ window.app = {
                 } else {
                     color = "rgba(0, 0, 0, 0.65)";
                 }
+
                 if (color) {
                     app.graphics.handle.fillStyle = color;
                     app.graphics.handle.fillRect(0, 0, app.graphics.viewport.WIDTH_PIXEL, app.graphics.viewport.HEIGHT_PIXEL);
@@ -238,7 +242,7 @@ window.app = {
             var coords = app.player.coordinates;
             switch (d) {
                 case 'n':
-                    if (!app.player.canMoveTo(coords.x, coords.y - 1)) {
+                    if (!app.player.accessible(coords.x, coords.y - 1)) {
                         app.player.setDirection(d);
                         app.audio.play('walk-fail');
                         return false;
@@ -246,7 +250,7 @@ window.app = {
                     app.player.coordinates.y--;
                     break;
                 case 'e':
-                    if (!app.player.canMoveTo(coords.x + 1, coords.y)) {
+                    if (!app.player.accessible(coords.x + 1, coords.y)) {
                         app.player.setDirection(d);
                         app.audio.play('walk-fail');
                         return false;
@@ -254,7 +258,7 @@ window.app = {
                     app.player.coordinates.x++;
                     break;
                 case 's':
-                    if (!app.player.canMoveTo(coords.x, coords.y + 1)) {
+                    if (!app.player.accessible(coords.x, coords.y + 1)) {
                         app.player.setDirection(d);
                         app.audio.play('walk-fail');
                         return false;
@@ -262,7 +266,7 @@ window.app = {
                     app.player.coordinates.y++;
                     break;
                 case 'w':
-                    if (!app.player.canMoveTo(coords.x - 1, coords.y)) {
+                    if (!app.player.accessible(coords.x - 1, coords.y)) {
                         app.player.setDirection(d);
                         app.audio.play('walk-fail');
                         return false;
@@ -308,7 +312,7 @@ window.app = {
                 }
             },
 
-            resetCounters: function() {
+            render: function() {
                 var len = app.player.inventory.data.length;
                 for (var i = 0; i < len; i++) {
                     $('#inventory-'+i).html(app.player.inventory.data[i]);
@@ -318,11 +322,8 @@ window.app = {
 
         // Forces an XY location
         setLocation: function(x, y) {
-            app.player.coordinates.x = x;
-            app.player.coordinates.y = y;
-
+            app.player.coordinates = {x: x, y: y};
             app.graphics.viewport.update();
-
             app.player.broadcastLocation();
         },
 
@@ -356,24 +357,24 @@ window.app = {
 
             _.extend(
                 data,
-                app.environment.map.getTileData(data.coordinates.x, data.coordinates.y)
+                app.environment.map.getTile(data.coordinates.x, data.coordinates.y)
             );
 
             return data;
         },
 
-        canMoveTo: function(x, y) {
+        accessible: function(x, y) {
             if (x < 0 || y < 0 || x >= app.environment.map.WIDTH_TILE || y >= app.environment.map.HEIGHT_TILE) {
                 return false;
             }
-            if (app.environment.map.getTileData(x, y).tile.block_player) {
+            if (app.environment.map.getTile(x, y).tile.block_player) {
                 return false;
             }
             return true;
         },
 
         broadcastLocation: function() {
-            app.network.send.move(app.player.coordinates.x, app.player.coordinates.y, app.player.direction);
+            app.network.send.move(app.player.coordinates, app.player.direction);
             app.environment.map.render(true);
         },
 
@@ -438,13 +439,13 @@ window.app = {
         },
 
         killIfNpcNearby: function() {
-            var loc = app.player.coordinates;
+            var coords = app.player.coordinates;
             var len = app.npc.data.length;
             for (var l = 0; l < len; l++) {
                 var npc = app.npc.data[l];
                 for (var i = -1; i <= 1; i++) {
                     for (var j = -1; j <= 1; j++) {
-                        if (npc.x == loc.x+i && npc.y == loc.y+j) {
+                        if (npc.x == coords.x+i && npc.y == coords.y+j) {
                             app.player.kill("Killed by " + app.graphics.tilesets.descriptors.characters[npc.id].name);
                             break;
                         }
@@ -509,18 +510,15 @@ window.app = {
 
     },
 
-    // Functions and data regarding the other players
     players: {
-
-        // Locations of all the different players (except for this player)
-        locations: [],
+        data: [],
 
         // Updates a player location, adding if it's a new entry
         update: function(data) {
             var found = false;
-            var len = app.players.locations.length;
+            var len = app.players.data.length;
             for (var i=0; i<len; i++) {
-                var player = app.players.locations[i];
+                var player = app.players.data[i];
                 if (player.session == data.session) {
                     _.extend(
                         player,
@@ -530,16 +528,16 @@ window.app = {
                 }
             }
             if (!found) {
-                app.players.locations.push(data);
+                app.players.data.push(data);
             }
         },
 
         remove: function(session) {
-            var len = app.players.locations.length;
+            var len = app.players.data.length;
             for (var i=0; i<len; i++) {
-                var player = app.players.locations[i];
+                var player = app.players.data[i];
                 if (player.session == session) {
-                    app.players.locations.splice(i, 1);
+                    app.players.data.splice(i, 1);
                 }
             }
         }
@@ -560,11 +558,11 @@ window.app = {
                 });
             },
             // Player moves to a new location
-            move: function(newX, newY, newDirection) {
+            move: function(coords, direction) {
                 app.network.socket.emit('character info', {
-                    x: newX,
-                    y: newY,
-                    direction: newDirection
+                    x: coords.x,
+                    y: coords.y,
+                    direction: direction
                 });
             },
             // Player builds a tile or mines a tile
@@ -628,7 +626,7 @@ window.app = {
             });
 
             socket.on('event time', function(data) {
-                app.environment.daylight.set(data.time);
+                app.environment.daylight.setTime(data.time);
             });
 
             socket.on('event earthquake', function(data) {
@@ -838,8 +836,8 @@ window.app = {
                     // change picture
                     return;
                 } else if (message === '/who') {
-                    app.chat.message("Client", "Found " + app.players.locations.length + " players", 'client');
-                    _.each(app.players.locations, function(player) {
+                    app.chat.message("Client", "Found " + app.players.data.length + " players", 'client');
+                    _.each(app.players.data, function(player) {
                         app.chat.message("Client", player.name, 'client');
                     });
                     return;
