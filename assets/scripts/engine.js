@@ -504,17 +504,17 @@ window.app = {
     // handles saving and loading data to local storage. One day this won't be needed at all.
     persistence: {
         save: function() {
-            localStorage.setObject('data', {
+            localStorage.setItem('data', JSON.stringify({
                 inventory: app.player.inventory.data,
                 direction: app.player.direction,
                 location: app.player.coordinates,
                 name: app.player.name,
                 picture: app.player.picture,
-            });
+            }));
         },
 
         load: function() {
-            var persistentData = localStorage.getObject('data');
+            var persistentData = JSON.parse(localStorage.getItem('data'));
             if (persistentData) {
                 app.player.inventory.data = persistentData.inventory;
                 app.player.direction = persistentData.direction;
@@ -696,6 +696,11 @@ window.app = {
 		TILE_WIDTH_PIXEL: 16,
         TILE_HEIGHT_PIXEL: 16,
 
+        globalAnimationFrame: false,
+        selfAnimationFrame: false,
+        $canvas: $('#map'),
+        handle: document.getElementById('map').getContext('2d'),
+
 		viewport: {
             update: function() {
                 app.graphics.viewport.x = app.player.coordinates.x - app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE;
@@ -729,11 +734,6 @@ window.app = {
                 return d.promise();
             }
         },
-
-        globalAnimationFrame: false,
-        selfAnimationFrame: false,
-        $canvas: $('#map'),
-        handle: document.getElementById('map').getContext('2d'),
 
         // Nametags are displayed in HTML in a layer above canvas
         nametags: {
@@ -911,7 +911,7 @@ window.app = {
             $(document).keyup(function(e) {
                 if ($(e.target).is(":input") && e.which == 27) {
                     e.preventDefault();
-                    $('#message-input').blur();
+                    app.chat.$input.blur();
                 };
             });
         }
@@ -977,11 +977,3 @@ window.app = {
 };
 app.downloadAssets();
 });
-
-Storage.prototype.setObject = function(key, value) {
-    this.setItem(key, JSON.stringify(value));
-}
-
-Storage.prototype.getObject = function(key) {
-    return JSON.parse(this.getItem(key));
-}
