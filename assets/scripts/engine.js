@@ -3,6 +3,7 @@
 
 $(function() {
 window.app = {
+    // First we download a bunch of our assets
     downloadAssets: function() {
         $.when(
             app.graphics.tilesets.download(
@@ -23,23 +24,19 @@ window.app = {
             app.initialize();
         });
     },
+
+    // Once the assets are done downloading we initialize the rest of the app
     initialize: function() {
         app.network.connectSocket();
-
         app.audio.initialize();
-
         app.persistence.load() || app.persistence.createNewPlayer();
         app.graphics.viewport.update();
         app.player.inventory.render();
-
         app.chat.initialize();
         app.network.bindEvents();
         app.network.send.join(app.player.name);
-
-        // Character keypress
         app.initializeKeybindings();
 
-        // global animation and map redraw function
         // Tried using requestAnimationFrame, but that is slow and choppy
         var currentFrame = 0;
         setInterval(function() {
@@ -62,9 +59,10 @@ window.app = {
             app.network.send.character(app.player.name, app.player.picture);
         }, 500);
 
+        // save every 3 seconds
         setInterval(function() {
             app.persistence.save();
-        }, 3000); // save every 3 seconds
+        }, 3000);
 
         $(window).unload(function() {
             app.persistence.save();
@@ -112,7 +110,9 @@ window.app = {
         map: {
             WIDTH_TILE: 200,
             HEIGHT_TILE: 200,
+
             data: [],
+
             getTile: function(x, y) {
                 var tile = app.environment.map.data[x][y];
                 var data = {};
@@ -124,6 +124,7 @@ window.app = {
                 }
                 return data;
             },
+
             render: function(redrawNametags) {
                 // immediately draw canvas as black
                 app.graphics.handle.fillStyle = "rgb(0,0,0)";
@@ -202,6 +203,7 @@ window.app = {
         corruption: {
             data: [],
             loaded: false,
+
             update: function(data) {
                 app.environment.corruption.loaded = true;
                 app.environment.corruption.data = data;
@@ -209,8 +211,7 @@ window.app = {
         },
 
         daylight: {
-            // integer representing hour of day
-            time: 8,
+            time: 8, // integer representing hour of day
 
             setTime: function(time) {
                 app.environment.daylight.time = time;
@@ -240,10 +241,9 @@ window.app = {
                     app.graphics.handle.fillStyle = color;
                     app.graphics.handle.fillRect(0, 0, app.graphics.viewport.WIDTH_PIXEL, app.graphics.viewport.HEIGHT_PIXEL);
                 }
-            },
+            }
         },
 
-        // Downloads the tiles for the first time, uses promises
         downloadTiles: function() {
             return $.get('/assets/tilesets/data.json').pipe(function(data) {
                 app.chat.message('Client', 'Tileset Descriptors done.', 'client');
@@ -252,7 +252,6 @@ window.app = {
             });
         },
 
-        // Downloads the map for the first time, uses promises
         downloadMap: function() {
             return $.get('/map').pipe(function(data) {
                 app.chat.message('Client', 'Map data done.', 'client');
@@ -263,18 +262,16 @@ window.app = {
     },
 
     player: {
-        direction: 's',
         picture: 0,
         name: '',
         god: false,
-
-        // Coordinates of player
         coordinates: {
             x: 100,
             y: 100
         },
+        direction: 's',
 
-        // Attempts to move the character in the nesw direction we specify
+        // Attempts to move the character in the direction we specify
         move: function(d) {
             var coords = app.player.coordinates;
             switch (d) {
@@ -315,6 +312,7 @@ window.app = {
                     return;
                     break;
             }
+
             app.audio.play('walk');
 
             if (app.environment.corruption.loaded && app.environment.corruption.data[coords.x][coords.y]) {
@@ -400,6 +398,7 @@ window.app = {
             return data;
         },
 
+        // Whether or not the tile can be walked on
         accessible: function(x, y) {
             if (x < 0 || y < 0 || x >= app.environment.map.WIDTH_TILE || y >= app.environment.map.HEIGHT_TILE) {
                 return false;
@@ -410,6 +409,7 @@ window.app = {
             return true;
         },
 
+        // Sends the players location and direction to the server
         broadcastLocation: function() {
             app.network.send.move(app.player.coordinates, app.player.direction);
             app.environment.map.render(true);
@@ -466,6 +466,7 @@ window.app = {
             }
         },
 
+        // Sends the player back to spawn
         kill: function(message) {
             app.audio.play('death');
             app.player.direction = 's';
@@ -475,6 +476,7 @@ window.app = {
             app.persistence.save();
         },
 
+        // Checks to see if an NPC is adjacent to the player, and if so, kills them
         killIfNpcNearby: function() {
             var coords = app.player.coordinates;
             var len = app.npc.data.length;
@@ -544,7 +546,6 @@ window.app = {
             });
             location.reload(true);
         }
-
     },
 
     players: {
@@ -649,8 +650,7 @@ window.app = {
 
             socket.on('leave', function(data) {
                 app.players.remove(data.session);
-                var player_name = data.name || 'unknown';
-                app.chat.message(data.name, "Player Disconnected", 'server');
+                app.chat.message(data.name || 'unknown', "Player Disconnected", 'server');
             });
 
             socket.on('terraform', function (data) {
@@ -693,7 +693,7 @@ window.app = {
     // Functions and data regarding the map
 
     graphics: {
-		TILE_WIDTH_PIXEL: 16,
+        TILE_WIDTH_PIXEL: 16,
         TILE_HEIGHT_PIXEL: 16,
 
         globalAnimationFrame: false,
@@ -701,24 +701,24 @@ window.app = {
         $canvas: $('#map'),
         handle: document.getElementById('map').getContext('2d'),
 
-		viewport: {
+        viewport: {
             update: function() {
                 app.graphics.viewport.x = app.player.coordinates.x - app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE;
                 app.graphics.viewport.y = app.player.coordinates.y - app.graphics.viewport.PLAYER_OFFSET_TOP_TILE;
             },
 
-			WIDTH_PIXEL: 272,
-			HEIGHT_PIXEL: 272,
+            WIDTH_PIXEL: 272,
+            HEIGHT_PIXEL: 272,
 
-			WIDTH_TILE: 17,
-			HEIGHT_TILE: 17,
+            WIDTH_TILE: 17,
+            HEIGHT_TILE: 17,
 
-			PLAYER_OFFSET_LEFT_TILE: 8,
-		    PLAYER_OFFSET_TOP_TILE: 8,
+            PLAYER_OFFSET_LEFT_TILE: 8,
+            PLAYER_OFFSET_TOP_TILE: 8,
 
-			x: null,
-			y: null
-		},
+            x: null,
+            y: null
+        },
 
         tilesets: {
             terrain: new Image(),
@@ -762,6 +762,7 @@ window.app = {
                 app.graphics.nametags.$tags.show();
             }
         },
+
         drawAvatar: function(x, y, tile_x, tile_y) {
             var x_pixel = x * app.graphics.TILE_WIDTH_PIXEL;
             var y_pixel = y * app.graphics.TILE_HEIGHT_PIXEL;
@@ -777,6 +778,7 @@ window.app = {
                 app.graphics.TILE_HEIGHT_PIXEL
             );
         },
+
         drawTile: function(x, y, tile) {
             var x_pixel = x * app.graphics.TILE_WIDTH_PIXEL;
             var y_pixel = y * app.graphics.TILE_HEIGHT_PIXEL;
@@ -797,8 +799,8 @@ window.app = {
                 app.graphics.TILE_HEIGHT_PIXEL
             );
         },
+
         drawCorruption: function(x, y) {
-            // Set the fill color before running function for efficiency
             app.graphics.handle.fillRect(
                 x * app.graphics.TILE_WIDTH_PIXEL,
                 y * app.graphics.TILE_HEIGHT_PIXEL,
@@ -806,6 +808,7 @@ window.app = {
                 app.graphics.TILE_HEIGHT_PIXEL
             );
         },
+
         getAvatarFrame: function(direction, altFrame) {
             var index = 0;
             if (direction == 'n') {
@@ -829,17 +832,21 @@ window.app = {
     chat: {
         $output: $('#messages'),
         $input: $('#message-input'),
+
         message: function(who, message, priority) {
             app.chat.$output
                 .append("<div class='message " + priority + "'><span class='username'>" + who + ": </span><span class='content'>" + message + "</span></div>")
                 .animate({scrollTop: this.$output[0].scrollHeight});
         },
+
         clear: function() {
             app.chat.$output.empty();
         },
+
         clearInput: function() {
             app.chat.$input.val('');
         },
+
         initialize: function() {
             $('#message-box form').submit(function(event) {
                 event.preventDefault();
