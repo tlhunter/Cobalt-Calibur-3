@@ -3,6 +3,26 @@
 
 $(function() {
 window.app = {
+    downloadAssets: function() {
+        $.when(
+            app.graphics.tilesets.download(
+                '/assets/tilesets/inventory.png',
+                app.graphics.tilesets.inventory
+            ),
+            app.graphics.tilesets.download(
+                '/assets/tilesets/avatars.png',
+                app.graphics.tilesets.avatars
+            ),
+            app.graphics.tilesets.download(
+                '/assets/tilesets/terrain.png',
+                app.graphics.tilesets.terrain
+            ),
+            app.environment.downloadTiles(),
+            app.environment.downloadMap()
+        ).done(function() {
+            app.initialize();
+        });
+    },
     initialize: function() {
         app.network.connectSocket();
 
@@ -223,6 +243,23 @@ window.app = {
             },
         },
 
+        // Downloads the tiles for the first time, uses promises
+        downloadTiles: function() {
+            return $.get('/assets/tilesets/data.json').pipe(function(data) {
+                app.chat.message('Client', 'Tileset Descriptors done.', 'client');
+                app.graphics.tilesets.descriptors = data;
+                return true;
+            });
+        },
+
+        // Downloads the map for the first time, uses promises
+        downloadMap: function() {
+            return $.get('/map').pipe(function(data) {
+                app.chat.message('Client', 'Map data done.', 'client');
+                app.environment.map.data = data;
+                return true;
+            });
+        },
     },
 
     player: {
@@ -682,7 +719,15 @@ window.app = {
             terrain: new Image(),
             avatars: new Image(),
             inventory: new Image(),
-            descriptors: {}
+            descriptors: {},
+
+            download: function(url, tileset) {
+                var d = $.Deferred();
+                tileset.src = url;
+                tileset.onload = function() { d.resolve(); }
+                tileset.onerror = function() { d.reject(); }
+                return d.promise();
+            }
         },
 
         globalAnimationFrame: false,
@@ -930,37 +975,7 @@ window.app = {
     }
 
 };
-
-app.chat.message('Client', 'Downloading assets...', 'client');
-
-// load Character, Inventory, Terrain descriptors
-$.get('/assets/tilesets/data.json', function(data) {
-    app.chat.message('Client', 'Tileset Descriptors done.', 'client');
-    app.graphics.tilesets.descriptors = data;
-});
-
-// load background sprites
-app.graphics.tilesets.terrain.src = '/assets/tilesets/terrain.png';
-app.graphics.tilesets.terrain.onload = function() {
-    app.chat.message('Client', 'Tileset Terrain done.', 'client');
-}
-// load avatar sprites
-app.graphics.tilesets.avatars.src = '/assets/tilesets/avatars.png';
-app.graphics.tilesets.avatars.onload = function() {
-    app.chat.message('Client', 'Tileset Avatars done.', 'client');
-}
-
-// load inventory sprites
-app.graphics.tilesets.inventory.src = '/assets/tilesets/inventory.png';
-app.graphics.tilesets.inventory.onload = function() {
-    app.chat.message('Client', 'Tileset Inventory done.', 'client');
-}
-
-$.get('/map', function(data) {
-    app.chat.message('Client', 'Map data done.', 'client');
-    app.environment.map.data = data;
-    app.initialize();
-});
+app.downloadAssets();
 });
 
 Storage.prototype.setObject = function(key, value) {
