@@ -146,7 +146,7 @@ window.app = {
                             if (npc.x == mapX && npc.y == mapY) {
                                 var index = app.graphics.getAvatarFrame(npc.d, app.graphics.globalAnimationFrame);
 
-                                var npc_name = app.graphics.tilesets.descriptors.characters[npc.id].name;
+                                var npc_name = app.graphics.tilesets.descriptors.avatars[npc.id].name;
                                 if (redrawNametags) app.graphics.nametags.add(npc_name, i, j);
                                 app.graphics.drawAvatar(i, j, index, npc.id);
                             }
@@ -446,7 +446,7 @@ window.app = {
                 for (var i = -1; i <= 1; i++) {
                     for (var j = -1; j <= 1; j++) {
                         if (npc.x == coords.x+i && npc.y == coords.y+j) {
-                            app.player.kill("Killed by " + app.graphics.tilesets.descriptors.characters[npc.id].name);
+                            app.player.kill("Killed by " + app.graphics.tilesets.descriptors.avatars[npc.id].name);
                             break;
                         }
                     }
@@ -680,7 +680,7 @@ window.app = {
 
         tilesets: {
             terrain: new Image(),
-            characters: new Image(),
+            avatars: new Image(),
             inventory: new Image(),
             descriptors: {}
         },
@@ -721,7 +721,7 @@ window.app = {
             var x_pixel = x * app.graphics.TILE_WIDTH_PIXEL;
             var y_pixel = y * app.graphics.TILE_HEIGHT_PIXEL;
             app.graphics.handle.drawImage(
-                app.graphics.tilesets.characters,
+                app.graphics.tilesets.avatars,
                 tile_x * app.graphics.TILE_WIDTH_PIXEL,
                 tile_y * app.graphics.TILE_HEIGHT_PIXEL,
                 app.graphics.TILE_WIDTH_PIXEL,
@@ -944,10 +944,10 @@ app.graphics.tilesets.terrain.src = '/assets/tilesets/terrain.png';
 app.graphics.tilesets.terrain.onload = function() {
     app.chat.message('Client', 'Tileset Terrain done.', 'client');
 }
-// load characters sprites
-app.graphics.tilesets.characters.src = '/assets/tilesets/characters.png';
-app.graphics.tilesets.characters.onload = function() {
-    app.chat.message('Client', 'Tileset Characters done.', 'client');
+// load avatar sprites
+app.graphics.tilesets.avatars.src = '/assets/tilesets/avatars.png';
+app.graphics.tilesets.avatars.onload = function() {
+    app.chat.message('Client', 'Tileset Avatars done.', 'client');
 }
 
 // load inventory sprites
