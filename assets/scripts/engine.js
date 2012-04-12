@@ -36,37 +36,15 @@ window.app = {
         app.network.bindEvents();
         app.network.send.join(app.player.name);
         app.initializeKeybindings();
-
-        // Tried using requestAnimationFrame, but that is slow and choppy
-        var currentFrame = 0;
-        setInterval(function() {
-            currentFrame++;
-            if (currentFrame % 3 == 0) {
-                currentFrame = 0;
-                // redraw every 150 ms, but change animation every 450 ms
-                app.graphics.globalAnimationFrame = !app.graphics.globalAnimationFrame;
-                app.player.killIfNpcNearby();
-            }
-            app.environment.map.render(currentFrame === 0);
-        }, 150);
+        app.persistence.startAutoSave();
+        app.graphics.enableAnimation();
+        app.chat.message('Help', 'Type /help for some help', 'help');
+        app.chat.message('Help', 'Type /nick NEWNAME to change your name', 'help');
 
         setTimeout(function() {
-            // Display helpful command
-            app.chat.message('Help', 'Type /help for some help', 'help');
-            app.chat.message('Help', 'Type /nick NEWNAME to change your name', 'help');
-            // Broadcast location
             app.network.send.move(app.player.coordinates, app.player.direction);
             app.network.send.character(app.player.name, app.player.picture);
         }, 500);
-
-        // save every 3 seconds
-        setInterval(function() {
-            app.persistence.save();
-        }, 3000);
-
-        $(window).unload(function() {
-            app.persistence.save();
-        });
     },
 
     initializeKeybindings: function() {
@@ -545,6 +523,17 @@ window.app = {
                 app.persistence.destroy();
             });
             location.reload(true);
+        },
+
+        // save every 3 seconds
+        startAutoSave: function() {
+            setInterval(function() {
+                app.persistence.save();
+            }, 3000);
+
+            $(window).unload(function() {
+                app.persistence.save();
+            });
         }
     },
 
@@ -700,6 +689,21 @@ window.app = {
         selfAnimationFrame: false,
         $canvas: $('#map'),
         handle: document.getElementById('map').getContext('2d'),
+
+        enableAnimation: function() {
+            // Tried using requestAnimationFrame, but that is slow and choppy
+            var currentFrame = 0;
+            setInterval(function() {
+                currentFrame++;
+                if (currentFrame % 3 == 0) {
+                    currentFrame = 0;
+                    // redraw every 150 ms, but change animation every 450 ms
+                    app.graphics.globalAnimationFrame = !app.graphics.globalAnimationFrame;
+                    app.player.killIfNpcNearby();
+                }
+                app.environment.map.render(currentFrame === 0);
+            }, 150);
+        },
 
         viewport: {
             update: function() {
