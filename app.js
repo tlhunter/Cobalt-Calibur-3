@@ -258,7 +258,6 @@ var game = {
                 io.sockets.emit('event npcmovement', {
                     npcs: game.npcs
                 });
-                logger("Event".grey, "NPC Move");
             }
         }
     },
@@ -327,7 +326,7 @@ function logger(title, message) {
     while (title.length < 26) {
         title = title + ' ';
     }
-    console.log(title + '| ' + message);
+    console.log(title + message);
 }
 
 function buildMap(db) {
