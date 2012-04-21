@@ -1,71 +1,45 @@
 {
-  "avatars": [
+  "characters": [
     {
       "name": "Ghost",
       "player": false
     },
     {
-      "name": "Arthur",
+      "name": "Blue",
       "player": true
     },
     {
-      "name": "Sharon",
+      "name": "Green",
       "player": true
     },
     {
-      "name": "Kasper",
+      "name": "Blue Hat",
       "player": true
     },
     {
-      "name": "Jessica",
+      "name": "Boy",
       "player": true
     },
     {
-      "name": "Emerald",
+      "name": "White",
       "player": true
     },
     {
-      "name": "Suki",
+      "name": "Barkeep",
       "player": true
     },
     {
-      "name": "Curtis",
+      "name": "Sol",
       "player": true
     },
     {
-      "name": "Cassandra",
+      "name": "Witch",
       "player": true
-    },
+    }
+  ],
+  "monsters": [
     {
-      "name": "Brawny",
-      "player": true
-    },
-    {
-      "name": "Sakura",
-      "player": true
-    },
-    {
-      "name": "Jack",
-      "player": true
-    },
-    {
-      "name": "Blossom",
-      "player": true
-    },
-    {
-      "name": "Laughey",
-      "player": true
-    },
-    {
-      "name": "Betty",
-      "player": true
-    },
-    {
-      "name": "Miamoto",
-      "player": true
-    },
-    {
-      "name": "Jekyll",
+      "name": "Shade",
       "player": false,
       "npc": {
         "hostile_day": false,
@@ -78,7 +52,7 @@
       }
     },
     {
-      "name": "Hyde",
+      "name": "Skeleton",
       "player": false,
       "npc": {
         "hostile_day": false,
@@ -91,7 +65,7 @@
       }
     },
     {
-      "name": "Shroomer",
+      "name": "Goblin",
       "player": false,
       "npc": {
         "hostile_day": true,
@@ -104,7 +78,7 @@
       }
     },
     {
-      "name": "Sunflower",
+      "name": "Imp",
       "player": false,
       "npc": {
         "hostile_day": true,
@@ -117,7 +91,7 @@
       }
     },
     {
-      "name": "Tree Man",
+      "name": "Genie",
       "player": false,
       "npc": {
         "hostile_day": true,
@@ -130,7 +104,7 @@
       }
     },
     {
-      "name": "Geode",
+      "name": "Succubus",
       "player": false,
       "npc": {
         "hostile_day": true,
@@ -143,7 +117,7 @@
       }
     },
     {
-      "name": "Thumper",
+      "name": "Reaper",
       "player": false,
       "npc": {
         "hostile_day": true,
@@ -156,7 +130,7 @@
       }
     },
     {
-      "name": "Cthulu Spawn",
+      "name": "Viking",
       "player": false,
       "npc": {
         "hostile_day": false,
@@ -167,103 +141,6 @@
         "despawn_night": true,
         "corruption_only": true
       }
-    },
-    {
-      "name": "Slimer",
-      "player": false,
-      "npc": {
-        "hostile_day": true,
-        "hostile_night": false,
-        "spawn_day": true,
-        "spawn_night": false,
-        "despawn_day": false,
-        "despawn_night": true,
-        "corruption_only": true
-      }
-    },
-    {
-      "name": "Dragon"
-    },
-    {
-      "name": "Eye Slug"
-    },
-    {
-      "name": "Beatle Bee"
-    },
-    {
-      "name": "Beatle Bum"
-    },
-    {
-      "name": "Mothra"
-    },
-    {
-      "name": "Cthulu Larvae"
-    },
-    {
-      "name": "Dolphina"
-    },
-    {
-      "name": "Krabmaster"
-    },
-    {
-      "name": "Froggy"
-    },
-    {
-      "name": "Ugly Slug"
-    },
-    {
-      "name": "Stupid Turtle"
-    },
-    {
-      "name": "Salamanda"
-    },
-    {
-      "name": "Dino Gal"
-    },
-    {
-      "name": "Dragon Snake"
-    },
-    {
-      "name": "Big Dragon"
-    },
-    {
-      "name": "Chocobo"
-    },
-    {
-      "name": "Vultura"
-    },
-    {
-      "name": "Rawr"
-    },
-    {
-      "name": "Horse Thingy"
-    },
-    {
-      "name": "Ugly Dude"
-    },
-    {
-      "name": "Beezworth"
-    },
-    {
-      "name": "Foxia"
-    },
-    {
-      "name": "Sedussa"
-    },
-    {
-      "name": "Burly Man"
-    },
-    {
-      "name": "Imp"
-    },
-    {
-      "name": "Faerie"
-    },
-    {
-      "name": "Dead Pirate"
-    },
-    {
-      "name": "Thrilla"
     }
   ],
   "inventory": [

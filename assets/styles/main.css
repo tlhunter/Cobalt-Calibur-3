@@ -6,65 +6,73 @@ body {
     font-family: arial;
     font-size: 13px;
     background: black;
-    margin: 10px 0 0 0;
+    margin: 0;
+    padding: 0;
+    color: #fff;
 }
 #page {
-    width: 512px;
-    height: 512px;
-    background: black url("/assets/images/interface.png") no-repeat top left;
+    text-align: center;
     margin: 0 auto;
-    position: relative;
-    color: white;
+    position: absolute;
 }
 #gamefield {
-    width: 272px;
-    height: 272px;
-    position: absolute;
-    left: 16px;
-    top: 48px;
+    text-align: left;
 }
 #messagefield {
+    text-align: left;
     color: #fff;
     position: absolute;
     left: 32px;
-    top: 352px;
-    width: 240px;
-    height: 128px;
+    bottom: 32px;
+    width: 33%;
+    height: 200px;
 }
 #inventoryfield {
-    left: 320px;
-    top: 64px;
-    width: 160px;
-    height: 240px;
+    right: 32px;
+    top: 16px;
+    width: 134px;
     position: absolute;
 }
+#inventoryfield h5 {
+    margin: 0 0 10px 0;
+    padding: 0px;
+    text-align: center;
+    text-shadow: 0 2px 2px #000;
+    font-size: 16px;
+}
 #inventoryfield .inventory {
-    padding: 17px 16px 0 0;
-    color: #000;
+    color: #fff;
+    background: rgba(0,0,0,0.75);
+    border-radius: 6px;
+    padding: 10px;
 }
 #inventoryfield .inventory-display {
     text-align: right;
     padding-right: 16px;
-    height: 24px;
-    font-size: 15px;
+    height: 20px;
+    font-size: 13px;
     font-family: Consolas;
 }
 #messages {
-    background-color: black;
     color: white;
     display: block;
     font-family: Consolas;
     overflow: auto;
-    font-size: 10px;
-    height: 110px;
+    font-size: 12px;
+    height: 160px;
 }
 #clock {
     position: absolute;
     right: 8px;
     bottom: 6px;
     font-family: consolas;
-    font-size: 11px;
+    font-size: 14px;
     text-shadow: 0px 1px 1px #000;
+}
+#message-box {
+    padding: 4px;
+    background: rgba(0, 0, 0, 0.75);
+    border-radius: 6px;
 }
 #messages, input {
     user-select: auto;
@@ -77,10 +85,10 @@ body {
     color: #ee2c2c;
 }
 #messages .help .username {
-    color: #2c2cee;
+    color: #5f5ff0;
 }
 #messages .help .content {
-    color: #999;
+    color: #ccc;
 }
 #messages .self .username,
 #messages .self .content {
@@ -93,31 +101,83 @@ body {
     color: #2c83ee;
 }
 #message-input {
-    width: 240px;
+    width: 100%;
     border: 0px;
-    background-color: #fff;
-    color: #000;
+    color: #fff;
+    background-color: transparent;
 }
 #message-send {
     display: none;
 }
 #nametags {
     position: absolute;
-    width: 272px;
-    height: 272px;
     overflow: hidden;
-    background: transparent url("/assets/images/map-overlay.png") no-repeat top left;
+    font-size: 14px;
+    font-family: arial;
 }
 #nametags .name {
     position: absolute;
-    width: 128px;
+    width: 160px;
     text-align: center;
     opacity: 0.75;
+    padding-top: 4px;
 }
 #nametags .name span {
-    background-color: rgba(0, 0, 0, 0.6);
-    padding: 2px 4px;
-    border-radius: 3px;
-    font-size: 9px;
-    font-family: Verdana;
+    background-color: rgba(0, 0, 0, 0.75);
+    padding: 3px 6px;
+    border-radius: 12px;
+}
+#nametags .name span.monster {
+    color: #e87b06;
+}
+#controls {
+    position: absolute;
+    width: 100%;
+    bottom: 0px;
+}
+#controls .holder {
+    margin: 0 auto;
+    width: 264px;
+    background: rgba(0, 0, 0, 0.75);
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    height: 32px;
+    padding-top: 8px;
+}
+#controls .holder .button {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    text-align: left;
+    text-shadow: 0 2px 2px #000;
+}
+#controls .wood-wall {
+    background-image: url("/assets/tilesets/terrain-32x32.png");
+    background-position: 0px -288px;
+}
+#controls .wood-floor {
+    background-image: url("/assets/tilesets/terrain-32x32.png");
+    background-position: 0px -320px;
+}
+#controls .stone-wall {
+    background-image: url("/assets/tilesets/terrain-32x32.png");
+    background-position: 0px -352px;
+}
+#controls .stone-floor {
+    background-image: url("/assets/tilesets/terrain-32x32.png");
+    background-position: 0px -384;
+}
+#controls .door {
+    background-image: url("/assets/tilesets/terrain-32x32.png");
+    background-position: 0px -416px;
+}
+#controls .glass {
+    background-image: url("/assets/tilesets/terrain-32x32.png");
+    background-position: 0px -448px;
+}
+#controls .collect {
+    background-image: url("/assets/images/mine.png");
+}
+a {
+    color: orange;
 }

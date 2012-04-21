@@ -196,7 +196,7 @@ var game = {
         corruption: {
             RADIUS: 4,
             handle: null,
-            interval: 61 * 1000, // Every minute and a second
+            interval: 43 * 1000,
             payload: function() {
                 // First, we want to populate an array of which tiles are synthetic and which are not
                 var synthetic_ids = game.getSyntheticTiles();
@@ -359,7 +359,7 @@ db.open(function(err, db) {
         if (err) throw err;
         game.descriptors = JSON.parse(data);
         setTimeout(function() {
-            var remaining = 100;
+            var remaining = 80;
             var coords = {};
             var npc_id;
             while (remaining) {
@@ -368,7 +368,7 @@ db.open(function(err, db) {
                 if (!game.canNPCSpawn(coords.x, coords.y)) {
                     continue;
                 }
-                npc_id = Math.floor(Math.random() * 36) + 16;
+                npc_id = Math.floor(Math.random() * 8);
                 game.npcs.push({id: npc_id, x: coords.x, y: coords.y, d: 's'});// throwing them in at a slash for now
                 remaining--;
             }

@@ -2,17 +2,18 @@
     <head>
         <title>Cobalt Calibur Beta</title>
         <script src="/assets/scripts/jquery-1.7.1.js"></script>
+        <script src='/assets/scripts/jquery.tipsy.js'></script>
         <script src="/assets/scripts/underscore.js"></script>
         <script src="/socket.io/socket.io.js"></script>
         <script src="/assets/scripts/engine.js"></script>
         <link rel="stylesheet" href="/assets/styles/main.css" type="text/css" media="screen" />
+        <link rel="stylesheet" href="/assets/styles/tipsy.css" type="text/css" media="screen" />
     </head>
     <body>
         <div id="page">
             <div id="gamefield">
                 <div id="nametags"></div>
                 <div id="clock"></div>
-                <canvas id='map' width='272' height='272'></canvas>
             </div>
             <div id="messagefield">
                 <div id="message-box">
@@ -24,16 +25,28 @@
                 </div>
             </div>
             <div id="inventoryfield">
+                <h5>Inventory</h5>
                 <div class="inventory">
-                    <div class="inventory-display" id="inventory-0" title="Stone">0</div>
-                    <div class="inventory-display" id="inventory-1" title="Wood">0</div>
-                    <div class="inventory-display" id="inventory-2" title="Water">0</div>
-                    <div class="inventory-display" id="inventory-3" title="Sand">0</div>
-                    <div class="inventory-display" id="inventory-4" title="Copper Ore">0</div>
-                    <div class="inventory-display" id="inventory-5" title="Iron Sore">0</div>
-                    <div class="inventory-display" id="inventory-6" title="Silver Ore">0</div>
-                    <div class="inventory-display" id="inventory-7" title="Gold Ore">0</div>
-                    <div class="inventory-display" id="inventory-8" title="Cobalt Ore">0</div>
+                    <div class="inventory-display" id="inventory-0" title="Stone">Stone: <span>0</span></div>
+                    <div class="inventory-display" id="inventory-1" title="Wood">Wood: <span>0</span></div>
+                    <div class="inventory-display" id="inventory-2" title="Water">Water: <span>0</span></div>
+                    <div class="inventory-display" id="inventory-3" title="Sand">Sand: <span>0</span></div>
+                    <div class="inventory-display" id="inventory-4" title="Copper Ore">Copper: <span>0</span></div>
+                    <div class="inventory-display" id="inventory-5" title="Iron Sore">Iron: <span>0</span></div>
+                    <div class="inventory-display" id="inventory-6" title="Silver Ore">Silver: <span>0</span></div>
+                    <div class="inventory-display" id="inventory-7" title="Gold Ore">Gold: <span>0</span></div>
+                    <div class="inventory-display" id="inventory-8" title="Cobalt Ore">Cobalt: <span>0</span></div>
+                </div>
+            </div>
+            <div id="controls">
+                <div class="holder">
+                    <div class="button wood-wall" title="Press 1 to place a wooden wall<br /><strong>Cost: 4 x Wood</strong>"><span>1</span></div>
+                    <div class="button wood-floor" title="Press 2 to place a wooden floor<br /><strong>Cost: 2 x Wood</strong>"><span>2</span></div>
+                    <div class="button stone-wall" title="Press 3 to place a stone wall<br /><strong>Cost: 4 x Stone</strong>"><span>3</span></div>
+                    <div class="button stone-floor" title="Press 4 to place a stone floor<br /><strong>Cost: 2 x Stone</strong>"><span>4</span></div>
+                    <div class="button door" title="Press 5 to place a door<br /><strong>Cost: 12 x Wood</strong>"><span>5</span></div>
+                    <div class="button glass" title="Press 6 to place a glass window<br /><strong>Cost: 4 x Sand</strong>"><span>6</span></div>
+                    <div class="button collect" title="Press F to mine / chop / collect / harvest"><span>F</span></div>
                 </div>
             </div>
         </div>

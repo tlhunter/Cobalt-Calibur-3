@@ -5,17 +5,22 @@ $(function() {
 window.app = {
     // First we download a bunch of our assets
     downloadAssets: function() {
+        app.chat.message('About', 'Cobalt Calibur, by <a target="_blank" href="http://thomashunter.name">Thomas Hunter</a> (<a target="_blank" href="http://twitter.com/tlhunter">@tlhunter</a>)', 'help');
         $.when(
             app.graphics.tilesets.download(
-                '/assets/tilesets/inventory.png',
+                '/assets/tilesets/inventory-32x32.png',
                 app.graphics.tilesets.inventory
             ),
             app.graphics.tilesets.download(
-                '/assets/tilesets/avatars.png',
-                app.graphics.tilesets.avatars
+                '/assets/tilesets/monsters-32x32.png',
+                app.graphics.tilesets.monsters
             ),
             app.graphics.tilesets.download(
-                '/assets/tilesets/terrain.png',
+                '/assets/tilesets/characters-32x48.png',
+                app.graphics.tilesets.characters
+            ),
+            app.graphics.tilesets.download(
+                '/assets/tilesets/terrain-32x32.png',
                 app.graphics.tilesets.terrain
             ),
             app.environment.downloadTiles(),
@@ -27,6 +32,7 @@ window.app = {
 
     // Once the assets are done downloading we initialize the rest of the app
     initialize: function() {
+        app.graphics.initialize();
         app.network.connectSocket();
         app.audio.initialize();
         app.persistence.load() || app.persistence.createNewPlayer();
@@ -37,14 +43,16 @@ window.app = {
         app.network.send.join(app.player.name);
         app.initializeKeybindings();
         app.persistence.startAutoSave();
-        app.graphics.enableAnimation();
+        app.graphics.startAnimation();
         app.chat.message('Help', 'Type /help for some help', 'help');
-        app.chat.message('Help', 'Type /nick NEWNAME to change your name', 'help');
+        app.chat.message('Help', 'Use the WASD keys to move around', 'help');
 
         setTimeout(function() {
             app.network.send.move(app.player.coordinates, app.player.direction);
             app.network.send.character(app.player.name, app.player.picture);
         }, 500);
+
+        $('#controls .button').tipsy({fade: false, gravity: 's', html: true});
     },
 
     initializeKeybindings: function() {
@@ -114,12 +122,20 @@ window.app = {
                 var tile;
                 if (redrawNametags) app.graphics.nametags.hide();
 
-                for (j=0; j<app.graphics.viewport.WIDTH_TILE; j++) {
-                    for (i=0; i < app.graphics.viewport.HEIGHT_TILE; i++) {
+                for (j=0; j<app.graphics.viewport.HEIGHT_TILE; j++) {
+                    for (i=0; i < app.graphics.viewport.WIDTH_TILE; i++) {
                         mapX = i + app.graphics.viewport.x;
                         mapY = j + app.graphics.viewport.y;
                         tile = (app.environment.map.data[mapX] && app.environment.map.data[mapX][mapY]) ? app.environment.map.data[mapX][mapY] : null;
                         app.graphics.drawTile(i, j, tile);
+
+                        /*
+                         * Draw Players and Draw NPCs really needs to be improved. Instead of checking every single tile to see if an NPC
+                         * is there, instead, get a list of all NPCs and players within the visible area. Then, go through them one by one
+                         * and draw them on the map. Also, if we sort them based on y coordinate, players will always be overlapping in
+                         * the proper way. I figure this will be the best way to make the current version of teh game faster. Might be able
+                         * to use the fram API thingy smoothly once we make that change.
+                         */
 
                         // Draw Players
                         var len = app.players.data.length;
@@ -133,8 +149,8 @@ window.app = {
                                 if (isNaN(picture_id)) {
                                     picture_id = 0;
                                 }
-                                if (redrawNametags) app.graphics.nametags.add(player.name, i, j);
-                                app.graphics.drawAvatar(i, j, index, picture_id);
+                                if (redrawNametags) app.graphics.nametags.add(player.name, i, j, false);
+                                app.graphics.drawAvatar(i, j, index, picture_id, 'characters');
                             }
                         }
 
@@ -145,9 +161,9 @@ window.app = {
                             if (npc.x == mapX && npc.y == mapY) {
                                 var index = app.graphics.getAvatarFrame(npc.d, app.graphics.globalAnimationFrame);
 
-                                var npc_name = app.graphics.tilesets.descriptors.avatars[npc.id].name;
-                                if (redrawNametags) app.graphics.nametags.add(npc_name, i, j);
-                                app.graphics.drawAvatar(i, j, index, npc.id);
+                                var npc_name = app.graphics.tilesets.descriptors.monsters[npc.id].name;
+                                if (redrawNametags) app.graphics.nametags.add(npc_name, i, j, true);
+                                app.graphics.drawAvatar(i, j, index, npc.id, 'monsters');
                             }
                         }
 
@@ -168,8 +184,8 @@ window.app = {
 
                 // Draw this player
                 var index = app.graphics.getAvatarFrame(app.player.direction, app.graphics.selfAnimationFrame);
-                if (redrawNametags) app.graphics.nametags.add(app.player.name, app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE, app.graphics.viewport.PLAYER_OFFSET_TOP_TILE);
-                app.graphics.drawAvatar(app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE, app.graphics.viewport.PLAYER_OFFSET_TOP_TILE, index, app.player.picture);
+                if (redrawNametags) app.graphics.nametags.add(app.player.name, app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE, app.graphics.viewport.PLAYER_OFFSET_TOP_TILE, false);
+                app.graphics.drawAvatar(app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE, app.graphics.viewport.PLAYER_OFFSET_TOP_TILE, index, app.player.picture, 'characters');
 
                 if (redrawNametags) app.graphics.nametags.show();
 
@@ -314,13 +330,13 @@ window.app = {
                 if (amount < 0) {
                     if (data[index] >= -amount) {
                         data[index] += amount;
-                        $('#inventory-'+index).stop().css({fontSize: '8px'}).animate({ fontSize : '15px' }).html(data[index]);
+                        $('#inventory-'+index+' span').stop().css({fontSize: '8px'}).animate({ fontSize : '15px' }).html(data[index]);
                         return true;
                     }
                     return false;
                 } else {
                     data[index] += amount;
-                    $('#inventory-'+index).stop().css({fontSize: '22px'}).animate({ fontSize : '15px' }).html(data[index]);
+                    $('#inventory-'+index+' span').stop().css({fontSize: '22px'}).animate({ fontSize : '15px' }).html(data[index]);
                     return true;
                 }
             },
@@ -328,7 +344,7 @@ window.app = {
             render: function() {
                 var len = app.player.inventory.data.length;
                 for (var i = 0; i < len; i++) {
-                    $('#inventory-'+i).html(app.player.inventory.data[i]);
+                    $('#inventory-'+i+' span').html(app.player.inventory.data[i]);
                 }
             },
         },
@@ -463,7 +479,7 @@ window.app = {
                 for (var i = -1; i <= 1; i++) {
                     for (var j = -1; j <= 1; j++) {
                         if (npc.x == coords.x+i && npc.y == coords.y+j) {
-                            app.player.kill("Killed by " + app.graphics.tilesets.descriptors.avatars[npc.id].name);
+                            app.player.kill("Killed by " + app.graphics.tilesets.descriptors.monsters[npc.id].name);
                             break;
                         }
                     }
@@ -682,15 +698,30 @@ window.app = {
     // Functions and data regarding the map
 
     graphics: {
-        TILE_WIDTH_PIXEL: 16,
-        TILE_HEIGHT_PIXEL: 16,
+        TILE_WIDTH_PIXEL: 32,
+        TILE_HEIGHT_PIXEL: 32,
 
         globalAnimationFrame: false,
         selfAnimationFrame: false,
-        $canvas: $('#map'),
-        handle: document.getElementById('map').getContext('2d'),
+        $canvas: null,
+        handle: null,
 
-        enableAnimation: function() {
+        initialize: function() {
+            var view = app.graphics.viewport;
+            view.WIDTH_TILE = Math.floor($(window).width() / app.graphics.TILE_WIDTH_PIXEL);
+            view.HEIGHT_TILE = Math.floor($(window).height() / app.graphics.TILE_HEIGHT_PIXEL);
+            view.WIDTH_PIXEL = app.graphics.viewport.WIDTH_TILE * app.graphics.TILE_WIDTH_PIXEL;
+            view.HEIGHT_PIXEL = app.graphics.viewport.HEIGHT_TILE * app.graphics.TILE_HEIGHT_PIXEL;
+            view.PLAYER_OFFSET_TOP_TILE = Math.floor(view.HEIGHT_TILE / 2);
+            view.PLAYER_OFFSET_LEFT_TILE = Math.floor(view.WIDTH_TILE / 2) + 1;
+            $('#gamefield').append('<canvas id="map" width="' + view.WIDTH_PIXEL + '" height="' + view.HEIGHT_PIXEL + '"></canvas>');
+            $('#page, #nametags').width(view.WIDTH_PIXEL).height(view.HEIGHT_PIXEL);
+
+            app.graphics.$canvas = $('#map');
+            app.graphics.handle = document.getElementById('map').getContext('2d');
+        },
+
+        startAnimation: function() {
             // Tried using requestAnimationFrame, but that is slow and choppy
             var currentFrame = 0;
             setInterval(function() {
@@ -711,14 +742,14 @@ window.app = {
                 app.graphics.viewport.y = app.player.coordinates.y - app.graphics.viewport.PLAYER_OFFSET_TOP_TILE;
             },
 
-            WIDTH_PIXEL: 272,
-            HEIGHT_PIXEL: 272,
+            WIDTH_PIXEL: null,
+            HEIGHT_PIXEL: null,
 
-            WIDTH_TILE: 17,
-            HEIGHT_TILE: 17,
+            WIDTH_TILE: null,
+            HEIGHT_TILE: null,
 
-            PLAYER_OFFSET_LEFT_TILE: 8,
-            PLAYER_OFFSET_TOP_TILE: 8,
+            PLAYER_OFFSET_LEFT_TILE: null,
+            PLAYER_OFFSET_TOP_TILE: null,
 
             x: null,
             y: null
@@ -726,9 +757,15 @@ window.app = {
 
         tilesets: {
             terrain: new Image(),
-            avatars: new Image(),
+            characters: new Image(),
+            monsters: new Image(),
             inventory: new Image(),
-            descriptors: {},
+            descriptors: {
+                terrain: null,
+                characters: null,
+                monsters: null,
+                inventory: null
+            },
 
             download: function(url, tileset) {
                 var d = $.Deferred();
@@ -744,11 +781,15 @@ window.app = {
             $tags: $('#nametags'),
 
             // adds a player name, provided the X and Y coords of the player
-            add: function(name, x, y) {
-                var x_pixel = (x - 4) * app.graphics.TILE_WIDTH_PIXEL + 7; // 7 is left margin or something
-                var y_pixel = (y - 1) * app.graphics.TILE_HEIGHT_PIXEL + 2;
+            add: function(name, x, y, monster) {
+                var cls = ''
+                if (monster) {
+                    cls = ' class="monster"'
+                }
+                var x_pixel = (x - 2) * app.graphics.TILE_WIDTH_PIXEL;
+                var y_pixel = (y + 1) * app.graphics.TILE_HEIGHT_PIXEL;
                 var $tags = app.graphics.nametags.$tags;
-                var $name = $('<div class="name"><span>' + name + '</span></div>');
+                var $name = $('<div class="name"><span' + cls + '>' + name + '</span></div>');
                 $name.css({
                     left: x_pixel,
                     top: y_pixel
@@ -767,19 +808,29 @@ window.app = {
             }
         },
 
-        drawAvatar: function(x, y, tile_x, tile_y) {
+        drawAvatar: function(x, y, tile_x, tile_y, tileset) {
             var x_pixel = x * app.graphics.TILE_WIDTH_PIXEL;
             var y_pixel = y * app.graphics.TILE_HEIGHT_PIXEL;
+            var tile_height = 32;
+
+            if (tileset == 'monsters') {
+                tileset = app.graphics.tilesets.monsters;
+                tile_height = 32;
+            } else if (tileset == 'characters') {
+                tileset = app.graphics.tilesets.characters;
+                y_pixel -= 16;
+                tile_height = 48;
+            }
             app.graphics.handle.drawImage(
-                app.graphics.tilesets.avatars,
+                tileset,
                 tile_x * app.graphics.TILE_WIDTH_PIXEL,
-                tile_y * app.graphics.TILE_HEIGHT_PIXEL,
+                tile_y * tile_height,
                 app.graphics.TILE_WIDTH_PIXEL,
-                app.graphics.TILE_HEIGHT_PIXEL,
+                tile_height,
                 x_pixel,
                 y_pixel,
                 app.graphics.TILE_WIDTH_PIXEL,
-                app.graphics.TILE_HEIGHT_PIXEL
+                tile_height
             );
         },
 
@@ -816,17 +867,17 @@ window.app = {
         getAvatarFrame: function(direction, altFrame) {
             var index = 0;
             if (direction == 'n') {
-                index = 4;
+                index = 6;
             } else if (direction == 'e') {
-                index = 2;
+                index = 3;
             } else if (direction == 's') {
                 index = 0;
             } else if (direction == 'w') {
-                index = 6;
+                index = 9;
             }
 
             if (altFrame) {
-                index++;
+                index += 2;
             }
 
             return index;
@@ -868,7 +919,7 @@ window.app = {
                     app.chat.message('Help', 'Press Esc to leave the chat box', 'help');
                     app.chat.message('Help', '-{Commands}------------------------', 'help');
                     app.chat.message('Help', '/nick <em>name</em>: change your name', 'help');
-                    app.chat.message('Help', '/pic <em>1-16</em>: change your avatar', 'help');
+                    app.chat.message('Help', '/pic <em>1-8</em>: change your avatar', 'help');
                     app.chat.message('Help', '/who: get a list of players', 'help');
                     app.chat.message('Help', '/gps: get coordinates', 'help');
                     app.chat.message('Help', '/clear: reset message area', 'help');
@@ -884,7 +935,7 @@ window.app = {
                     if (isNaN(picIndex)) {
                         picIndex = 1;
                     }
-                    if (picIndex > 16) {
+                    if (picIndex > 8) {
                         picIndex = 1;
                     }
                     app.player.picture = picIndex;
