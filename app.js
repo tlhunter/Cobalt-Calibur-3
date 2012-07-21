@@ -355,6 +355,7 @@ function buildMap(db) {
 }
 
 db.open(function(err, db) {
+    if (err) throw err;
     fs.readFile('assets/tilesets/data.json', function(err, data) {
         if (err) throw err;
         game.descriptors = JSON.parse(data);
