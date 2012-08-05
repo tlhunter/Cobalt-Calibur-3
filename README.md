@@ -60,7 +60,12 @@ corrupted areas. They also draw penises and destroy each others houses.
 Execute Program
 ==
 
-    sudo node app.js <PORT=80>
+    sudo node app.js <PORT=80> <MONGOHOST=127.0.0.1> <MONGOPORT=27017>
+
+I personally run the app using Forever:
+
+    sudo npm install forever -g
+    sudo forever start app.js 80 127.0.0.1 27017
 
 Requirements
 ==
