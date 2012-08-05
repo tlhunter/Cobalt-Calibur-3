@@ -16,8 +16,8 @@ var colors      = require('colors');
 var server_port = parseInt(process.argv[2], 10) || 80;
 
 // Database connection
-var mongo_host  = process.env['MONGO_NODE_DRIVER_HOST'] != null ? process.env['MONGO_NODE_DRIVER_HOST'] : 'localhost';
-var mongo_port  = process.env['MONGO_NODE_DRIVER_PORT'] != null ? process.env['MONGO_NODE_DRIVER_PORT'] : connection.DEFAULT_PORT;
+var mongo_host  = process.argv[3] || '127.0.0.1';
+var mongo_port  = parseInt(process.argv[4], 10) || 27017;
 var db          = new Db('terraformia', new server(mongo_host, mongo_port, {}), {native_parser:false});
 
 // Global object containing game data
