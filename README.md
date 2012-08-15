@@ -5,7 +5,7 @@ Cobalt Calibur 3 is a browser-based MMORPG (or, at least one day, it will be). T
 uses MongoDB for a database engine. The frontend uses the HTML5 Canvas tag to handle drawing of the map, and the map is
 resized when the page loads to fit the size of the users screen. It also uses some HTML5 audio for sound effects.
 
-Example Server: http://cobaltcalibur-thomashunter.rhcloud.com/
+Example Server: http://zyu.me
 
 How To Play
 ==
@@ -60,12 +60,12 @@ corrupted areas. They also draw penises and destroy each others houses.
 Execute Program
 ==
 
-    sudo node app.js <PORT=80> <MONGOHOST=127.0.0.1> <MONGOPORT=27017>
+    sudo node server.js
 
 I personally run the app using Forever:
 
     sudo npm install forever -g
-    sudo forever start app.js 80 127.0.0.1 27017
+    sudo forever start server.js
 
 Requirements
 ==
