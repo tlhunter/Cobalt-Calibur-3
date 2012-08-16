@@ -7,6 +7,15 @@ resized when the page loads to fit the size of the users screen. It also uses so
 
 Example Server: http://zyu.me
 
+Free Node.js/MongoDB Hosting and Guide
+==
+
+I wrote a step-by-step guide for how to download Cobalt Calibur, and get all of the hosting on Red Hat's
+OpenShift platform. This includes setting up a Node.js app and configuring MongoDB. The best part is that
+it is completely free, and only takes about 30 minutes to setup. Check it out here:
+
+https://openshift.redhat.com/community/blogs/hosting-and-developing-the-html5-game-cobalt-calibur-free-on-openshift
+
 How To Play
 ==
 
