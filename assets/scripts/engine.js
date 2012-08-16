@@ -312,7 +312,7 @@ window.app = {
             if (app.environment.corruption.loaded && app.environment.corruption.data[coords.x][coords.y]) {
                 if (Math.random() < 1/8) {
                     app.player.kill("You were killed by corruption");
-                    app.network.send.chat(app.player.name, "*Killed by Corruption*");
+                    app.network.send.chat("*Killed by Corruption*");
                 }
             }
 
@@ -950,7 +950,7 @@ window.app = {
                     return;
                 } else if (message === '/kill') {
                     app.player.kill('Committed Suicide');
-                        app.network.send.chat(app.player.name, "*Committed Suicide*");
+                        app.network.send.chat("*Committed Suicide*");
                     return;
                 } else if (message === '/gps') {
                     app.chat.message("Client", "Coordinates: [" + (app.player.coordinates.x) + "," + (app.player.coordinates.y) + "]", 'client');
@@ -966,7 +966,7 @@ window.app = {
                     return;
                 }
                 app.chat.message(app.player.name, message, 'self');
-                app.network.send.chat(app.player.name, message);
+                app.network.send.chat(message);
             });
 
             // Pres Esc inside of text box, leave the text box
