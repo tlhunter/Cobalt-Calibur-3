@@ -56,28 +56,47 @@ window.app = {
     },
 
     initializeKeybindings: function() {
+        
+        var keysPressed = {};
+        
+        $(document).keydown(function(e) {
+            keysPressed[e.which] = true;
+        });
+        
+        $(document).keyup(function(e) {
+            keysPressed[e.which] = false;
+        });
+        
+        var checkKeys = function() {
+            if (keysPressed['119']) { // w
+                app.player.move('n');
+            } else if (keysPressed['97']) { // a
+                app.player.move('w');
+            } else if (keysPressed['115']) { // s
+                app.player.move('s');
+            } else if (keysPressed['100']) { // d
+                app.player.move('e');
+            } else if (keysPressed['87']) { // W
+                app.player.setDirection('n');
+            } else if (keysPressed['65']) { // A
+                app.player.setDirection('w');
+            } else if (keysPressed['83']) { // S
+                app.player.setDirection('s');
+            } else if (keysPressed['68']) { // D
+                app.player.setDirection('e');
+            }
+            
+            setTimeout(checkKeys, 200);
+        };
+        
+        checkKeys();
+                
         $(document).keypress(function(e) {
             if ($(e.target).is(":input")) {
                 return;
             }
 
-            if (e.which == 119) { // w
-                app.player.move('n');
-            } else if (e.which == 97) { // a
-                app.player.move('w');
-            } else if (e.which == 115) { // s
-                app.player.move('s');
-            } else if (e.which == 100) { // d
-                app.player.move('e');
-            } else if (e.which == 87) { // W
-                app.player.setDirection('n');
-            } else if (e.which == 65) { // A
-                app.player.setDirection('w');
-            } else if (e.which == 83) { // S
-                app.player.setDirection('s');
-            } else if (e.which == 68) { // D
-                app.player.setDirection('e');
-            } else if (e.which == 116) { // T
+            if (e.which == 116) { // T
                 e.preventDefault(); // keeps us from getting a t in the box
                 $('#message-input').focus();
             } else if (e.which == 47) { // /
