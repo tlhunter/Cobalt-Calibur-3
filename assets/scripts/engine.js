@@ -581,6 +581,7 @@ window.app = {
                 var player = app.players.data[i];
                 if (player.session == session) {
                     app.players.data.splice(i, 1);
+                    break;
                 }
             }
         }
