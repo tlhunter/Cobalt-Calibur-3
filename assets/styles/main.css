@@ -137,12 +137,12 @@ body {
 }
 #controls .holder {
     margin: 0 auto;
-    width: 264px;
+    width: 290px;
     background: rgba(0, 0, 0, 0.75);
     border-top-left-radius: 6px;
     border-top-right-radius: 6px;
     height: 32px;
-    padding-top: 8px;
+    padding: 8px 0 10px 0;
 }
 #controls .holder .button {
     display: inline-block;
@@ -150,6 +150,7 @@ body {
     height: 32px;
     text-align: left;
     text-shadow: 0 2px 2px #000;
+    border: 2px solid #333;
 }
 #controls .wood-wall {
     background-image: url("/assets/tilesets/terrain-32x32.png");

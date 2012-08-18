@@ -44,15 +44,58 @@ window.app = {
         app.initializeKeybindings();
         app.persistence.startAutoSave();
         app.graphics.startAnimation();
+        app.controls.initialize();
         app.chat.message('Help', 'Type /help for some help', 'help');
         app.chat.message('Help', 'Use the WASD keys to move around', 'help');
-
+        
         setTimeout(function() {
             app.network.send.move(app.player.coordinates, app.player.direction);
             app.network.send.character(app.player.name, app.player.picture);
         }, 500);
 
         $('#controls .button').tipsy({fade: false, gravity: 's', html: true});
+
+        app.player.inventory.data = [1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000];
+    },
+
+    controls: {
+        selected: 0,
+        initialize: function() {
+            app.controls.set(0);
+        },
+        data: [
+            $('#controls .wood-wall'),
+            $('#controls .wood-floor'),
+            $('#controls .stone-wall'),
+            $('#controls .stone-floor'),
+            $('#controls .door'),
+            $('#controls .glass'),
+            $('#controls .collect')
+        ],
+        set: function(index) {
+            if (index < 0) {
+                index = app.controls.data.length - 1;
+            } else if (index >= app.controls.data.length) {
+                index = 0;
+            }
+
+            app.controls.data[app.controls.selected].css('border-color', '#333');
+            app.controls.selected = index;
+            app.controls.data[app.controls.selected].css('border-color', '#0F0');
+        },
+        next: function() {
+            app.controls.set(app.controls.selected + 1)
+        },
+        previous: function() {
+            app.controls.set(app.controls.selected - 1)
+        },
+        action: function() {
+            if (app.controls.selected == 6) { // collect
+                app.player.mineFacingTile();
+            } else {
+                app.player.placeItem(app.controls.selected + 9);
+            }
+        }
     },
 
     initializeKeybindings: function() {
@@ -103,6 +146,13 @@ window.app = {
                 }
             }
             
+            if (keysPressed['37']) { // left arrow
+                app.controls.previous();
+            }
+            else if (keysPressed['39']) { // right arrow
+                app.controls.next();
+            }
+
             setTimeout(checkKeys, 100);
         };
         
@@ -111,6 +161,10 @@ window.app = {
         $(document).keypress(function(e) {
             if ($(e.target).is(":input")) {
                 return;
+            }
+
+            if (e.which == 32) { // space
+                app.controls.action();
             }
 
             if (e.which == 116) { // T

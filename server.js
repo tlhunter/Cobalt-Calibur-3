@@ -1,6 +1,5 @@
 // Use clean code
 'use strict';
-
 // requires
 var app         = require('express').createServer();
 var io          = require('socket.io').listen(app, { log: false});
@@ -14,7 +13,7 @@ var colors      = require('colors');
 
 // Web Server Configuration
 var server_port = 80; // most OS's will require sudo to listen on 80
-var server_address = '127.0.0.1';
+var server_address = '192.168.0.191'; //'127.0.0.1';
 
 // MongoDB Configuration
 var mongo_host = '127.0.0.1';
