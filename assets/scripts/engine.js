@@ -55,38 +55,55 @@ window.app = {
         $('#controls .button').tipsy({fade: false, gravity: 's', html: true});
     },
 
+    keysPressed: {},
+
     initializeKeybindings: function() {
         
-        var keysPressed = {};
-        
         $(document).keydown(function(e) {
-            keysPressed[e.which] = true;
+            if ($(e.target).is(":input")) {
+                return;
+            }
+
+            app.keysPressed[e.which] = true;
         });
         
         $(document).keyup(function(e) {
-            keysPressed[e.which] = false;
+            if ($(e.target).is(":input")) {
+                return;
+            }
+
+            app.keysPressed[e.which] = false;
         });
         
         var checkKeys = function() {
-            if (keysPressed['119']) { // w
-                app.player.move('n');
-            } else if (keysPressed['97']) { // a
-                app.player.move('w');
-            } else if (keysPressed['115']) { // s
-                app.player.move('s');
-            } else if (keysPressed['100']) { // d
-                app.player.move('e');
-            } else if (keysPressed['87']) { // W
-                app.player.setDirection('n');
-            } else if (keysPressed['65']) { // A
-                app.player.setDirection('w');
-            } else if (keysPressed['83']) { // S
-                app.player.setDirection('s');
-            } else if (keysPressed['68']) { // D
-                app.player.setDirection('e');
+
+            if (app.keysPressed['87']) { // w
+                if (app.keysPressed['16']) { // shift
+                    app.player.setDirection('n');
+                } else {
+                    app.player.move('n');
+                }
+            } else if (app.keysPressed['65']) { // a
+                if (app.keysPressed['16']) { // shift
+                    app.player.setDirection('w');
+                } else {
+                    app.player.move('w');
+                }
+            } else if (app.keysPressed['83']) { // s
+                if (app.keysPressed['16']) { // shift
+                    app.player.setDirection('s');
+                } else {
+                    app.player.move('s');
+                }
+            } else if (app.keysPressed['68']) { // d
+                if (app.keysPressed['16']) { // shift
+                    app.player.setDirection('e');
+                } else {
+                    app.player.move('e');
+                }
             }
             
-            setTimeout(checkKeys, 200);
+            setTimeout(checkKeys, 100);
         };
         
         checkKeys();
