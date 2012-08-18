@@ -130,6 +130,22 @@ body {
 #nametags .name span.monster {
     color: #e87b06;
 }
+#hearts {
+    position: absolute;
+    width: 100%;
+    bottom: 55px;
+}
+#hearts .holder {
+    margin: 0 auto;
+    width: 290;
+    border-radius: 6px;
+}
+#hearts .holder .heart {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    background-image: url("/assets/tilesets/heart-32x32.png");    
+}
 #controls {
     position: absolute;
     width: 100%;

@@ -45,6 +45,7 @@ window.app = {
         app.persistence.startAutoSave();
         app.graphics.startAnimation();
         app.controls.initialize();
+        app.graphics.drawHearts();
         app.chat.message('Help', 'Type /help for some help', 'help');
         app.chat.message('Help', 'Use the WASD keys to move around', 'help');
         
@@ -346,6 +347,7 @@ window.app = {
     },
 
     player: {
+        hearts: 5,
         picture: 0,
         name: '',
         god: false,
@@ -401,7 +403,7 @@ window.app = {
 
             if (app.environment.corruption.loaded && app.environment.corruption.data[coords.x][coords.y]) {
                 if (Math.random() < 1/8) {
-                    app.player.kill("You were killed by corruption");
+                    app.player.hurt("You were killed by corruption");
                     app.network.send.chat("*Killed by Corruption*");
                 }
             }
@@ -558,6 +560,11 @@ window.app = {
             app.graphics.viewport.update();
             app.chat.message('Client', message, 'client');
             app.persistence.save();
+
+            setTimeout(function() {
+                app.player.hearts = 5;
+                app.graphics.drawHearts();
+            }, 200);
         },
 
         // Checks to see if an NPC is adjacent to the player, and if so, kills them
@@ -569,13 +576,22 @@ window.app = {
                 for (var i = -1; i <= 1; i++) {
                     for (var j = -1; j <= 1; j++) {
                         if (npc.x == coords.x+i && npc.y == coords.y+j) {
-                            app.player.kill("Killed by " + app.graphics.tilesets.descriptors.monsters[npc.id].name);
+                            app.player.hurt("Killed by " + app.graphics.tilesets.descriptors.monsters[npc.id].name);
                             break;
                         }
                     }
                 }
             }
         },
+
+        hurt: function(killMessage) {
+            app.player.hearts--;
+            if (app.player.hearts <= 0) {
+                app.player.kill(killMessage);
+                return;
+            }
+            app.graphics.drawHearts();
+        }
     },
 
     // NPC stuff
@@ -671,6 +687,7 @@ window.app = {
                 var player = app.players.data[i];
                 if (player.session == session) {
                     app.players.data.splice(i, 1);
+                    break;
                 }
             }
         }
@@ -971,6 +988,13 @@ window.app = {
             }
 
             return index;
+        },
+
+        drawHearts: function() {
+            $('#hearts .holder').empty();
+            for (var i = 0; i < app.player.hearts; i++) {
+                $('#hearts .holder').append('<div class="heart"></div>');
+            }
         }
     },
 

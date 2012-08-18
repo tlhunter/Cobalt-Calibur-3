@@ -242,12 +242,18 @@ var game = {
 
         npcmovement: {
             handle: null,
-            interval: 4 * 1000,
+            interval: 2 * 1000,
             payload: function() {
 
                 var len = game.npcs.length;
                 for(var i = 0; i < len; i++) {
                     var npc = game.npcs[i];
+
+                    if (game.tryNPCChase(npc)) {
+                        // success -> heading towards a player
+                        continue;
+                    }
+
                     var new_direction = Math.floor(Math.random() * 5);
                     if (new_direction == 0 && npc.x < 199 && game.canNPCWalk(npc.x+1, npc.y)) {
                         npc.x++;
@@ -297,6 +303,43 @@ var game = {
             return false;
         }
         return true;
+    },
+
+    tryNPCChase: function(npc) {
+        var radius = 10;
+        var deltaX = 0;
+        var deltaY = 0;
+        var moved = false;
+        for (var i = 0; i < game.players.length; i++) {
+            deltaX = game.players[i].x - npc.x;
+            deltaY = game.players[i].y - npc.y;
+            moved = false;
+
+            if (deltaX >= 0 && deltaX <= radius && npc.x < 199 && game.canNPCWalk(npc.x+1, npc.y)) {
+                npc.x++;
+                npc.d = 'e';
+                moved = true;
+            } else if (deltaX <= 0 && deltaX >= -radius && npc.x > 0 && game.canNPCWalk(npc.x-1, npc.y)) {
+                npc.x--;
+                npc.d = 'w';
+                moved = true;
+            }
+
+            if (deltaY >= 0 && deltaY <= radius && npc.y < 199 && game.canNPCWalk(npc.x, npc.y+1)) {
+                npc.y++;
+                npc.d = 's';
+                moved = true;
+            } else if (deltaY <= 0 && deltaY >= -radius && npc.y > 0 && game.canNPCWalk(npc.x, npc.y-1)) {
+                npc.y--;
+                npc.d = 'n';
+                moved = true;
+            }
+
+            if (moved) {
+                return true;
+            }
+        }
+        return false;
     },
 
     // Array of known player locations
