@@ -55,16 +55,16 @@ window.app = {
         $('#controls .button').tipsy({fade: false, gravity: 's', html: true});
     },
 
-    keysPressed: {},
-
     initializeKeybindings: function() {
+
+        var keysPressed = {};
         
         $(document).keydown(function(e) {
             if ($(e.target).is(":input")) {
                 return;
             }
 
-            app.keysPressed[e.which] = true;
+            keysPressed[e.which] = true;
         });
         
         $(document).keyup(function(e) {
@@ -72,31 +72,31 @@ window.app = {
                 return;
             }
 
-            app.keysPressed[e.which] = false;
+            keysPressed[e.which] = false;
         });
         
         var checkKeys = function() {
 
-            if (app.keysPressed['87']) { // w
-                if (app.keysPressed['16']) { // shift
+            if (keysPressed['87']) { // w
+                if (keysPressed['16']) { // shift
                     app.player.setDirection('n');
                 } else {
                     app.player.move('n');
                 }
-            } else if (app.keysPressed['65']) { // a
-                if (app.keysPressed['16']) { // shift
+            } else if (keysPressed['65']) { // a
+                if (keysPressed['16']) { // shift
                     app.player.setDirection('w');
                 } else {
                     app.player.move('w');
                 }
-            } else if (app.keysPressed['83']) { // s
-                if (app.keysPressed['16']) { // shift
+            } else if (keysPressed['83']) { // s
+                if (keysPressed['16']) { // shift
                     app.player.setDirection('s');
                 } else {
                     app.player.move('s');
                 }
-            } else if (app.keysPressed['68']) { // d
-                if (app.keysPressed['16']) { // shift
+            } else if (keysPressed['68']) { // d
+                if (keysPressed['16']) { // shift
                     app.player.setDirection('e');
                 } else {
                     app.player.move('e');
