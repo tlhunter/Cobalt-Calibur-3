@@ -45,7 +45,7 @@ window.app = {
         app.persistence.startAutoSave();
         app.graphics.startAnimation();
         app.controls.initialize();
-        app.graphics.drawHearts();
+        app.graphics.hearts.draw();
         app.chat.message('Help', 'Type /help for some help', 'help');
         app.chat.message('Help', 'Use the WASD keys to move around', 'help');
         
@@ -991,7 +991,7 @@ window.app = {
         },
 
         hearts: {
-            $holder = $('#hearts .holder'),
+            $holder: $('#hearts .holder'),
 
             draw: function() {
                 app.graphics.hearts.$holder.empty();
