@@ -24,6 +24,8 @@ harvest / mine / chop / collect the tile in front of the player. As you harvest 
 right will increase. As you place tiles, the inventory will decrease. Unlike other building games (e.g. Minecraft), you
 don't keep the items you created in inventory, just the raw materials.
 
+You can optionally use the arrows to select different actions and the space bar to perform them.
+
 Synthetic Tiles:
 ==
 
@@ -57,14 +59,9 @@ When the server starts, NPCs can spawn on naturally occuring tiles. They then wa
 
 Game Mechanics
 ==
-Walking in the corruption has a chance of killing the player. Standing adjacent to an enemy will kill the player.
-Enemies don't have any AI, they just move. There is no health. There are day and night cycles, but they don't affect
-gameplay. There are occasional earthquakes, and they change the landscape.
-
-Emergent Gameplay
-==
-People eventually start building walls around NPCs. They also build synthetic tiles in patterns to efficiently remove
-corrupted areas. They also draw penises and destroy each others houses.
+Walking in the corruption has a chance of hurting the player. Standing adjacent to an enemy will hurt the player.
+Enemies have very simple AI, they move towards the player. There are day and night cycles, but they don't affect
+gameplay. There are occasional earthquakes, and they change the landscape. Health slowly gets restored.
 
 Execute Program
 ==
@@ -74,7 +71,7 @@ Execute Program
 I personally run the app using Forever:
 
     sudo npm install forever -g
-    sudo forever start server.js
+    screen sudo forever start server.js
 
 Requirements
 ==
