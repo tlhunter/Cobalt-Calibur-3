@@ -292,7 +292,8 @@ var game = {
     },
 
     canNPCWalk: function(x, y) {
-        if (game.getTileData(x, y).tile.block_npc) {
+        var tile = game.getTileData(x, y).tile;
+        if (tile && tile.block_npc) {
             return false;
         }
         return true;
