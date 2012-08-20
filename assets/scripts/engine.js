@@ -154,7 +154,7 @@ window.app = {
                 app.controls.next();
             }
 
-            setTimeout(checkKeys, 100);
+            setTimeout(checkKeys, 200);
         };
         
         checkKeys();
