@@ -44,40 +44,131 @@ window.app = {
         app.initializeKeybindings();
         app.persistence.startAutoSave();
         app.graphics.startAnimation();
+        app.controls.initialize();
+        app.graphics.drawHearts();
         app.chat.message('Help', 'Type /help for some help', 'help');
         app.chat.message('Help', 'Use the WASD keys to move around', 'help');
-
+        
         setTimeout(function() {
             app.network.send.move(app.player.coordinates, app.player.direction);
             app.network.send.character(app.player.name, app.player.picture);
         }, 500);
 
         $('#controls .button').tipsy({fade: false, gravity: 's', html: true});
+
+        app.player.inventory.data = [1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000];
+    },
+
+    controls: {
+        selected: 0,
+        initialize: function() {
+            app.controls.set(0);
+        },
+        data: [
+            $('#controls .wood-wall'),
+            $('#controls .wood-floor'),
+            $('#controls .stone-wall'),
+            $('#controls .stone-floor'),
+            $('#controls .door'),
+            $('#controls .glass'),
+            $('#controls .collect')
+        ],
+        set: function(index) {
+            if (index < 0) {
+                index = app.controls.data.length - 1;
+            } else if (index >= app.controls.data.length) {
+                index = 0;
+            }
+
+            app.controls.data[app.controls.selected].css('border-color', '#333');
+            app.controls.selected = index;
+            app.controls.data[app.controls.selected].css('border-color', '#0F0');
+        },
+        next: function() {
+            app.controls.set(app.controls.selected + 1)
+        },
+        previous: function() {
+            app.controls.set(app.controls.selected - 1)
+        },
+        action: function() {
+            if (app.controls.selected == 6) { // collect
+                app.player.mineFacingTile();
+            } else {
+                app.player.placeItem(app.controls.selected + 9);
+            }
+        }
     },
 
     initializeKeybindings: function() {
+
+        var keysPressed = {};
+        
+        $(document).keydown(function(e) {
+            if ($(e.target).is(":input")) {
+                return;
+            }
+
+            keysPressed[e.which] = true;
+        });
+        
+        $(document).keyup(function(e) {
+            if ($(e.target).is(":input")) {
+                return;
+            }
+
+            keysPressed[e.which] = false;
+        });
+        
+        var checkKeys = function() {
+
+            if (keysPressed['87']) { // w
+                if (keysPressed['16']) { // shift
+                    app.player.setDirection('n');
+                } else {
+                    app.player.move('n');
+                }
+            } else if (keysPressed['65']) { // a
+                if (keysPressed['16']) { // shift
+                    app.player.setDirection('w');
+                } else {
+                    app.player.move('w');
+                }
+            } else if (keysPressed['83']) { // s
+                if (keysPressed['16']) { // shift
+                    app.player.setDirection('s');
+                } else {
+                    app.player.move('s');
+                }
+            } else if (keysPressed['68']) { // d
+                if (keysPressed['16']) { // shift
+                    app.player.setDirection('e');
+                } else {
+                    app.player.move('e');
+                }
+            }
+            
+            if (keysPressed['37']) { // left arrow
+                app.controls.previous();
+            }
+            else if (keysPressed['39']) { // right arrow
+                app.controls.next();
+            }
+
+            setTimeout(checkKeys, 100);
+        };
+        
+        checkKeys();
+                
         $(document).keypress(function(e) {
             if ($(e.target).is(":input")) {
                 return;
             }
 
-            if (e.which == 119) { // w
-                app.player.move('n');
-            } else if (e.which == 97) { // a
-                app.player.move('w');
-            } else if (e.which == 115) { // s
-                app.player.move('s');
-            } else if (e.which == 100) { // d
-                app.player.move('e');
-            } else if (e.which == 87) { // W
-                app.player.setDirection('n');
-            } else if (e.which == 65) { // A
-                app.player.setDirection('w');
-            } else if (e.which == 83) { // S
-                app.player.setDirection('s');
-            } else if (e.which == 68) { // D
-                app.player.setDirection('e');
-            } else if (e.which == 116) { // T
+            if (e.which == 32) { // space
+                app.controls.action();
+            }
+
+            if (e.which == 116) { // T
                 e.preventDefault(); // keeps us from getting a t in the box
                 $('#message-input').focus();
             } else if (e.which == 47) { // /
@@ -256,6 +347,7 @@ window.app = {
     },
 
     player: {
+        hearts: 5,
         picture: 0,
         name: '',
         god: false,
@@ -311,7 +403,7 @@ window.app = {
 
             if (app.environment.corruption.loaded && app.environment.corruption.data[coords.x][coords.y]) {
                 if (Math.random() < 1/8) {
-                    app.player.kill("You were killed by corruption");
+                    app.player.hurt("You were killed by corruption");
                     app.network.send.chat("*Killed by Corruption*");
                 }
             }
@@ -468,6 +560,11 @@ window.app = {
             app.graphics.viewport.update();
             app.chat.message('Client', message, 'client');
             app.persistence.save();
+
+            setTimeout(function() {
+                app.player.hearts = 5;
+                app.graphics.hearts.draw();
+            }, 200);
         },
 
         // Checks to see if an NPC is adjacent to the player, and if so, kills them
@@ -479,13 +576,22 @@ window.app = {
                 for (var i = -1; i <= 1; i++) {
                     for (var j = -1; j <= 1; j++) {
                         if (npc.x == coords.x+i && npc.y == coords.y+j) {
-                            app.player.kill("Killed by " + app.graphics.tilesets.descriptors.monsters[npc.id].name);
+                            app.player.hurt("Killed by " + app.graphics.tilesets.descriptors.monsters[npc.id].name);
                             break;
                         }
                     }
                 }
             }
         },
+
+        hurt: function(killMessage) {
+            app.player.hearts--;
+            if (app.player.hearts <= 0) {
+                app.player.kill(killMessage);
+                return;
+            }
+            app.graphics.hearts.draw();
+        }
     },
 
     // NPC stuff
@@ -882,6 +988,17 @@ window.app = {
             }
 
             return index;
+        },
+
+        hearts: {
+            $holder = $('#hearts .holder'),
+
+            draw: function() {
+                app.graphics.hearts.$holder.empty();
+                for (var i = 0; i < app.player.hearts; i++) {
+                    app.graphics.hearts.$holder.append('<div class="heart"></div>');
+                }
+            }
         }
     },
 
