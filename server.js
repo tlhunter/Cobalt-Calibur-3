@@ -470,6 +470,7 @@ db.open(function(err, db) {
         // User requests map builder page, builds map from JSON file, returns OK
         app.get('/build-map', function(req, res) {
             buildMap(db);
+            res.send("Rebuilt Map");
         });
 
         // Exports the map from the database to JSON
