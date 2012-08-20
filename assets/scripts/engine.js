@@ -1005,6 +1005,9 @@ window.app = {
         $input: $('#message-input'),
 
         message: function(who, message, priority) {
+            // Hacky code... But it fixes some XSS issues. Encoded data is getting undencoded at some point
+            message = message.replace(/&/g, "&amp;").replace(/>/g, "&gt;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+            who = who.replace(/&/g, "&amp;").replace(/>/g, "&gt;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
             app.chat.$output
                 .append("<div class='message " + priority + "'><span class='username'>" + who + ": </span><span class='content'>" + message + "</span></div>")
                 .animate({scrollTop: this.$output[0].scrollHeight});
