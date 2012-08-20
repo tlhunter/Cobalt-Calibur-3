@@ -54,6 +54,13 @@ window.app = {
             app.network.send.character(app.player.name, app.player.picture);
         }, 500);
 
+        setInterval(function() {
+            if (app.player.hearts < 5) {
+                app.player.hearts++;
+                app.graphics.hearts.draw();
+            }
+        }, 30 * 1000);
+
         $('#controls .button').tipsy({fade: false, gravity: 's', html: true});
     },
 
