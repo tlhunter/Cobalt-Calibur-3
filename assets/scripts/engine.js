@@ -55,8 +55,6 @@ window.app = {
         }, 500);
 
         $('#controls .button').tipsy({fade: false, gravity: 's', html: true});
-
-        app.player.inventory.data = [1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000];
     },
 
     controls: {
