@@ -450,8 +450,22 @@ db.open(function(err, db) {
             });
         }, 60000); // Save map to Mongo once every minute
 
-        logger("Express".magenta, "Attempting to listen on port: " + server_port);
+        logger("Express".magenta, "Attempting to listen on: " + server_address + ':' + server_port);
+
         app.listen(server_port, server_address);
+        app.on('error', function (e) {
+            if (e.code == 'EADDRINUSE') {
+                logger("Express".red, "Address in use, trying again...");
+                setTimeout(function () {
+                    app.close();
+                    app.listen(server_port, server_address);
+                }, 1000);
+            } else if (e.code == 'EACCES') {
+                logger("Express".red, "You don't have permissions to bind to this address. Try running via sudo.");
+            } else {
+                logger("Express".red, e);
+            }
+        });
 
         // User requests root, return HTML
         app.get('/', function (req, res) {
