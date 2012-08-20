@@ -563,7 +563,7 @@ window.app = {
 
             setTimeout(function() {
                 app.player.hearts = 5;
-                app.graphics.drawHearts();
+                app.graphics.hearts.draw();
             }, 200);
         },
 
@@ -590,7 +590,7 @@ window.app = {
                 app.player.kill(killMessage);
                 return;
             }
-            app.graphics.drawHearts();
+            app.graphics.hearts.draw();
         }
     },
 
@@ -990,10 +990,14 @@ window.app = {
             return index;
         },
 
-        drawHearts: function() {
-            $('#hearts .holder').empty();
-            for (var i = 0; i < app.player.hearts; i++) {
-                $('#hearts .holder').append('<div class="heart"></div>');
+        hearts: {
+            $holder = $('#hearts .holder'),
+
+            draw: function() {
+                app.graphics.hearts.$holder.empty();
+                for (var i = 0; i < app.player.hearts; i++) {
+                    app.graphics.hearts.$holder.append('<div class="heart"></div>');
+                }
             }
         }
     },
