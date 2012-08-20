@@ -254,7 +254,7 @@ var game = {
                         continue;
                     }
 
-                    var new_direction = Math.floor(Math.random() * 5);
+                    var new_direction = Math.floor(Math.random() * 10);
                     if (new_direction == 0 && npc.x < 199 && game.canNPCWalk(npc.x+1, npc.y)) {
                         npc.x++;
                         npc.d = 'e';
