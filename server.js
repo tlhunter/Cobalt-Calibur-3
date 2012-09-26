@@ -25,11 +25,17 @@ var mongo_collection = 'terraformia';
 
 var db = new Db(mongo_collection, new server(mongo_host, mongo_port, {}), {native_parser:false});
 
+var collections = {
+    map: undefined
+};
+
 
 
 
 // Global object containing game data
 var game = {
+    dirtyBit: false,
+    levelName: '1',
     // collection of global events containing their handles and time values
     events: {
 
@@ -394,7 +400,7 @@ function buildMap(db) {
         logger("MongoDB".blue, "Cool, I connected to the collection");
         collection.remove({}, function(err, result) {
             logger("MongoDB".blue, "Removing the entries from the collection");
-            collection.insert({map: mapData});
+            collection.insert({map: mapData, levelName: game.levelName});
             collection.count(function(err, count) {
                 logger("MongoDB".blue, "Done counting, not sure what I found");
                 if (count == 1) {
@@ -408,6 +414,9 @@ function buildMap(db) {
 
 db.open(function(err, db) {
 	if (err) throw err;
+
+    // indexing query
+
 
     var runGame = function() {
         fs.readFile('assets/tilesets/data.json', function(err, data) {
@@ -432,23 +441,19 @@ db.open(function(err, db) {
 
         // Every minute we want to write the database from memory to mongo
         setInterval(function() {
-            db.collection('maps', function(err, collection) {
-                if (err) {
-                    logger("MongoDB".red, "Error selecting map collection to save", err);
-                }
-                collection.remove({}, function(err, result) {
-                    logger("MongoDB".yellow, "Deleting previous map... Don't kill server");
-                    collection.insert({map: game.map});
-                    collection.count(function(err, count) {
-                        if (count == 1) {
-                            logger("MongoDB".green, "Map saved to database");
-                        } else {
-                            logger("MongoDB".red, "Error Saving Map");
-                        }
+            if ( game.dirtyBit ) {
+                db.collection('maps', function(err, collection) {
+                    if (err) {
+                        logger("MongoDB".red, "Error selecting map collection to save", err);
+                    }
+
+                    collection.update({levelName: game.levelName}, {$set: {map: game.map}}, function(err, result) {
+                        logger("MongoDB".green, "Yo dawg, I hear you like to save maps to the db.");
+                        game.dirtyBit = false;
                     });
                 });
-            });
-        }, 60000); // Save map to Mongo once every minute
+            }
+        }, 5000); // Save map to Mongo once every minute
 
         logger("Express".magenta, "Attempting to listen on: " + server_address + ':' + server_port);
 
@@ -653,6 +658,8 @@ db.open(function(err, db) {
 
             // a user made a change to the world
             socket.on('terraform', function(data) {
+                game.dirtyBit = true;
+
                 socket.broadcast.emit('terraform', {
                     session: this.id,
                     x: data.x,
