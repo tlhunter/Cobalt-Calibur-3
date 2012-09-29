@@ -2,6 +2,125 @@
 'use strict';
 
 $(function() {
+    function initializeKeybindings () {
+        var CONTROL = {
+                "27" : // "escape" key
+                    function () { // clear everything
+                        clearTimeout(pending);
+                        pending = null;
+                        pressed = "";
+                    },
+                "70" : // letter "f"
+                    function () {
+                        app.player.mineFacingTile();
+                    },
+                "84" : // letter "t"
+                    function () {
+                        $('#message-input').focus();
+                    },
+                "191": // forward-slash "/"
+                    function () {
+                        $('#message-input').focus();
+                    },
+
+                "32" : 0, // space " "
+
+                "49" : 1, // number "1"
+                "50" : 2, // number "2"
+                "51" : 3, // number "3"
+                "52" : 4, // number "4"
+                "53" : 5  // number "5"
+            },
+
+            MOVEMENT = {
+                "37" : "w", // arrow left
+                "38" : "n", // arrow up
+                "39" : "e", // arrow right
+                "40" : "s", // arrow down
+
+                "65" : "w", // letter a
+                "68" : "e", // letter d
+                "83" : "s", // letter s
+                "87" : "n"  // letter w
+            },
+
+            rEW = /[ew]/i,
+            rNS = /[ns]/i,
+
+            changeDirection = function (direction, remove) {
+                if (remove) {
+                    pressed = pressed.replace(direction, "");
+                } else {
+                    if (rEW.test(direction) && !rEW.test(pressed)) {
+                        pressed += direction;
+                    }
+                    if (rNS.test(direction) && !rNS.test(pressed)) {
+                        pressed += direction;
+                    }
+                }
+            },
+
+            keyvent = function (event) {
+                var key = event.which,
+                    control = CONTROL[key],
+                    direction = MOVEMENT[key],
+                    keyup = event.type === "keyup";
+
+                if (direction || control) {
+                    event.preventDefault();
+                }
+
+                if (control && keyup) {
+                    if (movementInterrupt && !pressed.length && key === 70) {
+                        playerMoving = !playerMoving;
+                    }
+
+                    if (typeof control === "function") {
+                        control();
+                    } else {
+                        app.player.placeItem(8 + control);
+                    }
+                }
+
+                if (direction && playerMoving) {
+                    changeDirection(direction, keyup);
+
+                    if (keyup && !pressed.length) {
+                        clearTimeout(pending);
+                        pending = null;
+                    }
+
+                    if (!keyup && pressed.length && !pending) {
+                        app.player.setDirection(direction);
+                        pending = setTimeout(movementCycle, 80);
+                    }
+                }
+            },
+
+            movementCycle = function () {
+                pressed
+                    .split("")
+                    .forEach(app.player.move);
+                // when player can be different classes and have a different movement rate
+                // the timeout variable should be a part of the player class and inserted below
+                pending = setTimeout(movementCycle, 150);
+            },
+
+            // enable movement interruption by command keys
+            movementInterrupt = false,
+
+            // holds reference to current timeout
+            pending,
+
+            // enables movement keys to behave normally when not expecting to move character
+            playerMoving = true,
+
+            // current held keys
+            pressed = "";
+
+        $(document).on("keydown keyup", keyvent);
+    }
+
 window.app = {
     // First we download a bunch of our assets
     downloadAssets: function() {
@@ -41,7 +160,7 @@ window.app = {
         app.chat.initialize();
         app.network.bindEvents();
         app.network.send.join(app.player.name);
-        app.initializeKeybindings();
+        initializeKeybindings();
         app.persistence.startAutoSave();
         app.graphics.startAnimation();
         app.controls.initialize();
@@ -102,90 +221,6 @@ window.app = {
                 app.player.placeItem(app.controls.selected + 9);
             }
         }
-    },
-
-    initializeKeybindings: function() {
-
-        var keysPressed = {};
-        
-        $(document).keydown(function(e) {
-            if ($(e.target).is(":input")) {
-                return;
-            }
-
-            keysPressed[e.which] = true;
-        });
-        
-        $(document).keyup(function(e) {
-            if ($(e.target).is(":input")) {
-                return;
-            }
-
-            keysPressed[e.which] = false;
-        });
-        
-        var checkKeys = function() {
-
-            if (keysPressed['87']) { // w
-                if (keysPressed['16']) { // shift
-                    app.player.setDirection('n');
-                } else {
-                    app.player.move('n');
-                }
-            } else if (keysPressed['65']) { // a
-                if (keysPressed['16']) { // shift
-                    app.player.setDirection('w');
-                } else {
-                    app.player.move('w');
-                }
-            } else if (keysPressed['83']) { // s
-                if (keysPressed['16']) { // shift
-                    app.player.setDirection('s');
-                } else {
-                    app.player.move('s');
-                }
-            } else if (keysPressed['68']) { // d
-                if (keysPressed['16']) { // shift
-                    app.player.setDirection('e');
-                } else {
-                    app.player.move('e');
-                }
-            }
-            
-            if (keysPressed['37']) { // left arrow
-                app.controls.previous();
-            }
-            else if (keysPressed['39']) { // right arrow
-                app.controls.next();
-            }
-
-            setTimeout(checkKeys, 200);
-        };
-        
-        checkKeys();
-                
-        $(document).keypress(function(e) {
-            if ($(e.target).is(":input")) {
-                return;
-            }
-
-            if (e.which == 32) { // space
-                app.controls.action();
-            }
-
-            if (e.which == 116) { // T
-                e.preventDefault(); // keeps us from getting a t in the box
-                $('#message-input').focus();
-            } else if (e.which == 47) { // /
-                $('#message-input').focus();
-            } else if (e.which >= 49 && e.which <= 54) { // 1 - 6
-                var numberPressed = e.which - 48;
-                var terrainIndex = numberPressed + 8;
-                app.player.placeItem(terrainIndex);
-            } else if (e.which == 102) { // f
-                app.player.mineFacingTile();
-            }
-        });
     },
 
     environment: {
