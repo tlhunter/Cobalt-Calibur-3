@@ -2,6 +2,133 @@
 'use strict';
 
 $(function() {
+    function initializeKeybindings () {
+
+        function changeDirection (direction, remove) {
+            if (remove) {
+                pressed = pressed.replace(direction, "");
+            } else {
+                // micro-optimization? - only declare the variables if they will be needed
+                // even though they are scoped at this level maybe delayed definition is faster?
+                var rEW = /[ew]/i, rNS = /[ns]/i;
+                if (rEW.test(direction) && !rEW.test(pressed)) {
+                    pressed += direction;
+                } else if (rNS.test(direction) && !rNS.test(pressed)) {
+                    pressed += direction;
+                }
+            }
+        }
+
+        function focusCLI () {
+            // first boolean wil [enable|disable] movement interruption by command keys
+            if (false || !pressed.length) {
+                reset(true);
+                $('#message-input').focus();
+            }
+        }
+
+        // do as little as possible in here since it is firing for all keyboard events
+        function keyvent (event) {
+            var key = event.which,
+                control = CONTROL[key],
+                direction = MOVEMENT[key],
+                keyup = event.type === "keyup";
+
+            if (+key === 27) {
+                reset(); // special case for "escape" key so that it can reset everything
+            } else {
+                if (!cliHasFocus) {
+                    // only fire control function on keyup
+                    if (control) {
+                        keyup && control();
+                    } else if (direction) {
+                        event.preventDefault();
+                        changeDirection(direction, keyup);
+
+                        if (keyup) {
+                            // if nothing is being held just clean up everything to baseline
+                            !pressed.length && reset();
+                        } else if (pressed.length && !pending) {
+                            // immediately when the user presses a direction 
+                            // turn the player to face that direction
+                            app.player.setDirection(direction);
+                            // if the user is only tapping the direction to 
+                            // face that direction the keyup event will cancel
+                            // the hold, other wise the user is intending to
+                            // hold and move continuously
+                            pending = setTimeout(movementCycle, 80);
+                        }
+                    }
+                }
+            }
+        }
+
+        // factory for placing items for static execution during gameplay
+        function makeItemPlacement (num) {
+            return function () {
+                app.player.placeItem(8 + num);
+            };
+        }
+
+        // movementCycle is started by key press and continues calling itself
+        // while movement keys are held by the user to keep the player moving
+        function movementCycle () {
+            // if the move event gets refactored this could simply pass two
+            // ordinal directions instead of this hack to call move twice
+            pressed
+                .split("")
+                .forEach(app.player.move);
+            // when player can be different classes and have a different movement rate
+            // the timeout variable should be a part of the player class and inserted below
+            pending = setTimeout(movementCycle, 150);
+        }
+
+        // "escape" key functionality - reset everything
+        function reset (cli) {      // arg is a little bit of sugar
+            cliHasFocus = !!cli;    // default to player control
+            clearTimeout(pending);  // stop all movements
+            pending = null;         // clear for starting new movements
+            pressed = "";           // delete all held keys
+        }
+
+        var CONTROL = {                      // letter "f"
+                "70" : app.player.mineFacingTile.bind(app.player),
+                "84" : focusCLI,             // letter "t"
+                "191": focusCLI,             // forward-slash "/"
+
+                // "32" : 0, // space " "
+
+                "49" : makeItemPlacement(1), // number "1"
+                "50" : makeItemPlacement(2), // number "2"
+                "51" : makeItemPlacement(3), // number "3"
+                "52" : makeItemPlacement(4), // number "4"
+                "53" : makeItemPlacement(5)  // number "5"
+            },
+
+            MOVEMENT = {
+                "37" : "w", // arrow left
+                "38" : "n", // arrow up
+                "39" : "e", // arrow right
+                "40" : "s", // arrow down
+
+                "65" : "w", // letter a
+                "68" : "e", // letter d
+                "83" : "s", // letter s
+                "87" : "n"  // letter w
+            },
+
+            // prevents movement and actions while the command box has focus
+            cliHasFocus = false,
+
+            // holds reference to current timeout
+            pending,
+
+            // current held keys
+            pressed = "";
+
+        $(document).on("keydown keyup", keyvent);
+    }
+
 window.app = {
     // First we download a bunch of our assets
     downloadAssets: function() {
@@ -41,7 +168,7 @@ window.app = {
         app.chat.initialize();
         app.network.bindEvents();
         app.network.send.join(app.player.name);
-        app.initializeKeybindings();
+        initializeKeybindings();
         app.persistence.startAutoSave();
         app.graphics.startAnimation();
         app.controls.initialize();
@@ -87,7 +214,7 @@ window.app = {
 
             app.controls.data[app.controls.selected].css('border-color', '#333');
             app.controls.selected = index;
-            app.controls.data[app.controls.selected].css('border-color', '#0F0');
+            // app.controls.data[app.controls.selected].css('border-color', '#0F0');
         },
         next: function() {
             app.controls.set(app.controls.selected + 1)
@@ -102,90 +229,6 @@ window.app = {
                 app.player.placeItem(app.controls.selected + 9);
             }
         }
-    },
-
-    initializeKeybindings: function() {
-
-        var keysPressed = {};
-        
-        $(document).keydown(function(e) {
-            if ($(e.target).is(":input")) {
-                return;
-            }
-
-            keysPressed[e.which] = true;
-        });
-        
-        $(document).keyup(function(e) {
-            if ($(e.target).is(":input")) {
-                return;
-            }
-
-            keysPressed[e.which] = false;
-        });
-        
-        var checkKeys = function() {
-
-            if (keysPressed['87']) { // w
-                if (keysPressed['16']) { // shift
-                    app.player.setDirection('n');
-                } else {
-                    app.player.move('n');
-                }
-            } else if (keysPressed['65']) { // a
-                if (keysPressed['16']) { // shift
-                    app.player.setDirection('w');
-                } else {
-                    app.player.move('w');
-                }
-            } else if (keysPressed['83']) { // s
-                if (keysPressed['16']) { // shift
-                    app.player.setDirection('s');
-                } else {
-                    app.player.move('s');
-                }
-            } else if (keysPressed['68']) { // d
-                if (keysPressed['16']) { // shift
-                    app.player.setDirection('e');
-                } else {
-                    app.player.move('e');
-                }
-            }
-            
-            if (keysPressed['37']) { // left arrow
-                app.controls.previous();
-            }
-            else if (keysPressed['39']) { // right arrow
-                app.controls.next();
-            }
-
-            setTimeout(checkKeys, 200);
-        };
-        
-        checkKeys();
-                
-        $(document).keypress(function(e) {
-            if ($(e.target).is(":input")) {
-                return;
-            }
-
-            if (e.which == 32) { // space
-                app.controls.action();
-            }
-
-            if (e.which == 116) { // T
-                e.preventDefault(); // keeps us from getting a t in the box
-                $('#message-input').focus();
-            } else if (e.which == 47) { // /
-                $('#message-input').focus();
-            } else if (e.which >= 49 && e.which <= 54) { // 1 - 6
-                var numberPressed = e.which - 48;
-                var terrainIndex = numberPressed + 8;
-                app.player.placeItem(terrainIndex);
-            } else if (e.which == 102) { // f
-                app.player.mineFacingTile();
-            }
-        });
     },
 
     environment: {
