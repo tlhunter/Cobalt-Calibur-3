@@ -73,14 +73,10 @@ $(function() {
         // movementCycle is started by key press and continues calling itself
         // while movement keys are held by the user to keep the player moving
         function movementCycle () {
-            // if the move event gets refactored this could simply pass two
-            // ordinal directions instead of this hack to call move twice
-            pressed
-                .split("")
-                .forEach(app.player.move);
+            app.player.move(pressed);
             // when player can be different classes and have a different movement rate
             // the timeout variable should be a part of the player class and inserted below
-            pending = setTimeout(movementCycle, 150);
+            pending = setTimeout(movementCycle, app.player.speed || 200);
         }
 
         // "escape" key functionality - reset everything
@@ -404,62 +400,47 @@ window.app = {
             y: 100
         },
         direction: 's',
+        speed: 150,
 
         // Attempts to move the character in the direction we specify
         move: function(d) {
+            // if nothing is passed in or anything not acceptable is passed in do nothing
+            if (!d || /[^ensw]/i.test(d)) {
+                console.log("Invalid direction passed to move: " + d);
+                return false;
+            }
+
+            // face the player in the direction of the first valid direction passed in
+            app.player.setDirection(d.slice(0,1));
+
+            // convert d to an array of directions for consistent processing
+            // ensure that the pair is [x, y]
+            d = [(d.match(/[ew]/) || [])[0] || "", (d.match(/[ns]/) || [])[0] || ""]
+                // map to grid movement change values
+                .map(function (item) {
+                    // parse into integers
+                    return ~~({e: 1, n: -1, s: 1, w: -1}[item]);
+                });
+
             var coords = app.player.coordinates;
-            switch (d) {
-                case 'n':
-                    if (!app.player.accessible(coords.x, coords.y - 1)) {
-                        app.player.setDirection(d);
-                        app.audio.play('walk-fail');
-                        return false;
-                    }
-                    app.player.coordinates.y--;
-                    break;
-                case 'e':
-                    if (!app.player.accessible(coords.x + 1, coords.y)) {
-                        app.player.setDirection(d);
-                        app.audio.play('walk-fail');
-                        return false;
-                    }
-                    app.player.coordinates.x++;
-                    break;
-                case 's':
-                    if (!app.player.accessible(coords.x, coords.y + 1)) {
-                        app.player.setDirection(d);
-                        app.audio.play('walk-fail');
-                        return false;
-                    }
-                    app.player.coordinates.y++;
-                    break;
-                case 'w':
-                    if (!app.player.accessible(coords.x - 1, coords.y)) {
-                        app.player.setDirection(d);
-                        app.audio.play('walk-fail');
-                        return false;
-                    }
-                    app.player.coordinates.x--;
-                    break;
-                default:
-                    console.log("Invalid Direction", d);
-                    return;
-                    break;
-            }
 
-            app.audio.play('walk');
+            if (!app.player.accessible(coords.x + d[0], coords.y + d[1])) {
+                app.audio.play('walk-fail');
+            } else {
+                app.player.coordinates.x += d[0];
+                app.player.coordinates.y += d[1];
+                app.audio.play('walk');
 
-            if (app.environment.corruption.loaded && app.environment.corruption.data[coords.x][coords.y]) {
-                if (Math.random() < 1/8) {
-                    app.player.hurt("You were killed by corruption");
-                    app.network.send.chat("*Killed by Corruption*");
+                if (app.environment.corruption.loaded && app.environment.corruption.data[coords.x][coords.y]) {
+                    if (Math.random() < 1/8) {
+                        app.player.hurt("You were killed by corruption");
+                        app.network.send.chat("*Killed by Corruption*");
+                    }
                 }
+
+                app.graphics.selfAnimationFrame = !app.graphics.selfAnimationFrame;
+                app.graphics.viewport.update();
             }
-
-            app.graphics.selfAnimationFrame = !app.graphics.selfAnimationFrame;
-            app.graphics.viewport.update();
-
-            app.player.setDirection(d); // broadcasts location
         },
 
         inventory: {
