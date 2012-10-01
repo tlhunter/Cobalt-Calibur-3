@@ -125,6 +125,14 @@ $(function() {
         $(document).on("keydown keyup", keyvent);
     }
 
+    function regenerateHearts () {
+        if (app.player.hearts < 5) {
+            app.player.hearts++;
+            app.graphics.hearts.draw();
+        }
+        setTimeout(regenerateHearts, 30 * 1000);
+    }
+
 window.app = {
     // First we download a bunch of our assets
     downloadAssets: function() {
@@ -176,12 +184,7 @@ window.app = {
             app.network.send.character(app.player.name, app.player.picture);
         }, 500);
 
-        setInterval(function() {
-            if (app.player.hearts < 5) {
-                app.player.hearts++;
-                app.graphics.hearts.draw();
-            }
-        }, 30 * 1000);
+        regenerateHearts();
 
         $('#controls .button').tipsy({fade: false, gravity: 's', html: true});
     },
