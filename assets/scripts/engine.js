@@ -2,137 +2,6 @@
 'use strict';
 
 $(function() {
-    function initializeKeybindings () {
-
-        function changeDirection (direction, remove) {
-            if (remove) {
-                pressed = pressed.replace(direction, "");
-            } else {
-                // micro-optimization? - only declare the variables if they will be needed
-                // even though they are scoped at this level maybe delayed definition is faster?
-                var rEW = /[ew]/i, rNS = /[ns]/i;
-                if (rEW.test(direction) && !rEW.test(pressed)) {
-                    pressed += direction;
-                } else if (rNS.test(direction) && !rNS.test(pressed)) {
-                    pressed += direction;
-                }
-            }
-        }
-
-        function focusCLI () {
-            // first boolean wil [enable|disable] movement interruption by command keys
-            if (false || !pressed.length) {
-                reset(true);
-                $('#message-input').focus();
-            }
-        }
-
-        // do as little as possible in here since it is firing for all keyboard events
-        function keyvent (event) {
-            var key = event.which,
-                control = CONTROL[key],
-                direction = MOVEMENT[key],
-                keyup = event.type === "keyup";
-
-            if (+key === 27) {
-                reset(); // special case for "escape" key so that it can reset everything
-            } else {
-                if (!cliHasFocus) {
-                    // only fire control function on keyup
-                    if (control) {
-                        keyup && control();
-                    } else if (direction) {
-                        event.preventDefault();
-                        changeDirection(direction, keyup);
-
-                        if (keyup) {
-                            // if nothing is being held just clean up everything to baseline
-                            !pressed.length && reset();
-                        } else if (pressed.length && !pending) {
-                            // immediately when the user presses a direction 
-                            // turn the player to face that direction
-                            app.player.setDirection(direction);
-                            // if the user is only tapping the direction to 
-                            // face that direction the keyup event will cancel
-                            // the hold, other wise the user is intending to
-                            // hold and move continuously
-                            pending = setTimeout(movementCycle, 80);
-                        }
-                    }
-                }
-            }
-        }
-
-        // factory for placing items for static execution during gameplay
-        function makeItemPlacement (num) {
-            return function () {
-                app.player.placeItem(8 + num);
-            };
-        }
-
-        // movementCycle is started by key press and continues calling itself
-        // while movement keys are held by the user to keep the player moving
-        function movementCycle () {
-            app.player.move(pressed);
-            // when player can be different classes and have a different movement rate
-            // the timeout variable should be a part of the player class and inserted below
-            pending = setTimeout(movementCycle, app.player.speed || 200);
-        }
-
-        // "escape" key functionality - reset everything
-        function reset (cli) {      // arg is a little bit of sugar
-            cliHasFocus = !!cli;    // default to player control
-            clearTimeout(pending);  // stop all movements
-            pending = null;         // clear for starting new movements
-            pressed = "";           // delete all held keys
-        }
-
-        var CONTROL = {                      // letter "f"
-                "70" : app.player.mineFacingTile.bind(app.player),
-                "84" : focusCLI,             // letter "t"
-                "191": focusCLI,             // forward-slash "/"
-
-                // "32" : 0, // space " "
-
-                "49" : makeItemPlacement(1), // number "1"
-                "50" : makeItemPlacement(2), // number "2"
-                "51" : makeItemPlacement(3), // number "3"
-                "52" : makeItemPlacement(4), // number "4"
-                "53" : makeItemPlacement(5)  // number "5"
-            },
-
-            MOVEMENT = {
-                "37" : "w", // arrow left
-                "38" : "n", // arrow up
-                "39" : "e", // arrow right
-                "40" : "s", // arrow down
-
-                "65" : "w", // letter a
-                "68" : "e", // letter d
-                "83" : "s", // letter s
-                "87" : "n"  // letter w
-            },
-
-            // prevents movement and actions while the command box has focus
-            cliHasFocus = false,
-
-            // holds reference to current timeout
-            pending,
-
-            // current held keys
-            pressed = "";
-
-        $(document).on("keydown keyup", keyvent);
-    }
-
-    function regenerateHearts () {
-        if (app.player.hearts < 5) {
-            app.player.hearts++;
-            app.graphics.hearts.draw();
-        }
-        setTimeout(regenerateHearts, 30 * 1000);
-    }
-
 window.app = {
     // First we download a bunch of our assets
     downloadAssets: function() {
@@ -168,11 +37,12 @@ window.app = {
         app.audio.initialize();
         app.persistence.load() || app.persistence.createNewPlayer();
         app.graphics.viewport.update();
+        app.player.regenerateHearts();
         app.player.inventory.render();
         app.chat.initialize();
         app.network.bindEvents();
         app.network.send.join(app.player.name);
-        initializeKeybindings();
+        app.initializeKeybindings();
         app.persistence.startAutoSave();
         app.graphics.startAnimation();
         app.graphics.hearts.draw();
@@ -184,7 +54,7 @@ window.app = {
             app.network.send.character(app.player.name, app.player.picture);
         }, 500);
 
-        regenerateHearts();
+        
 
         $('#controls .button').tipsy({fade: false, gravity: 's', html: true});
     },
@@ -582,7 +452,138 @@ window.app = {
                 return;
             }
             app.graphics.hearts.draw();
+        },
+
+        regenerateHearts: function () {
+            if (app.player.hearts < 5) {
+                app.player.hearts++;
+                app.graphics.hearts.draw();
+            }
+            setTimeout(app.player.regenerateHearts, 30 * 1000);
         }
+    },
+
+    initializeKeybindings: function () {
+
+        function changeDirection (direction, remove) {
+            if (remove) {
+                pressed = pressed.replace(direction, "");
+            } else {
+                // micro-optimization? - only declare the variables if they will be needed
+                // even though they are scoped at this level maybe delayed definition is faster?
+                var rEW = /[ew]/i, rNS = /[ns]/i;
+                if (rEW.test(direction) && !rEW.test(pressed)) {
+                    pressed += direction;
+                } else if (rNS.test(direction) && !rNS.test(pressed)) {
+                    pressed += direction;
+                }
+            }
+        }
+
+        function focusCLI () {
+            // first boolean wil [enable|disable] movement interruption by command keys
+            if (false || !pressed.length) {
+                reset(true);
+                $('#message-input').focus();
+            }
+        }
+
+        // do as little as possible in here since it is firing for all keyboard events
+        function keyvent (event) {
+            var key = event.which,
+                control = CONTROL[key],
+                direction = MOVEMENT[key],
+                keyup = event.type === "keyup";
+
+            if (+key === 27) {
+                reset(); // special case for "escape" key so that it can reset everything
+            } else {
+                if (!cliHasFocus) {
+                    // only fire control function on keyup
+                    if (control) {
+                        keyup && control();
+                    } else if (direction) {
+                        event.preventDefault();
+                        changeDirection(direction, keyup);
+
+                        if (keyup) {
+                            // if nothing is being held just clean up everything to baseline
+                            !pressed.length && reset();
+                        } else if (pressed.length && !pending) {
+                            // immediately when the user presses a direction 
+                            // turn the player to face that direction
+                            app.player.setDirection(direction);
+                            // if the user is only tapping the direction to 
+                            // face that direction the keyup event will cancel
+                            // the hold, other wise the user is intending to
+                            // hold and move continuously
+                            pending = setTimeout(movementCycle, 80);
+                        }
+                    }
+                }
+            }
+        }
+
+        // factory for placing items for static execution during gameplay
+        function makeItemPlacement (num) {
+            return function () {
+                app.player.placeItem(8 + num);
+            };
+        }
+
+        // movementCycle is started by key press and continues calling itself
+        // while movement keys are held by the user to keep the player moving
+        function movementCycle () {
+            app.player.move(pressed);
+            // when player can be different classes and have a different movement rate
+            // the timeout variable should be a part of the player class and inserted below
+            pending = setTimeout(movementCycle, app.player.speed || 200);
+        }
+
+        // "escape" key functionality - reset everything
+        function reset (cli) {      // arg is a little bit of sugar
+            cliHasFocus = !!cli;    // default to player control
+            clearTimeout(pending);  // stop all movements
+            pending = null;         // clear for starting new movements
+            pressed = "";           // delete all held keys
+        }
+
+        var CONTROL = {                      // letter "f"
+                "70" : app.player.mineFacingTile.bind(app.player),
+                "84" : focusCLI,             // letter "t"
+                "191": focusCLI,             // forward-slash "/"
+
+                // "32" : 0, // space " "
+
+                "49" : makeItemPlacement(1), // number "1"
+                "50" : makeItemPlacement(2), // number "2"
+                "51" : makeItemPlacement(3), // number "3"
+                "52" : makeItemPlacement(4), // number "4"
+                "53" : makeItemPlacement(5)  // number "5"
+            },
+
+            MOVEMENT = {
+                "37" : "w", // arrow left
+                "38" : "n", // arrow up
+                "39" : "e", // arrow right
+                "40" : "s", // arrow down
+
+                "65" : "w", // letter a
+                "68" : "e", // letter d
+                "83" : "s", // letter s
+                "87" : "n"  // letter w
+            },
+
+            // prevents movement and actions while the command box has focus
+            cliHasFocus = false,
+
+            // holds reference to current timeout
+            pending,
+
+            // current held keys
+            pressed = "";
+
+        $(document).on("keydown keyup", keyvent);
     },
 
     // NPC stuff
@@ -1147,7 +1148,6 @@ window.app = {
             return false;
         }
     }
-
 };
 app.downloadAssets();
 });
