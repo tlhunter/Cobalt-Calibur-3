@@ -167,7 +167,6 @@ window.app = {
         initializeKeybindings();
         app.persistence.startAutoSave();
         app.graphics.startAnimation();
-        app.controls.initialize();
         app.graphics.hearts.draw();
         app.chat.message('Help', 'Type /help for some help', 'help');
         app.chat.message('Help', 'Use the WASD keys to move around', 'help');
@@ -185,46 +184,6 @@ window.app = {
         }, 30 * 1000);
 
         $('#controls .button').tipsy({fade: false, gravity: 's', html: true});
-    },
-
-    controls: {
-        selected: 0,
-        initialize: function() {
-            app.controls.set(0);
-        },
-        data: [
-            $('#controls .wood-wall'),
-            $('#controls .wood-floor'),
-            $('#controls .stone-wall'),
-            $('#controls .stone-floor'),
-            $('#controls .door'),
-            $('#controls .glass'),
-            $('#controls .collect')
-        ],
-        set: function(index) {
-            if (index < 0) {
-                index = app.controls.data.length - 1;
-            } else if (index >= app.controls.data.length) {
-                index = 0;
-            }
-
-            app.controls.data[app.controls.selected].css('border-color', '#333');
-            app.controls.selected = index;
-            // app.controls.data[app.controls.selected].css('border-color', '#0F0');
-        },
-        next: function() {
-            app.controls.set(app.controls.selected + 1)
-        },
-        previous: function() {
-            app.controls.set(app.controls.selected - 1)
-        },
-        action: function() {
-            if (app.controls.selected == 6) { // collect
-                app.player.mineFacingTile();
-            } else {
-                app.player.placeItem(app.controls.selected + 9);
-            }
-        }
     },
 
     environment: {
