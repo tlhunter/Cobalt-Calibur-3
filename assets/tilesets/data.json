@@ -208,15 +208,12 @@
     },
     {
       "name": "Water",
-      "mineable": true,
-      "provides": {
-        "id": 2,
-        "quantity": 1
-      },
+      "mineable": false,
+      "provides": null,
       "block_player": true,
       "block_npc": true,
       "replaceable": false,
-      "becomes": 1,
+      "becomes": null,
       "spawn_npc": false
     },
     {
