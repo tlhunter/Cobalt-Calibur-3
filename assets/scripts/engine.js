@@ -964,32 +964,14 @@ window.app = {
         },
 
         getAvatarFrame: function(direction, altFrame) {
-            var index = 0;
-            if (direction == 'n') {
-                index = 6;
-            } else if (direction == 'e') {
-                index = 3;
-            } else if (direction == 's') {
-                index = 0;
-            } else if (direction == 'w') {
-                index = 9;
-            }
-
-            if (altFrame) {
-                index += 2;
-            }
-
-            return index;
+            return ({e:3, n:6, w:9}[direction] || 0) + (altFrame && 2);
         },
 
         hearts: {
             $holder: $('#hearts .holder'),
 
             draw: function() {
-                app.graphics.hearts.$holder.empty();
-                for (var i = 0; i < app.player.hearts; i++) {
-                    app.graphics.hearts.$holder.append('<div class="heart"></div>');
-                }
+                app.graphics.hearts.$holder.html(Array(1+app.player.hearts).join('<div class="heart"></div>'));
             }
         }
     },
