@@ -64,6 +64,14 @@ window.app = {
             WIDTH_TILE: 200,
             HEIGHT_TILE: 200,
 
+            colors: {
+                black: "rgb(0,0,0)",
+                corruption: [
+                    "rgba(15,0,61,0.5)",
+                    "rgba(36,14,88,0.7)",
+                    "rgba(47,24,99,0.6)"
+                ]
+            },
             data: [],
 
             getTile: function(x, y) {
@@ -78,9 +86,37 @@ window.app = {
                 return data;
             },
 
+            // used to filter all npc + other players to only those in view
+            isInViewport: function isInViewport (avatar) {
+                var viewport = app.graphics.viewport;
+                // this math could be cleaned up!
+                return avatar.x >= viewport.x && avatar.x <= viewport.x + viewport.WIDTH_TILE
+                    && avatar.y >= viewport.y && avatar.y <= viewport.y + viewport.HEIGHT_TILE;
+            },
+
+            drawAvatar: function drawAvatar (redrawNametags, avatar) {
+                var x = avatar.x - app.graphics.viewport.x,
+                    y = avatar.y - app.graphics.viewport.y,
+                    index = app.graphics.getAvatarFrame(avatar.d || avatar.direction, app.graphics.globalAnimationFrame),
+                    isPlayer = "name" in avatar,
+                    avatar_name = avatar.name || app.graphics.tilesets.descriptors.monsters[avatar.id].name || "???",
+                    avatar_id = ~~avatar.picture || avatar.id || 0;
+
+                if (redrawNametags) app.graphics.nametags.add(avatar_name, x, y, !isPlayer);
+                app.graphics.drawAvatar(x, y, index, avatar_id, isPlayer ? 'characters' : 'monsters');
+            },
+
+            // return properly sorted list of all other avatars
+            getAvatars: function getAvatars () {
+                return app.npc.data.concat(app.players.data)
+                    .sort(function (a, b) {
+                        return a.x !== b.x ? 0 : a.y < b.y ? -1 : 1;
+                    });
+            },
+
             render: function(redrawNametags) {
                 // immediately draw canvas as black
-                app.graphics.handle.fillStyle = "rgb(0,0,0)";
+                app.graphics.handle.fillStyle = app.environment.map.colors.black;
                 app.graphics.handle.fillRect(0, 0, app.graphics.viewport.WIDTH_PIXEL, app.graphics.viewport.HEIGHT_PIXEL);
 
                 var i, j;
@@ -96,58 +132,18 @@ window.app = {
                         tile = (app.environment.map.data[mapX] && app.environment.map.data[mapX][mapY]) ? app.environment.map.data[mapX][mapY] : null;
                         app.graphics.drawTile(i, j, tile);
 
-                        /*
-                         * Draw Players and Draw NPCs really needs to be improved. Instead of checking every single tile to see if an NPC
-                         * is there, instead, get a list of all NPCs and players within the visible area. Then, go through them one by one
-                         * and draw them on the map. Also, if we sort them based on y coordinate, players will always be overlapping in
-                         * the proper way. I figure this will be the best way to make the current version of teh game faster. Might be able
-                         * to use the fram API thingy smoothly once we make that change.
-                         */
-
-                        // Draw Players
-                        var len = app.players.data.length;
-                        for (var k = 0; k < len; k++) {
-                            var player = app.players.data[k];
-                            if (player.x == mapX && player.y == mapY) {
-                                var index = app.graphics.getAvatarFrame(player.direction, app.graphics.globalAnimationFrame);
-
-                                var player_name = player.name || '???';
-                                var picture_id = player.picture;
-                                if (isNaN(picture_id)) {
-                                    picture_id = 0;
-                                }
-                                if (redrawNametags) app.graphics.nametags.add(player.name, i, j, false);
-                                app.graphics.drawAvatar(i, j, index, picture_id, 'characters');
-                            }
-                        }
-
-                        // Draw NPCs
-                        var len = app.npc.data.length;
-                        for (var l = 0; l < len; l++) {
-                            var npc = app.npc.data[l];
-                            if (npc.x == mapX && npc.y == mapY) {
-                                var index = app.graphics.getAvatarFrame(npc.d, app.graphics.globalAnimationFrame);
-
-                                var npc_name = app.graphics.tilesets.descriptors.monsters[npc.id].name;
-                                if (redrawNametags) app.graphics.nametags.add(npc_name, i, j, true);
-                                app.graphics.drawAvatar(i, j, index, npc.id, 'monsters');
-                            }
-                        }
-
                         // Draw Corruption
                         if (app.environment.corruption.loaded && mapX >= 0 && mapX < app.environment.map.WIDTH_TILE && mapY >= 0 && mapY < app.environment.map.HEIGHT_TILE && app.environment.corruption.data[mapX][mapY] === 1) {
-                            var rnd = Math.floor(Math.random() * 3);
-                            if (rnd == 0) {
-                                app.graphics.handle.fillStyle = "rgba(15,0,61,0.5)";
-                            } else if (rnd == 1) {
-                                app.graphics.handle.fillStyle = "rgba(36,14,88,0.7)";
-                            } else if (rnd == 2) {
-                                app.graphics.handle.fillStyle = "rgba(47,24,99,0.6)";
-                            }
+                            app.graphics.handle.fillStyle = app.environment.map.colors.corruption[Math.floor(Math.random() * app.environment.map.colors.corruption.length)];
                             app.graphics.drawCorruption(i, j);
                         }
                     }
                 }
+
+                // Draw NPCs + other players
+                app.environment.map.getAvatars()
+                    .filter(app.environment.map.isInViewport)
+                    .forEach(app.environment.map.drawAvatar.bind(null, redrawNametags));
 
                 // Draw this player
                 var index = app.graphics.getAvatarFrame(app.player.direction, app.graphics.selfAnimationFrame);
@@ -158,7 +154,6 @@ window.app = {
 
                 app.environment.daylight.draw();
             },
-
         },
 
         corruption: {
