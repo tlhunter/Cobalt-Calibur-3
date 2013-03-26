@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 
 'use strict';
-// requires
-var app         = require('express').createServer();
-var io          = require('socket.io').listen(app, { log: false});
-var Db          = require('mongodb').Db;
+
 var fs          = require('fs');
+var express 	= require("express");
+var app 		= express();
+var server		= require('http').createServer(app);
+var io          = require('socket.io').listen(server, {log: false});
+var mongodb 	= require('mongodb');
 var sanitizer   = require('sanitizer');
 var _           = require('underscore');
-var connection  = require('mongodb').Connection;
-var server      = require('mongodb').Server;
 var colors      = require('colors');
 
 // Web Server Configuration
@@ -24,7 +24,7 @@ var mongo_user = 'admin';
 var mongo_pass = 'password';
 var mongo_collection = 'terraformia';
 
-var db = new Db(mongo_collection, new server(mongo_host, mongo_port, {}), {native_parser:false});
+var mongoServer = new mongodb.Server(mongo_host, mongo_port, {});
 
 var collections = {
     map: undefined
@@ -413,7 +413,7 @@ function buildMap(db) {
     });
 }
 
-db.open(function(err, db) {
+new mongodb.Db(mongo_collection, mongoServer, {safe:false}).open(function(err, db) {
 	if (err) throw err;
 
     // indexing query
@@ -458,7 +458,7 @@ db.open(function(err, db) {
 
         logger("Express".magenta, "Attempting to listen on: " + server_address + ':' + server_port);
 
-        app.listen(server_port, server_address);
+        server.listen(server_port, server_address);
         app.on('error', function (e) {
             if (e.code == 'EADDRINUSE') {
                 logger("Express".red, "Address in use, trying again...");
@@ -489,7 +489,7 @@ db.open(function(err, db) {
 
         // User requests map builder page, builds map from JSON file, returns OK
         app.get('/build-map', function(req, res) {
-            buildMap(db);
+            buildMap(mongoServer);
             res.send("Rebuilt Map");
         });
 
@@ -542,7 +542,7 @@ db.open(function(err, db) {
                     return;
                 } else {
                     logger("MongoDB".red, "The map in Mongo is null");
-                    buildMap(db);
+                    buildMap(mongoServer);
                     return;
                 }
             });
@@ -674,7 +674,7 @@ db.open(function(err, db) {
     };
 
     if (mongo_req_auth) {
-        db.authenticate(mongo_user, mongo_pass, function(err, data) {
+        mongoServer.uthenticate(mongo_user, mongo_pass, function(err, data) {
             runGame();
         });
     } else {

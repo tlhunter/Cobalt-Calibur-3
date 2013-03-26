@@ -48,13 +48,11 @@ window.app = {
         app.graphics.hearts.draw();
         app.chat.message('Help', 'Type /help for some help', 'help');
         app.chat.message('Help', 'Use the WASD keys to move around', 'help');
-        
+
         setTimeout(function() {
             app.network.send.move(app.player.coordinates, app.player.direction);
             app.network.send.character(app.player.name, app.player.picture);
         }, 500);
-
-        
 
         $('#controls .button').tipsy({fade: false, gravity: 's', html: true});
     },
