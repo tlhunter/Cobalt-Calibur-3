@@ -64,18 +64,19 @@ gameplay. There are occasional earthquakes, and they change the landscape. Healt
 
 ## Running Game Server
 
-You'll
+You'll want to specify the port number as the first argument to the script (although it defaults to 80). If you are
+listening on 80, you'll probably need to run the command using `sudo` for permissions.
 
     sudo node server.js 80
 
 I personally run the app using Forever:
 
-    sudo npm install forever -g
-    screen sudo forever start server.js
+    sudo npm install -g forever
+    sudo forever start server.js
 
 ## Requirements
 
-MongoDB, Node.js 0.6+
+MongoDB, Node.js 0.8+
 
 ## Screenshot
 
