@@ -1,0 +1,22 @@
+{
+	"name": "Cobalt-Calibur-3",
+	"version": "0.0.1",
+	"author": "Thomas Hunter <me@thomashunter.name>",
+	"description": "2D MMO Engine",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/tlhunter/Cobalt-Calibur-3.git"
+	},
+	"dependencies": {
+		"colors": ">=0.6.0",
+		"express": ">=3.1.0",
+		"mongodb": ">=1.2.14",
+		"sanitizer": ">=0.0.15",
+		"socket.io": ">=0.9.13",
+		"underscore": ">=1.4.4"
+	},
+	"license": "Dual BSD/GPL",
+	"engines": {
+		"node": ">=0.8.0"
+	}
+}
