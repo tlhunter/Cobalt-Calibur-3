@@ -1,4 +1,5 @@
-// Use clean code
+#!/usr/bin/env node
+
 'use strict';
 // requires
 var app         = require('express').createServer();
@@ -12,7 +13,7 @@ var server      = require('mongodb').Server;
 var colors      = require('colors');
 
 // Web Server Configuration
-var server_port = 80; // most OS's will require sudo to listen on 80
+var server_port = parseInt(process.argv[2], 10) || 80; // most OS's will require sudo to listen on 80
 var server_address = '127.0.0.1';
 
 // MongoDB Configuration
