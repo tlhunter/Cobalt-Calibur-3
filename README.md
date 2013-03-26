@@ -4,7 +4,7 @@ Cobalt Calibur 3 is a browser-based MMORPG (or, at least one day, it will be). T
 uses MongoDB for a database engine. The frontend uses the HTML5 Canvas tag to handle drawing of the map, and the map is
 resized when the page loads to fit the size of the users screen. It also uses some HTML5 audio for sound effects.
 
-Example Server: [zyu.me](http://zyu.me)
+Example Server: [cobaltcalibur.net](http://cobaltcalibur.net)
 
 ## Free Node.js/MongoDB Hosting and Guide
 
