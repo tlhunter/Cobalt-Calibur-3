@@ -7,7 +7,7 @@ var express 	= require("express");
 var app 		= express();
 var server		= require('http').createServer(app);
 var io          = require('socket.io').listen(server, {log: false});
-var mongodb 	= require('mongodb');
+var MongoClient	= require('mongodb').MongoClient;
 var sanitizer   = require('sanitizer');
 var _           = require('underscore');
 var colors      = require('colors');
@@ -16,15 +16,7 @@ var colors      = require('colors');
 var server_port = parseInt(process.argv[2], 10) || 80; // most OS's will require sudo to listen on 80
 var server_address = '127.0.0.1';
 
-// MongoDB Configuration
-var mongo_host = '127.0.0.1';
-var mongo_port = 27017;
-var mongo_req_auth = false; // Does your MongoDB require authentication?
-var mongo_user = 'admin';
-var mongo_pass = 'password';
-var mongo_collection = 'terraformia';
-
-var mongoServer = new mongodb.Server(mongo_host, mongo_port, {});
+var mongo_conn_string = 'mongodb://127.0.0.1:27017/terraformia';
 
 var collections = {
     map: undefined
@@ -390,30 +382,42 @@ function logger(title, message) {
 
 function buildMap(db) {
     logger("MongoDB".blue, "Attempting to build the database");
+
     var fileContents = fs.readFileSync('map.json','utf8');
     var mapData = JSON.parse(fileContents);
+
     db.collection('maps', function(err, collection) {
         logger("MongoDB".blue, "Connecting to the map collection");
+
         if (err) {
             logger("Error".red, err);
             throw err;
         }
+
         logger("MongoDB".blue, "Cool, I connected to the collection");
+
         collection.remove({}, function(err, result) {
             logger("MongoDB".blue, "Removing the entries from the collection");
-            collection.insert({map: mapData, levelName: game.levelName});
-            collection.count(function(err, count) {
-                logger("MongoDB".blue, "Done counting, not sure what I found");
-                if (count == 1) {
-                    game.map = mapData;
-                    logger("MongoDB".blue, "Map was rebuilt from map.json file");
-                }
+
+            collection.insert({map: mapData, levelName: game.levelName}, function(err) {
+                if (err) { throw err };
+                logger("MongoDB".blue, "Recreating the database");
+
+                collection.count(function(err, count) {
+                    logger("MongoDB".blue, "Done counting, not sure what I found");
+
+                    if (count == 1) {
+                        game.map = mapData;
+                        logger("MongoDB".blue, "Map was rebuilt from map.json file");
+                    }
+                });
             });
+
         });
     });
 }
 
-new mongodb.Db(mongo_collection, mongoServer, {safe:false}).open(function(err, db) {
+MongoClient.connect(mongo_conn_string, function(err, db) {
 	if (err) throw err;
 
     // indexing query
@@ -489,7 +493,7 @@ new mongodb.Db(mongo_collection, mongoServer, {safe:false}).open(function(err, d
 
         // User requests map builder page, builds map from JSON file, returns OK
         app.get('/build-map', function(req, res) {
-            buildMap(mongoServer);
+            buildMap(db);
             res.send("Rebuilt Map");
         });
 
@@ -542,7 +546,7 @@ new mongodb.Db(mongo_collection, mongoServer, {safe:false}).open(function(err, d
                     return;
                 } else {
                     logger("MongoDB".red, "The map in Mongo is null");
-                    buildMap(mongoServer);
+                    buildMap(db);
                     return;
                 }
             });
@@ -673,12 +677,6 @@ new mongodb.Db(mongo_collection, mongoServer, {safe:false}).open(function(err, d
         });
     };
 
-    if (mongo_req_auth) {
-        mongoServer.uthenticate(mongo_user, mongo_pass, function(err, data) {
-            runGame();
-        });
-    } else {
-        runGame();
-    }
+    runGame();
 });
 
