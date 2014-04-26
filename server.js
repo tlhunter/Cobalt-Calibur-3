@@ -10,20 +10,13 @@ var io          = require('socket.io').listen(server, {log: false});
 var MongoClient	= require('mongodb').MongoClient;
 var sanitizer   = require('sanitizer');
 var _           = require('underscore');
-var colors      = require('colors');
+var logger      = require('./modules/logger.js');
 
 // Web Server Configuration
 var server_port = parseInt(process.argv[2], 10) || 80; // most OS's will require sudo to listen on 80
 var server_address = '127.0.0.1';
 
 var mongo_conn_string = 'mongodb://127.0.0.1:27017/terraformia';
-
-var collections = {
-    map: undefined
-};
-
-
-
 
 // Global object containing game data
 var game = {
@@ -80,9 +73,9 @@ var game = {
                             }
                         }
                     }
-                    logger("New Trees".blue, new_trees);
-                    logger("New Grass".blue, new_grass);
-                    logger("New Sand".blue, new_sand);
+                    logger.info("New Trees", new_trees);
+                    logger.info("New Grass", new_grass);
+                    logger.info("New Sand", new_sand);
                     io.sockets.emit('event bigterraform', {});
                 }
 
@@ -93,7 +86,7 @@ var game = {
                 io.sockets.emit('event time', {
                     time: game.events.daynight.current
                 });
-                logger("Event".grey, "Time: " + game.events.daynight.current + ":00");
+                logger.debug("Event", "Time: " + game.events.daynight.current + ":00");
             }
         },
 
@@ -103,7 +96,7 @@ var game = {
             eruptions: 2,
             payload: function() {
                 var eruption = function(x, y, ore) {
-                    logger("Epicenter".blue, "[" + x + "," + y + "], Type: " + ore);
+                    logger.info("Epicenter", "[" + x + "," + y + "], Type: " + ore);
                     game.map[x+0][y+0] = [ore, 20]; // center point
 
                     // Big Rocks
@@ -195,7 +188,7 @@ var game = {
                     remaining--;
                 }
                 io.sockets.emit('event earthquake', { });
-                logger("Event".grey, "Earthquake");
+                logger.debug("Event", "Earthquake");
             }
         },
 
@@ -235,7 +228,7 @@ var game = {
                 io.sockets.emit('event corruption', {
                     map: game.corruption_map
                 });
-                logger("Event".grey, "Corruption Spread");
+                logger.debug("Event", "Corruption Spread");
             }
         },
 
@@ -381,34 +374,34 @@ function logger(title, message) {
 }
 
 function buildMap(db) {
-    logger("MongoDB".blue, "Attempting to build the database");
+    logger.info("MongoDB", "Attempting to build the database");
 
     var fileContents = fs.readFileSync('map.json','utf8');
     var mapData = JSON.parse(fileContents);
 
     db.collection('maps', function(err, collection) {
-        logger("MongoDB".blue, "Connecting to the map collection");
+        logger.info("MongoDB", "Connecting to the map collection");
 
         if (err) {
-            logger("Error".red, err);
+            logger.error("Error", err);
             throw err;
         }
 
-        logger("MongoDB".blue, "Cool, I connected to the collection");
+        logger.info("MongoDB", "Cool, I connected to the collection");
 
         collection.remove({}, function(err, result) {
-            logger("MongoDB".blue, "Removing the entries from the collection");
+            logger.info("MongoDB", "Removing the entries from the collection");
 
             collection.insert({map: mapData, levelName: game.levelName}, function(err) {
                 if (err) { throw err };
-                logger("MongoDB".blue, "Recreating the database");
+                logger.info("MongoDB", "Recreating the database");
 
                 collection.count(function(err, count) {
-                    logger("MongoDB".blue, "Done counting, not sure what I found");
+                    logger.info("MongoDB", "Done counting, not sure what I found");
 
                     if (count == 1) {
                         game.map = mapData;
-                        logger("MongoDB".blue, "Map was rebuilt from map.json file");
+                        logger.info("MongoDB", "Map was rebuilt from map.json file");
                     }
                 });
             });
@@ -449,31 +442,31 @@ MongoClient.connect(mongo_conn_string, function(err, db) {
             if ( game.dirtyBit ) {
                 db.collection('maps', function(err, collection) {
                     if (err) {
-                        logger("MongoDB".red, "Error selecting map collection to save", err);
+                        logger.error("MongoDB", "Error selecting map collection to save", err);
                     }
 
                     collection.update({levelName: game.levelName}, {$set: {map: game.map}}, function(err, result) {
-                        logger("MongoDB".green, "Yo dawg, I hear you like to save maps to the db.");
+                        logger.success("MongoDB", "Yo dawg, I hear you like to save maps to the db.");
                         game.dirtyBit = false;
                     });
                 });
             }
         }, 5000); // Save map to Mongo once every minute
 
-        logger("Express".magenta, "Attempting to listen on: " + server_address + ':' + server_port);
+        logger.notice("Express", "Attempting to listen on: " + server_address + ':' + server_port);
 
         server.listen(server_port, server_address);
         app.on('error', function (e) {
             if (e.code == 'EADDRINUSE') {
-                logger("Express".red, "Address in use, trying again...");
+                logger.error("Express", "Address in use, trying again...");
                 setTimeout(function () {
                     app.close();
                     app.listen(server_port, server_address);
                 }, 1000);
             } else if (e.code == 'EACCES') {
-                logger("Express".red, "You don't have permissions to bind to this address. Try running via sudo.");
+                logger.error("Express", "You don't have permissions to bind to this address. Try running via sudo.");
             } else {
-                logger("Express".red, e);
+                logger.error("Express", e);
             }
         });
 
@@ -532,12 +525,12 @@ MongoClient.connect(mongo_conn_string, function(err, db) {
         // Builds the map object with data from the mongo db
         db.collection('maps', function(err, collection) {
             if (err) {
-                logger("MongoDB".red, "Map collection doesn't exist", err);
+                logger.error("MongoDB", "Map collection doesn't exist", err);
                 throw err;
             }
             collection.findOne({}, {}, function(err, item) {
                 if (err) {
-                    logger("MongoDB".red, "Map collection is empty", err);
+                    logger.error("MongoDB", "Map collection is empty", err);
                     throw err;
                 }
                 if (item != null) {
@@ -545,7 +538,7 @@ MongoClient.connect(mongo_conn_string, function(err, db) {
                     initializeTimers();
                     return;
                 } else {
-                    logger("MongoDB".red, "The map in Mongo is null");
+                    logger.error("MongoDB", "The map in Mongo is null");
                     buildMap(db);
                     return;
                 }
@@ -553,7 +546,7 @@ MongoClient.connect(mongo_conn_string, function(err, db) {
         });
 
         io.sockets.on('connection', function (socket) {
-            logger("Player".cyan, "Connected");
+            logger.action("Player", "Connected");
             //npc locations
             //corruption zones
 
@@ -598,12 +591,12 @@ MongoClient.connect(mongo_conn_string, function(err, db) {
                     name: name,
                     message: message
                 });
-                logger("Chat".blue, "Name: " + data.name + ", Message: " + data.message);
+                logger.info("Chat", data.name + ": " + data.message);
             });
 
             socket.on('join', function(data) {
                 var session_id = this.id;
-                logger("Player".cyan, "Connected, Name: " + data.name);
+                logger.action("Player", "Connected, Name: " + data.name);
                 socket.broadcast.emit('chat', {
                     session: session_id,
                     name: data.name,
@@ -614,7 +607,7 @@ MongoClient.connect(mongo_conn_string, function(err, db) {
 
             // when a user disconnects, remove them from the players array, and let the world know
             socket.on('disconnect', function(data) {
-                logger("Player".cyan, "Disconnected");
+                logger.action("Player", "Disconnected");
                 var session_id = this.id;
                 var len = game.players.length;
                 var player_name;
