@@ -365,209 +365,205 @@ function initializeTimers() {
 }
 
 map.connect(mongo_connection_string, function(err) {
-	if (err) throw err;
+    if (err) throw err;
 
-    var runGame = function() {
-        fs.readFile('assets/tilesets/data.json', function(err, data) {
-            if (err) throw err;
-            game.descriptors = JSON.parse(data);
-            setTimeout(function() {
-                var remaining = 80;
-                var coords = {};
-                var npc_id;
-                while (remaining) {
-                    coords.x = Math.floor(Math.random() * 199);
-                    coords.y = Math.floor(Math.random() * 199);
-                    if (!game.canNPCSpawn(coords.x, coords.y)) {
-                        continue;
-                    }
-                    npc_id = Math.floor(Math.random() * 8);
-                    game.npcs.push({id: npc_id, x: coords.x, y: coords.y, d: 's'});// throwing them in at a slash for now
-                    remaining--;
+    fs.readFile('assets/tilesets/data.json', function(err, data) {
+        if (err) throw err;
+        game.descriptors = JSON.parse(data);
+        setTimeout(function() {
+            var remaining = 80;
+            var coords = {};
+            var npc_id;
+            while (remaining) {
+                coords.x = Math.floor(Math.random() * 199);
+                coords.y = Math.floor(Math.random() * 199);
+                if (!game.canNPCSpawn(coords.x, coords.y)) {
+                    continue;
                 }
+                npc_id = Math.floor(Math.random() * 8);
+                game.npcs.push({id: npc_id, x: coords.x, y: coords.y, d: 's'});// throwing them in at a slash for now
+                remaining--;
+            }
+        }, 1000);
+    });
+
+    logger.notice("Express", "Attempting to listen on: " + server_host + ':' + server_port);
+
+    server.listen(server_port, server_host);
+    app.on('error', function (e) {
+        if (e.code == 'EADDRINUSE') {
+            logger.error("Express", "Address in use, trying again...");
+            setTimeout(function () {
+                app.close();
+                app.listen(server_port, server_host);
             }, 1000);
+        } else if (e.code == 'EACCES') {
+            logger.error("Express", "You don't have permissions to bind to this address. Try running via sudo.");
+        } else {
+            logger.error("Express", e);
+        }
+    });
+
+    // User requests root, return HTML
+    app.get('/', function (req, res) {
+        res.sendfile(__dirname + '/index.html');
+    });
+
+    app.get('/favicon.ico', function (req, res) {
+        res.sendfile(__dirname + '/favicon.ico');
+    });
+
+    // User request map, return map JSON from RAM
+    app.get('/map', function(req, res) {
+        res.send(map.data);
+    });
+
+    // User requests map builder page, builds map from JSON file, returns OK
+    app.get('/build-map', function(req, res) {
+        map.buildMap(function(err) {
+            if (err) {
+                res.send(500, "Couldn't build map.");
+                return;
+            }
+
+            res.send(200, "Rebuilt Map");
+        });
+    });
+
+    // User requests a file in the assets folder, read it and return it
+    app.get('/assets/*', function (req, res) {
+        // is this secure? in PHP land it would be pretty bad
+        res.sendfile(__dirname + '/assets/' + req.params[0]);
+    });
+
+    map.loadMap(function(err) {
+        if (err) throw err;
+        initializeTimers();
+    });
+
+    io.sockets.on('connection', function (socket) {
+        logger.action("Player", "Connected");
+        //npc locations
+        //corruption zones
+
+        // Send the list of known players, one per packet
+        setTimeout(function() {
+            socket.emit('chat', {
+                name: 'Server',
+                message: 'Socket Established',
+                priority: 'server'
+            });
+
+            _.each(game.players, function(player) {
+                socket.emit('character info',
+                    player
+                );
+            });
+
+            socket.emit('event time', {
+                time: game.events.daynight.current
+            });
+
+            if (game.corruption_map.length) {
+                // Don't send corruption if we haven't figured it out yet
+                socket.emit('event corruption', {
+                    map: game.corruption_map
+                });
+            }
+
+            if (game.npcs.length) {
+                // Don't send NPCs if we don't have any
+                socket.emit('event npcmovement', {
+                    npcs: game.npcs
+                });
+            }
+        }, 100);
+
+        // Receive chat, send chats to all users
+        socket.on('chat', function (data) {
+            var message = sanitizer.escape(data.message.substr(0, 100));
+            var name = sanitizer.escape(data.name);
+            socket.broadcast.emit('chat', {
+                session: this.id,
+                name: name,
+                message: message
+            });
+            logger.info("Chat", data.name + ": " + data.message);
         });
 
-        logger.notice("Express", "Attempting to listen on: " + server_host + ':' + server_port);
+        socket.on('join', function(data) {
+            var session_id = this.id;
+            logger.action("Player", "Connected, Name: " + data.name);
+            socket.broadcast.emit('chat', {
+                session: session_id,
+                name: data.name,
+                message: 'Player Connected',
+                priority: 'server'
+            });
+        });
 
-        server.listen(server_port, server_host);
-        app.on('error', function (e) {
-            if (e.code == 'EADDRINUSE') {
-                logger.error("Express", "Address in use, trying again...");
-                setTimeout(function () {
-                    app.close();
-                    app.listen(server_port, server_host);
-                }, 1000);
-            } else if (e.code == 'EACCES') {
-                logger.error("Express", "You don't have permissions to bind to this address. Try running via sudo.");
-            } else {
-                logger.error("Express", e);
+        // when a user disconnects, remove them from the players array, and let the world know
+        socket.on('disconnect', function(data) {
+            logger.action("Player", "Disconnected");
+            var session_id = this.id;
+            var len = game.players.length;
+            var player_name;
+            for (var i=0; i<len; i++) {
+                if (game.players[i].session == session_id) {
+                    player_name = game.players[i].name;
+                    game.players.splice(i, 1);
+                    break;
+                }
+            }
+            socket.broadcast.emit('leave', {
+                session: session_id,
+                name: player_name || null
+            });
+        });
+
+        // Get an update from the client for their char's name and picture
+        socket.on('character info', function(data) {
+            data.session = this.id;
+            if (data.name) {
+                data.name = sanitizer.escape(data.name.substr(0, 12));
+            }
+            if (data.picture) {
+                data.picture = parseInt(data.picture, 10);
+                if (isNaN(data.picture) || data.picture > 15) {
+                    data.picture = 0;
+                }
+            }
+            socket.broadcast.emit('character info', data);
+            var len = game.players.length;
+            var foundPlayer = false;
+            for (var i=0; i<len; i++) {
+                if (game.players[i].session == data.session) {
+                    _.extend(
+                        game.players[i],
+                        data
+                    );
+                    foundPlayer = true;
+                    break;
+                }
+            }
+            if (!foundPlayer) {
+                game.players.push(data);
             }
         });
 
-        // User requests root, return HTML
-        app.get('/', function (req, res) {
-            res.sendfile(__dirname + '/index.html');
-        });
+        // a user made a change to the world
+        socket.on('terraform', function(data) {
+            map.dirty();
 
-        app.get('/favicon.ico', function (req, res) {
-            res.sendfile(__dirname + '/favicon.ico');
-        });
-
-        // User request map, return map JSON from RAM
-        app.get('/map', function(req, res) {
-            res.send(map.data);
-        });
-
-        // User requests map builder page, builds map from JSON file, returns OK
-        app.get('/build-map', function(req, res) {
-            map.buildMap(function(err) {
-                if (err) {
-                    res.send(500, "Couldn't build map.");
-                    return;
-                }
-
-                res.send(200, "Rebuilt Map");
-            });
-        });
-
-        // User requests a file in the assets folder, read it and return it
-        app.get('/assets/*', function (req, res) {
-            // is this secure? in PHP land it would be pretty bad
-            res.sendfile(__dirname + '/assets/' + req.params[0]);
-        });
-
-        map.loadMap(function(err) {
-            if (err) throw err;
-            initializeTimers();
-        });
-
-        io.sockets.on('connection', function (socket) {
-            logger.action("Player", "Connected");
-            //npc locations
-            //corruption zones
-
-            // Send the list of known players, one per packet
-            setTimeout(function() {
-                socket.emit('chat', {
-                    name: 'Server',
-                    message: 'Socket Established',
-                    priority: 'server'
-                });
-
-                _.each(game.players, function(player) {
-                    socket.emit('character info',
-                        player
-                    );
-                });
-
-                socket.emit('event time', {
-                    time: game.events.daynight.current
-                });
-
-                if (game.corruption_map.length) {
-                    // Don't send corruption if we haven't figured it out yet
-                    socket.emit('event corruption', {
-                        map: game.corruption_map
-                    });
-                }
-
-                if (game.npcs.length) {
-                    // Don't send NPCs if we don't have any
-                    socket.emit('event npcmovement', {
-                        npcs: game.npcs
-                    });
-                }
-            }, 100);
-
-            // Receive chat, send chats to all users
-            socket.on('chat', function (data) {
-                var message = sanitizer.escape(data.message.substr(0, 100));
-                var name = sanitizer.escape(data.name);
-                socket.broadcast.emit('chat', {
-                    session: this.id,
-                    name: name,
-                    message: message
-                });
-                logger.info("Chat", data.name + ": " + data.message);
+            socket.broadcast.emit('terraform', {
+                session: this.id,
+                x: data.x,
+                y: data.y,
+                tile: data.tile
             });
 
-            socket.on('join', function(data) {
-                var session_id = this.id;
-                logger.action("Player", "Connected, Name: " + data.name);
-                socket.broadcast.emit('chat', {
-                    session: session_id,
-                    name: data.name,
-                    message: 'Player Connected',
-                    priority: 'server'
-                });
-            });
-
-            // when a user disconnects, remove them from the players array, and let the world know
-            socket.on('disconnect', function(data) {
-                logger.action("Player", "Disconnected");
-                var session_id = this.id;
-                var len = game.players.length;
-                var player_name;
-                for (var i=0; i<len; i++) {
-                    if (game.players[i].session == session_id) {
-                        player_name = game.players[i].name;
-                        game.players.splice(i, 1);
-                        break;
-                    }
-                }
-                socket.broadcast.emit('leave', {
-                    session: session_id,
-                    name: player_name || null
-                });
-            });
-
-            // Get an update from the client for their char's name and picture
-            socket.on('character info', function(data) {
-                data.session = this.id;
-                if (data.name) {
-                    data.name = sanitizer.escape(data.name.substr(0, 12));
-                }
-                if (data.picture) {
-                    data.picture = parseInt(data.picture, 10);
-                    if (isNaN(data.picture) || data.picture > 15) {
-                        data.picture = 0;
-                    }
-                }
-                socket.broadcast.emit('character info', data);
-                var len = game.players.length;
-                var foundPlayer = false;
-                for (var i=0; i<len; i++) {
-                    if (game.players[i].session == data.session) {
-                        _.extend(
-                            game.players[i],
-                            data
-                        );
-                        foundPlayer = true;
-                        break;
-                    }
-                }
-                if (!foundPlayer) {
-                    game.players.push(data);
-                }
-            });
-
-            // a user made a change to the world
-            socket.on('terraform', function(data) {
-                map.dirty();
-
-                socket.broadcast.emit('terraform', {
-                    session: this.id,
-                    x: data.x,
-                    y: data.y,
-                    tile: data.tile
-                });
-
-                map.data[data.x][data.y] = data.tile;
-            });
+            map.data[data.x][data.y] = data.tile;
         });
-    };
-
-    runGame();
+    });
 });
 
