@@ -14,7 +14,7 @@ var logger      = require('./modules/logger.js');
 
 // Web Server Configuration
 var server_port = parseInt(process.argv[2], 10) || 80; // most OS's will require sudo to listen on 80
-var server_address = '127.0.0.1';
+var server_host = null;
 
 var mongo_conn_string = 'mongodb://127.0.0.1:27017/terraformia';
 
@@ -453,15 +453,15 @@ MongoClient.connect(mongo_conn_string, function(err, db) {
             }
         }, 5000); // Save map to Mongo once every minute
 
-        logger.notice("Express", "Attempting to listen on: " + server_address + ':' + server_port);
+        logger.notice("Express", "Attempting to listen on: " + server_host + ':' + server_port);
 
-        server.listen(server_port, server_address);
+        server.listen(server_port, server_host);
         app.on('error', function (e) {
             if (e.code == 'EADDRINUSE') {
                 logger.error("Express", "Address in use, trying again...");
                 setTimeout(function () {
                     app.close();
-                    app.listen(server_port, server_address);
+                    app.listen(server_port, server_host);
                 }, 1000);
             } else if (e.code == 'EACCES') {
                 logger.error("Express", "You don't have permissions to bind to this address. Try running via sudo.");
