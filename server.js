@@ -7,20 +7,20 @@ var express 	= require("express");
 var app 		= express();
 var server		= require('http').createServer(app);
 var io          = require('socket.io').listen(server, {log: false});
-var MongoClient	= require('mongodb').MongoClient;
 var sanitizer   = require('sanitizer');
 var _           = require('underscore');
+
 var logger      = require('./modules/logger.js');
+var map         = require('./modules/map.js');
 
 // Web Server Configuration
 var server_port = parseInt(process.argv[2], 10) || 80; // most OS's will require sudo to listen on 80
 var server_host = null;
 
-var mongo_conn_string = 'mongodb://127.0.0.1:27017/terraformia';
+var mongo_connection_string = 'mongodb://127.0.0.1:27017/terraformia';
 
 // Global object containing game data
 var game = {
-    dirtyBit: false,
     levelName: '1',
     // collection of global events containing their handles and time values
     events: {
@@ -43,16 +43,16 @@ var game = {
 
                     for (var y = 0; y < len_y; y++) {
                         for (var x = 0; x < len_x; x++) {
-                            switch(game.map[x][y][0]) {
+                            switch(map.data[x][y][0]) {
                                 case 0: // grass
                                     if (Math.random() < 1/4000) {
-                                        game.map[x][y] = [4, 20]; // tree, 20 health
+                                        map.data[x][y] = [4, 20]; // tree, 20 health
                                         new_trees++;
                                     }
                                     break;
                                 case 1: // dirt
                                     if (Math.random() < 1/5) {
-                                        game.map[x][y][0] = 0; // grass
+                                        map.data[x][y][0] = 0; // grass
                                         new_grass++;
                                     }
                                     break;
@@ -62,9 +62,9 @@ var game = {
                                             if (x+xx < 0 || x+xx >= len_x || y+yy < 0 || y+yy >= len_y) {
                                                 break;
                                             }
-                                            var tile = game.map[x+xx][y+yy][0];
+                                            var tile = map.data[x+xx][y+yy][0];
                                             if (tile == 0 || tile == 1) { // if this is a grass or dirt tile
-                                                game.map[x+xx][y+yy][0] = 2; // make it sand
+                                                map.data[x+xx][y+yy][0] = 2; // make it sand
                                                 new_sand++;
                                             }
                                         }
@@ -97,58 +97,58 @@ var game = {
             payload: function() {
                 var eruption = function(x, y, ore) {
                     logger.info("Epicenter", "[" + x + "," + y + "], Type: " + ore);
-                    game.map[x+0][y+0] = [ore, 20]; // center point
+                    map.data[x+0][y+0] = [ore, 20]; // center point
 
                     // Big Rocks
-                    game.map[x+0][y+1] = [6, 20];
-                    game.map[x+0][y+2] = [6, 20];
-                    game.map[x+1][y+0] = [6, 20];
+                    map.data[x+0][y+1] = [6, 20];
+                    map.data[x+0][y+2] = [6, 20];
+                    map.data[x+1][y+0] = [6, 20];
 
-                    game.map[x+2][y+0] = [6, 20];
-                    game.map[x+0][y-1] = [6, 20];
-                    game.map[x+0][y-2] = [6, 20];
+                    map.data[x+2][y+0] = [6, 20];
+                    map.data[x+0][y-1] = [6, 20];
+                    map.data[x+0][y-2] = [6, 20];
 
-                    game.map[x-1][y+0] = [6, 20];
-                    game.map[x-2][y+0] = [6, 20];
-                    game.map[x+1][y+1] = [6, 20];
+                    map.data[x-1][y+0] = [6, 20];
+                    map.data[x-2][y+0] = [6, 20];
+                    map.data[x+1][y+1] = [6, 20];
 
-                    game.map[x+1][y-1] = [6, 20];
-                    game.map[x-1][y-1] = [6, 20];
-                    game.map[x-1][y+1] = [6, 20];
+                    map.data[x+1][y-1] = [6, 20];
+                    map.data[x-1][y-1] = [6, 20];
+                    map.data[x-1][y+1] = [6, 20];
 
                     // Small Rocks
-                    game.map[x+1][y+2] = [7, 10];
-                    game.map[x+2][y+1] = [7, 10];
+                    map.data[x+1][y+2] = [7, 10];
+                    map.data[x+2][y+1] = [7, 10];
 
-                    game.map[x+2][y-1] = [7, 10];
-                    game.map[x+1][y-2] = [7, 10];
+                    map.data[x+2][y-1] = [7, 10];
+                    map.data[x+1][y-2] = [7, 10];
 
-                    game.map[x-1][y-2] = [7, 10];
-                    game.map[x-2][y-1] = [7, 10];
+                    map.data[x-1][y-2] = [7, 10];
+                    map.data[x-2][y-1] = [7, 10];
 
-                    game.map[x-2][y+1] = [7, 10];
-                    game.map[x-1][y+2] = [7, 10];
+                    map.data[x-2][y+1] = [7, 10];
+                    map.data[x-1][y+2] = [7, 10];
 
                     // Rubble
-                    game.map[x-1][y+3] = [8, 1];
-                    game.map[x+0][y+3] = [8, 1];
-                    game.map[x+1][y+3] = [8, 1];
-                    game.map[x+2][y+2] = [8, 1];
+                    map.data[x-1][y+3] = [8, 1];
+                    map.data[x+0][y+3] = [8, 1];
+                    map.data[x+1][y+3] = [8, 1];
+                    map.data[x+2][y+2] = [8, 1];
 
-                    game.map[x+3][y+1] = [8, 1];
-                    game.map[x+3][y+0] = [8, 1];
-                    game.map[x+3][y-1] = [8, 1];
-                    game.map[x+2][y-2] = [8, 1];
+                    map.data[x+3][y+1] = [8, 1];
+                    map.data[x+3][y+0] = [8, 1];
+                    map.data[x+3][y-1] = [8, 1];
+                    map.data[x+2][y-2] = [8, 1];
 
-                    game.map[x-1][y-3] = [8, 1];
-                    game.map[x+0][y-3] = [8, 1];
-                    game.map[x+1][y-3] = [8, 1];
-                    game.map[x-2][y-2] = [8, 1];
+                    map.data[x-1][y-3] = [8, 1];
+                    map.data[x+0][y-3] = [8, 1];
+                    map.data[x+1][y-3] = [8, 1];
+                    map.data[x-2][y-2] = [8, 1];
 
-                    game.map[x-3][y+1] = [8, 1];
-                    game.map[x-3][y+0] = [8, 1];
-                    game.map[x-3][y-1] = [8, 1];
-                    game.map[x-2][y+2] = [8, 1];
+                    map.data[x-3][y+1] = [8, 1];
+                    map.data[x-3][y+0] = [8, 1];
+                    map.data[x-3][y-1] = [8, 1];
+                    map.data[x-2][y+2] = [8, 1];
                 };
                 var len_y = 200;
                 var len_x = 200;
@@ -160,15 +160,15 @@ var game = {
                     coords.x = Math.floor(Math.random() * (len_x - (eruption_radius * 2))) + eruption_radius;
                     coords.y = Math.floor(Math.random() * (len_y - (eruption_radius * 2))) + eruption_radius;
                     // This is all pretty ugly code... Makes sure the center and four corners aren't synthetic
-                    if (_.indexOf(synthetic_ids, game.map[coords.x][coords.y][0]) != -1) {
+                    if (_.indexOf(synthetic_ids, map.data[coords.x][coords.y][0]) != -1) {
                         continue;
-                    } else if (_.indexOf(synthetic_ids, game.map[coords.x+3][coords.y+3][0]) != -1) {
+                    } else if (_.indexOf(synthetic_ids, map.data[coords.x+3][coords.y+3][0]) != -1) {
                         continue;
-                    } else if (_.indexOf(synthetic_ids, game.map[coords.x+3][coords.y-3][0]) != -1) {
+                    } else if (_.indexOf(synthetic_ids, map.data[coords.x+3][coords.y-3][0]) != -1) {
                         continue;
-                    } else if (_.indexOf(synthetic_ids, game.map[coords.x-3][coords.y+3][0]) != -1) {
+                    } else if (_.indexOf(synthetic_ids, map.data[coords.x-3][coords.y+3][0]) != -1) {
                         continue;
-                    } else if (_.indexOf(synthetic_ids, game.map[coords.x-3][coords.y-3][0]) != -1) {
+                    } else if (_.indexOf(synthetic_ids, map.data[coords.x-3][coords.y-3][0]) != -1) {
                         continue;
                     }
                     var ore_id = null;
@@ -213,7 +213,7 @@ var game = {
                 // Now, we want to go through all of our tiles, find synthetic ones, and draw a square around it
                 for (var y = 0; y < len_y; y++) {
                     for (var x = 0; x < len_x; x++) {
-                        if (_.indexOf(synthetic_ids, game.map[x][y][0]) != -1) {
+                        if (_.indexOf(synthetic_ids, map.data[x][y][0]) != -1) {
                             for (var xx = -game.events.corruption.RADIUS; xx <= game.events.corruption.RADIUS; xx++) {
                                 for (var yy = -game.events.corruption.RADIUS; yy <= game.events.corruption.RADIUS; yy++) {
                                     if (x+xx >= 0 && x+xx < len_x && y+yy >= 0 && y+yy < len_y) {
@@ -268,11 +268,9 @@ var game = {
         }
     },
 
-    // Giant array of map data
-    map: [],
     corruption_map: [],
     getTileData: function(x, y) {
-        var tile = game.map[x][y];
+        var tile = map.data[x][y];
         var data = {};
         if (tile && typeof tile[0] != 'undefined') {
             data.tile = game.descriptors.terrain[tile[0]];
@@ -366,48 +364,8 @@ function initializeTimers() {
     });
 }
 
-function buildMap(db) {
-    logger.info("MongoDB", "Attempting to build the database");
-
-    var fileContents = fs.readFileSync('map.json','utf8');
-    var mapData = JSON.parse(fileContents);
-
-    db.collection('maps', function(err, collection) {
-        logger.info("MongoDB", "Connecting to the map collection");
-
-        if (err) {
-            logger.error("Error", err);
-            throw err;
-        }
-
-        logger.info("MongoDB", "Cool, I connected to the collection");
-
-        collection.remove({}, function(err, result) {
-            logger.info("MongoDB", "Removing the entries from the collection");
-
-            collection.insert({map: mapData, levelName: game.levelName}, function(err) {
-                if (err) { throw err };
-                logger.info("MongoDB", "Recreating the database");
-
-                collection.count(function(err, count) {
-                    logger.info("MongoDB", "Done counting, not sure what I found");
-
-                    if (count == 1) {
-                        game.map = mapData;
-                        logger.info("MongoDB", "Map was rebuilt from map.json file");
-                    }
-                });
-            });
-
-        });
-    });
-}
-
-MongoClient.connect(mongo_conn_string, function(err, db) {
+map.connect(mongo_connection_string, function(err) {
 	if (err) throw err;
-
-    // indexing query
-
 
     var runGame = function() {
         fs.readFile('assets/tilesets/data.json', function(err, data) {
@@ -429,22 +387,6 @@ MongoClient.connect(mongo_conn_string, function(err, db) {
                 }
             }, 1000);
         });
-
-        // Every minute we want to write the database from memory to mongo
-        setInterval(function() {
-            if ( game.dirtyBit ) {
-                db.collection('maps', function(err, collection) {
-                    if (err) {
-                        logger.error("MongoDB", "Error selecting map collection to save", err);
-                    }
-
-                    collection.update({levelName: game.levelName}, {$set: {map: game.map}}, function(err, result) {
-                        logger.success("MongoDB", "Yo dawg, I hear you like to save maps to the db.");
-                        game.dirtyBit = false;
-                    });
-                });
-            }
-        }, 5000); // Save map to Mongo once every minute
 
         logger.notice("Express", "Attempting to listen on: " + server_host + ':' + server_port);
 
@@ -474,38 +416,18 @@ MongoClient.connect(mongo_conn_string, function(err, db) {
 
         // User request map, return map JSON from RAM
         app.get('/map', function(req, res) {
-            res.send(game.map);
+            res.send(map.data);
         });
 
         // User requests map builder page, builds map from JSON file, returns OK
         app.get('/build-map', function(req, res) {
-            buildMap(db);
-            res.send("Rebuilt Map");
-        });
-
-        // Exports the map from the database to JSON
-        app.get('/export-map', function(req, res) {
-            db.collection('maps', function(err, collection) {
+            map.buildMap(function(err) {
                 if (err) {
-                    res.send(err);
-                    throw err;
+                    res.send(500, "Couldn't build map.");
+                    return;
                 }
-                collection.findOne({}, {}, function(err, item) {
-                    if (err) {
-                        res.send(err);
-                        throw err;
-                    }
-                    if (item != null) {
-                        var data = JSON.stringify(item.map);
-                        fs.writeFileSync('map-export.json', data, 'utf8');
-                        res.send("Backed up map");
-                        return;
-                    } else {
-                        res.send("Couldn't back up map");
-                        return;
-                    }
-                });
 
+                res.send(200, "Rebuilt Map");
             });
         });
 
@@ -515,27 +437,9 @@ MongoClient.connect(mongo_conn_string, function(err, db) {
             res.sendfile(__dirname + '/assets/' + req.params[0]);
         });
 
-        // Builds the map object with data from the mongo db
-        db.collection('maps', function(err, collection) {
-            if (err) {
-                logger.error("MongoDB", "Map collection doesn't exist", err);
-                throw err;
-            }
-            collection.findOne({}, {}, function(err, item) {
-                if (err) {
-                    logger.error("MongoDB", "Map collection is empty", err);
-                    throw err;
-                }
-                if (item != null) {
-                    game.map = item.map;
-                    initializeTimers();
-                    return;
-                } else {
-                    logger.error("MongoDB", "The map in Mongo is null");
-                    buildMap(db);
-                    return;
-                }
-            });
+        map.loadMap(function(err) {
+            if (err) throw err;
+            initializeTimers();
         });
 
         io.sockets.on('connection', function (socket) {
@@ -544,36 +448,37 @@ MongoClient.connect(mongo_conn_string, function(err, db) {
             //corruption zones
 
             // Send the list of known players, one per packet
-            setTimeout(
-                function() {
-                    socket.emit('chat', {
-                        name: 'Server',
-                        message: 'Socket Established',
-                        priority: 'server'
+            setTimeout(function() {
+                socket.emit('chat', {
+                    name: 'Server',
+                    message: 'Socket Established',
+                    priority: 'server'
+                });
+
+                _.each(game.players, function(player) {
+                    socket.emit('character info',
+                        player
+                    );
+                });
+
+                socket.emit('event time', {
+                    time: game.events.daynight.current
+                });
+
+                if (game.corruption_map.length) {
+                    // Don't send corruption if we haven't figured it out yet
+                    socket.emit('event corruption', {
+                        map: game.corruption_map
                     });
-                    _.each(game.players, function(player) {
-                        socket.emit('character info',
-                            player
-                        );
+                }
+
+                if (game.npcs.length) {
+                    // Don't send NPCs if we don't have any
+                    socket.emit('event npcmovement', {
+                        npcs: game.npcs
                     });
-                    socket.emit('event time', {
-                        time: game.events.daynight.current
-                    });
-                    if (game.corruption_map.length) {
-                        // Don't send corruption if we haven't figured it out yet
-                        socket.emit('event corruption', {
-                            map: game.corruption_map
-                        });
-                    }
-                    if (game.npcs.length) {
-                        // Don't send NPCs if we don't have any
-                        socket.emit('event npcmovement', {
-                            npcs: game.npcs
-                        });
-                    }
-                },
-                100
-            );
+                }
+            }, 100);
 
             // Receive chat, send chats to all users
             socket.on('chat', function (data) {
@@ -649,7 +554,7 @@ MongoClient.connect(mongo_conn_string, function(err, db) {
 
             // a user made a change to the world
             socket.on('terraform', function(data) {
-                game.dirtyBit = true;
+                map.dirty();
 
                 socket.broadcast.emit('terraform', {
                     session: this.id,
@@ -658,7 +563,7 @@ MongoClient.connect(mongo_conn_string, function(err, db) {
                     tile: data.tile
                 });
 
-                game.map[data.x][data.y] = data.tile;
+                map.data[data.x][data.y] = data.tile;
             });
         });
     };
