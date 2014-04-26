@@ -473,6 +473,11 @@ window.app = {
             }
         }
 
+        function focusCLIslash() {
+            $('#message-input').val('/');
+            focusCLI();
+        }
+
         function focusCLI () {
             // first boolean wil [enable|disable] movement interruption by command keys
             if (false || !pressed.length) {
@@ -544,7 +549,7 @@ window.app = {
         var CONTROL = {                      // letter "f"
                 "70" : app.player.mineFacingTile.bind(app.player),
                 "84" : focusCLI,             // letter "t"
-                "191": focusCLI,             // forward-slash "/"
+                "191": focusCLIslash,             // forward-slash "/"
 
                 // "32" : 0, // space " "
 
