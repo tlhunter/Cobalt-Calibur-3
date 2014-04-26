@@ -12,6 +12,7 @@ var _           = require('underscore');
 
 var logger      = require('./modules/logger.js');
 var map         = require('./modules/map.js');
+var corruption  = require('./modules/corruption.js').setMap(map).setSocket(io);
 
 // Web Server Configuration
 var server_port = parseInt(process.argv[2], 10) || 80; // most OS's will require sudo to listen on 80
@@ -21,7 +22,6 @@ var mongo_connection_string = 'mongodb://127.0.0.1:27017/terraformia';
 
 // Global object containing game data
 var game = {
-    levelName: '1',
     // collection of global events containing their handles and time values
     events: {
 
@@ -192,46 +192,6 @@ var game = {
             }
         },
 
-        // This code sucks ass!
-        corruption: {
-            RADIUS: 4,
-            handle: null,
-            interval: 43 * 1000,
-            payload: function() {
-                // First, we want to populate an array of which tiles are synthetic and which are not
-                var synthetic_ids = game.getSyntheticTiles();
-                game.corruption_map = [];
-                var len_y = 200;
-                var len_x = 200;
-                // Now, we want to generate, you know, 40,000 tiles of 0's in a 2d array
-                for (var y = 0; y < len_y; y++) {
-                    game.corruption_map[y] = [];
-                    for (var x = 0; x < len_x; x++) {
-                        game.corruption_map[y][x] = 1;
-                    }
-                }
-                // Now, we want to go through all of our tiles, find synthetic ones, and draw a square around it
-                for (var y = 0; y < len_y; y++) {
-                    for (var x = 0; x < len_x; x++) {
-                        if (_.indexOf(synthetic_ids, map.data[x][y][0]) != -1) {
-                            for (var xx = -game.events.corruption.RADIUS; xx <= game.events.corruption.RADIUS; xx++) {
-                                for (var yy = -game.events.corruption.RADIUS; yy <= game.events.corruption.RADIUS; yy++) {
-                                    if (x+xx >= 0 && x+xx < len_x && y+yy >= 0 && y+yy < len_y) {
-                                        game.corruption_map[x+xx][y+yy] = 0;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                io.sockets.emit('event corruption', {
-                    map: game.corruption_map
-                });
-                logger.debug("Event", "Corruption Spread");
-            }
-        },
-
         npcmovement: {
             handle: null,
             interval: 2 * 1000,
@@ -268,7 +228,6 @@ var game = {
         }
     },
 
-    corruption_map: [],
     getTileData: function(x, y) {
         var tile = map.data[x][y];
         var data = {};
@@ -356,12 +315,15 @@ var game = {
 
 function initializeTimers() {
     // Initialize timers
+    // TODO: Eventually move these all to separate modules
     _.each(game.events, function(event) {
         event.handle = setInterval(
             event.payload,
             event.interval
         );
     });
+
+    corruption.execute();
 }
 
 map.connect(mongo_connection_string, function(err) {
@@ -443,9 +405,6 @@ map.connect(mongo_connection_string, function(err) {
 
     io.sockets.on('connection', function (socket) {
         logger.action("Player", "Connected");
-        //npc locations
-        //corruption zones
-
         // Send the list of known players, one per packet
         setTimeout(function() {
             socket.emit('chat', {
@@ -464,10 +423,10 @@ map.connect(mongo_connection_string, function(err) {
                 time: game.events.daynight.current
             });
 
-            if (game.corruption_map.length) {
+            if (corruption.data.length) {
                 // Don't send corruption if we haven't figured it out yet
                 socket.emit('event corruption', {
-                    map: game.corruption_map
+                    map: corruption.data
                 });
             }
 

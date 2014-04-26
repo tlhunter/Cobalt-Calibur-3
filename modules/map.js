@@ -7,6 +7,7 @@ var MapPersistence = function() {
     const levelName = '1'; // In case we ever want additional maps one day
     var dirtyBit = false;
     var database;
+
     self.data = []; // Giant array of map data
 
     self.dirty = function() {
