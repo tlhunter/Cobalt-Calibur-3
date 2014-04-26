@@ -366,13 +366,6 @@ function initializeTimers() {
     });
 }
 
-function logger(title, message) {
-    while (title.length < 26) {
-        title = title + ' ';
-    }
-    console.log(title + message);
-}
-
 function buildMap(db) {
     logger.info("MongoDB", "Attempting to build the database");
 
