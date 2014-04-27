@@ -329,7 +329,7 @@ function initializeTimers() {
 map.connect(mongo_connection_string, function(err) {
     if (err) throw err;
 
-    fs.readFile('assets/tilesets/data.json', function(err, data) {
+    fs.readFile('assets/data.json', function(err, data) {
         if (err) throw err;
         game.descriptors = JSON.parse(data);
         setTimeout(function() {

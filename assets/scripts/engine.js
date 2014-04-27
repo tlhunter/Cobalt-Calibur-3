@@ -199,7 +199,7 @@ window.app = {
         },
 
         downloadTiles: function() {
-            return $.get('/assets/tilesets/data.json').pipe(function(data) {
+            return $.get('/assets/data.json').pipe(function(data) {
                 app.chat.message('Client', 'Tileset Descriptors done.', 'client');
                 app.graphics.tilesets.descriptors = data;
                 return true;
