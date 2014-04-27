@@ -13,6 +13,7 @@ var _           = require('underscore');
 var logger      = require('./modules/logger.js');
 var map         = require('./modules/map.js');
 var corruption  = require('./modules/corruption.js').setMap(map).setSocket(io);
+var terrain     = require('./modules/terrain.js').setMap(map);
 
 var gamedata    = require('./assets/data.json');
 
@@ -155,22 +156,21 @@ var game = {
                 var len_y = 200;
                 var len_x = 200;
                 var eruption_radius = 4;
-                var synthetic_ids = game.getSyntheticTiles();
                 var remaining = game.events.earthquake.eruptions;
                 var coords = {};
                 while (remaining) {
                     coords.x = Math.floor(Math.random() * (len_x - (eruption_radius * 2))) + eruption_radius;
                     coords.y = Math.floor(Math.random() * (len_y - (eruption_radius * 2))) + eruption_radius;
                     // This is all pretty ugly code... Makes sure the center and four corners aren't synthetic
-                    if (_.indexOf(synthetic_ids, map.data[coords.x][coords.y][0]) != -1) {
+                    if (_.indexOf(terrain.synthetics, map.data[coords.x][coords.y][0]) != -1) {
                         continue;
-                    } else if (_.indexOf(synthetic_ids, map.data[coords.x+3][coords.y+3][0]) != -1) {
+                    } else if (_.indexOf(terrain.synthetics, map.data[coords.x+3][coords.y+3][0]) != -1) {
                         continue;
-                    } else if (_.indexOf(synthetic_ids, map.data[coords.x+3][coords.y-3][0]) != -1) {
+                    } else if (_.indexOf(terrain.synthetics, map.data[coords.x+3][coords.y-3][0]) != -1) {
                         continue;
-                    } else if (_.indexOf(synthetic_ids, map.data[coords.x-3][coords.y+3][0]) != -1) {
+                    } else if (_.indexOf(terrain.synthetics, map.data[coords.x-3][coords.y+3][0]) != -1) {
                         continue;
-                    } else if (_.indexOf(synthetic_ids, map.data[coords.x-3][coords.y-3][0]) != -1) {
+                    } else if (_.indexOf(terrain.synthetics, map.data[coords.x-3][coords.y-3][0]) != -1) {
                         continue;
                     }
                     var ore_id = null;
@@ -299,17 +299,6 @@ var game = {
 
     // Array of NPC locations
     npcs: [],
-
-    getSyntheticTiles: function() {
-        var len_t = gamedata.terrain.length;
-        var synthetic_ids = [];
-        for (var k = 0; k < len_t; k++) {
-            if (gamedata.terrain[k].synthetic) {
-                synthetic_ids.push(k);
-            }
-        }
-        return synthetic_ids;
-    }
 };
 
 function initializeTimers() {

@@ -1,5 +1,6 @@
 var _ = require('underscore');
 var logger = require('./logger.js');
+var terrain = require('./terrain.js');
 
 var Corruption = function() {
     var self = this;
@@ -21,9 +22,6 @@ var Corruption = function() {
     };
 
     var loop = function() {
-        // First, we want to populate an array of which tiles are synthetic and which are not
-        //var synthetic_ids = game.getSyntheticTiles(); // TODO: Make a tileset module
-        var synthetic_ids = [9, 10, 11, 12, 13, 14];
         self.data = [];
         var len_y = 200;
         var len_x = 200;
@@ -37,7 +35,7 @@ var Corruption = function() {
         // Now, we want to go through all of our tiles, find synthetic ones, and draw a square around it
         for (var y = 0; y < len_y; y++) {
             for (var x = 0; x < len_x; x++) {
-                if (_.indexOf(synthetic_ids, self.map.data[x][y][0]) != -1) {
+                if (_.indexOf(terrain.synthetics, self.map.data[x][y][0]) != -1) {
                     for (var xx = -RADIUS; xx <= RADIUS; xx++) {
                         for (var yy = -RADIUS; yy <= RADIUS; yy++) {
                             if (x+xx >= 0 && x+xx < len_x && y+yy >= 0 && y+yy < len_y) {
