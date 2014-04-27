@@ -15,8 +15,6 @@ var map         = require('./modules/map.js');
 var corruption  = require('./modules/corruption.js').setMap(map).setSocket(io);
 var terrain     = require('./modules/terrain.js').setMap(map);
 
-var gamedata    = require('./assets/data.json');
-
 // Web Server Configuration
 var server_port = parseInt(process.argv[2], 10) || 80; // most OS's will require sudo to listen on 80
 var server_host = null;
@@ -209,16 +207,16 @@ var game = {
                     }
 
                     var new_direction = Math.floor(Math.random() * 10);
-                    if (new_direction == 0 && npc.x < 199 && game.canNPCWalk(npc.x+1, npc.y)) {
+                    if (new_direction == 0 && npc.x < 199 && map.canNPCWalk(npc.x+1, npc.y)) {
                         npc.x++;
                         npc.d = 'e';
-                    } else if (new_direction == 1 && npc.x > 0 && game.canNPCWalk(npc.x-1, npc.y)) {
+                    } else if (new_direction == 1 && npc.x > 0 && map.canNPCWalk(npc.x-1, npc.y)) {
                         npc.x--;
                         npc.d = 'w';
-                    } else if (new_direction == 2 && npc.y < 199 && game.canNPCWalk(npc.x, npc.y+1)) {
+                    } else if (new_direction == 2 && npc.y < 199 && map.canNPCWalk(npc.x, npc.y+1)) {
                         npc.y++;
                         npc.d = 's';
-                    } else if (new_direction == 3 && npc.y > 0 && game.canNPCWalk(npc.x, npc.y-1)) {
+                    } else if (new_direction == 3 && npc.y > 0 && map.canNPCWalk(npc.x, npc.y-1)) {
                         npc.y--;
                         npc.d = 'n';
                     }
@@ -228,33 +226,6 @@ var game = {
                 });
             }
         }
-    },
-
-    getTileData: function(x, y) {
-        var tile = map.data[x][y];
-        var data = {};
-        if (tile && typeof tile[0] != 'undefined') {
-            data.tile = gamedata.terrain[tile[0]];
-        }
-        if (tile && typeof tile[1] != 'undefined') {
-            data.health = tile[1];
-        }
-        return data;
-    },
-
-    canNPCWalk: function(x, y) {
-        var tile = game.getTileData(x, y).tile;
-        if (tile && tile.block_npc) {
-            return false;
-        }
-        return true;
-    },
-
-    canNPCSpawn: function(x, y) {
-        if (!game.getTileData(x, y).tile.spawn_npc) {
-            return false;
-        }
-        return true;
     },
 
     tryNPCChase: function(npc) {
@@ -267,21 +238,21 @@ var game = {
             deltaY = game.players[i].y - npc.y;
             moved = false;
 
-            if (deltaX >= 0 && deltaX <= radius && npc.x < 199 && game.canNPCWalk(npc.x+1, npc.y)) {
+            if (deltaX >= 0 && deltaX <= radius && npc.x < 199 && map.canNPCWalk(npc.x+1, npc.y)) {
                 npc.x++;
                 npc.d = 'e';
                 moved = true;
-            } else if (deltaX <= 0 && deltaX >= -radius && npc.x > 0 && game.canNPCWalk(npc.x-1, npc.y)) {
+            } else if (deltaX <= 0 && deltaX >= -radius && npc.x > 0 && map.canNPCWalk(npc.x-1, npc.y)) {
                 npc.x--;
                 npc.d = 'w';
                 moved = true;
             }
 
-            if (deltaY >= 0 && deltaY <= radius && npc.y < 199 && game.canNPCWalk(npc.x, npc.y+1)) {
+            if (deltaY >= 0 && deltaY <= radius && npc.y < 199 && map.canNPCWalk(npc.x, npc.y+1)) {
                 npc.y++;
                 npc.d = 's';
                 moved = true;
-            } else if (deltaY <= 0 && deltaY >= -radius && npc.y > 0 && game.canNPCWalk(npc.x, npc.y-1)) {
+            } else if (deltaY <= 0 && deltaY >= -radius && npc.y > 0 && map.canNPCWalk(npc.x, npc.y-1)) {
                 npc.y--;
                 npc.d = 'n';
                 moved = true;
@@ -324,7 +295,7 @@ map.connect(mongo_connection_string, function(err) {
         while (remaining) {
             coords.x = Math.floor(Math.random() * 199);
             coords.y = Math.floor(Math.random() * 199);
-            if (!game.canNPCSpawn(coords.x, coords.y)) {
+            if (!map.canNPCSpawn(coords.x, coords.y)) {
                 continue;
             }
             npc_id = Math.floor(Math.random() * 8);

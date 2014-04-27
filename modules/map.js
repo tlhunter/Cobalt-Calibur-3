@@ -1,6 +1,7 @@
 var filesystem = require('fs');
 var logger = require('./logger.js');
 var MongoClient	= require('mongodb').MongoClient;
+var gamedata = require('../assets/data.json');
 
 var MapPersistence = function() {
     var self = this;
@@ -8,21 +9,61 @@ var MapPersistence = function() {
     var dirtyBit = false;
     var database;
 
-    self.data = []; // Giant array of map data
+    // Giant array of map data
+    self.data = [];
 
+    // Marks the map data as being altered and needs persisting
     self.dirty = function() {
         self.dirtyBit = true;
     };
 
+    // Marks the map data as being recent and not needing persisting
     self.clean = function() {
         self.dirtyBit = false;
     };
 
+    // Check to see if the map needs persisting
     self.isDirty = function() {
         return self.dirtyBit;
     };
 
-    // Connects to MongoDB
+    // Get information about the tile at the provided coordinates
+    self.getTileData = function(x, y) {
+        var tile = self.data[x][y];
+        var data = {};
+
+        if (tile && typeof tile[0] != 'undefined') {
+            data.tile = gamedata.terrain[tile[0]];
+        }
+
+        if (tile && typeof tile[1] != 'undefined') {
+            data.health = tile[1];
+        }
+
+        return data;
+    };
+
+    // Can the NPC walk over the specified location?
+    self.canNPCWalk = function(x, y) {
+        var tile = self.getTileData(x, y).tile;
+
+        if (tile && tile.block_npc) {
+            return false;
+        }
+
+        return true;
+    };
+
+    // Can an NPC spawn at the specified location?
+    self.canNPCSpawn = function(x, y) {
+        if (!self.getTileData(x, y).tile.spawn_npc) {
+            return false;
+        }
+
+        return true;
+    };
+
+    // Connect to MongoDB
     self.connect = function(mongodb_connection_string, callback) {
         MongoClient.connect(mongodb_connection_string, function(err, db) {
             if (err) {
