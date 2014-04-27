@@ -1010,8 +1010,8 @@ window.app = {
                     app.chat.message('Help', 'Press T or / to enter the chat box', 'help');
                     app.chat.message('Help', 'Press Esc to leave the chat box', 'help');
                     app.chat.message('Help', '-{Commands}------------------------', 'help');
-                    app.chat.message('Help', '/nick <em>name</em>: change your name', 'help');
-                    app.chat.message('Help', '/pic <em>1-8</em>: change your avatar', 'help');
+                    app.chat.message('Help', '/nick NAME: change your name', 'help');
+                    app.chat.message('Help', '/pic 1-8: change your avatar', 'help');
                     app.chat.message('Help', '/who: get a list of players', 'help');
                     app.chat.message('Help', '/gps: get coordinates', 'help');
                     app.chat.message('Help', '/clear: reset message area', 'help');
