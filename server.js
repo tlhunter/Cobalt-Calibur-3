@@ -13,6 +13,7 @@ var _           = require('underscore');
 var logger      = require('./modules/logger.js');
 var map         = require('./modules/map.js');
 var corruption  = require('./modules/corruption.js').setMap(map).setSocket(io);
+var daynight    = require('./modules/daynight.js').setMap(map).setSocket(io);
 var terrain     = require('./modules/terrain.js').setMap(map);
 
 // Web Server Configuration
@@ -25,71 +26,6 @@ var mongo_connection_string = 'mongodb://127.0.0.1:27017/terraformia';
 var game = {
     // collection of global events containing their handles and time values
     events: {
-
-        daynight: {
-            BEACH_RADIUS: 1,
-            handle: null,
-            interval: 1 * 60 * 1000,
-            cycle: 24,
-            current: 8,
-            payload: function() {
-                game.events.daynight.current++;
-
-                var len_y = 200;
-                var len_x = 200;
-                if (game.events.daynight.current === 9) {
-                    var new_trees = 0,
-                        new_grass = 0,
-                        new_sand = 0;
-
-                    for (var y = 0; y < len_y; y++) {
-                        for (var x = 0; x < len_x; x++) {
-                            switch(map.data[x][y][0]) {
-                                case 0: // grass
-                                    if (Math.random() < 1/4000) {
-                                        map.data[x][y] = [4, 20]; // tree, 20 health
-                                        new_trees++;
-                                    }
-                                    break;
-                                case 1: // dirt
-                                    if (Math.random() < 1/5) {
-                                        map.data[x][y][0] = 0; // grass
-                                        new_grass++;
-                                    }
-                                    break;
-                                case 3: // water
-                                    for (var xx = -game.events.daynight.BEACH_RADIUS; xx <= game.events.daynight.BEACH_RADIUS; xx++) {
-                                        for (var yy = -game.events.daynight.BEACH_RADIUS; yy <= game.events.daynight.BEACH_RADIUS; yy++) {
-                                            if (x+xx < 0 || x+xx >= len_x || y+yy < 0 || y+yy >= len_y) {
-                                                break;
-                                            }
-                                            var tile = map.data[x+xx][y+yy][0];
-                                            if (tile == 0 || tile == 1) { // if this is a grass or dirt tile
-                                                map.data[x+xx][y+yy][0] = 2; // make it sand
-                                                new_sand++;
-                                            }
-                                        }
-                                    }
-                                    break;
-                            }
-                        }
-                    }
-                    logger.info("New Trees", new_trees);
-                    logger.info("New Grass", new_grass);
-                    logger.info("New Sand", new_sand);
-                    io.sockets.emit('event bigterraform', {});
-                }
-
-                if (game.events.daynight.current >= game.events.daynight.cycle) {
-                    game.events.daynight.current = 0;
-                }
-
-                io.sockets.emit('event time', {
-                    time: game.events.daynight.current
-                });
-                logger.debug("Event", "Time: " + game.events.daynight.current + ":00");
-            }
-        },
 
         earthquake: {
             handle: null,
@@ -283,6 +219,7 @@ function initializeTimers() {
     });
 
     corruption.execute();
+    daynight.execute();
 }
 
 map.connect(mongo_connection_string, function(err) {
@@ -375,7 +312,7 @@ map.connect(mongo_connection_string, function(err) {
             });
 
             socket.emit('event time', {
-                time: game.events.daynight.current
+                time: daynight.getTime()
             });
 
             if (corruption.data.length) {
