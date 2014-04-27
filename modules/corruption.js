@@ -11,13 +11,13 @@ var Corruption = function() {
     var map;
     var io;
 
-    self.setMap = function(map) {
-        self.map = map;
+    self.setMap = function(new_map) {
+        map = new_map;
         return self;
     };
 
-    self.setSocket = function(io) {
-        self.io = io;
+    self.setSocket = function(new_io) {
+        io = new_io;
         return self;
     };
 
@@ -35,7 +35,7 @@ var Corruption = function() {
         // Now, we want to go through all of our tiles, find synthetic ones, and draw a square around it
         for (var y = 0; y < len_y; y++) {
             for (var x = 0; x < len_x; x++) {
-                if (_.indexOf(terrain.synthetics, self.map.data[x][y][0]) != -1) {
+                if (_.indexOf(terrain.synthetics, map.data[x][y][0]) != -1) {
                     for (var xx = -RADIUS; xx <= RADIUS; xx++) {
                         for (var yy = -RADIUS; yy <= RADIUS; yy++) {
                             if (x+xx >= 0 && x+xx < len_x && y+yy >= 0 && y+yy < len_y) {
@@ -47,7 +47,7 @@ var Corruption = function() {
             }
         }
 
-        self.io.sockets.emit('event corruption', {
+        io.sockets.emit('event corruption', {
             map: self.data
         });
 
