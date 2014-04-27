@@ -51,12 +51,12 @@ body {
     padding-right: 16px;
     height: 20px;
     font-size: 13px;
-    font-family: Consolas;
+    font-family: Consolas, monospace;
 }
 #messages {
     color: white;
     display: block;
-    font-family: Consolas;
+    font-family: Consolas, monospace;
     overflow: auto;
     font-size: 12px;
     height: 160px;
@@ -65,7 +65,7 @@ body {
     position: absolute;
     right: 8px;
     bottom: 6px;
-    font-family: consolas;
+    font-family: Consolas, monospace;
     font-size: 14px;
     text-shadow: 0px 1px 1px #000;
 }
