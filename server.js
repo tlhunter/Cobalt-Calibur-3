@@ -14,6 +14,8 @@ var logger      = require('./modules/logger.js');
 var map         = require('./modules/map.js');
 var corruption  = require('./modules/corruption.js').setMap(map).setSocket(io);
 
+var gamedata    = require('./assets/data.json');
+
 // Web Server Configuration
 var server_port = parseInt(process.argv[2], 10) || 80; // most OS's will require sudo to listen on 80
 var server_host = null;
@@ -232,7 +234,7 @@ var game = {
         var tile = map.data[x][y];
         var data = {};
         if (tile && typeof tile[0] != 'undefined') {
-            data.tile = game.descriptors.terrain[tile[0]];
+            data.tile = gamedata.terrain[tile[0]];
         }
         if (tile && typeof tile[1] != 'undefined') {
             data.health = tile[1];
@@ -298,14 +300,11 @@ var game = {
     // Array of NPC locations
     npcs: [],
 
-    // Data from tilesets JSON
-    descriptors: {},
-
     getSyntheticTiles: function() {
-        var len_t = game.descriptors.terrain.length;
+        var len_t = gamedata.terrain.length;
         var synthetic_ids = [];
         for (var k = 0; k < len_t; k++) {
-            if (game.descriptors.terrain[k].synthetic) {
+            if (gamedata.terrain[k].synthetic) {
                 synthetic_ids.push(k);
             }
         }
@@ -329,25 +328,21 @@ function initializeTimers() {
 map.connect(mongo_connection_string, function(err) {
     if (err) throw err;
 
-    fs.readFile('assets/data.json', function(err, data) {
-        if (err) throw err;
-        game.descriptors = JSON.parse(data);
-        setTimeout(function() {
-            var remaining = 80;
-            var coords = {};
-            var npc_id;
-            while (remaining) {
-                coords.x = Math.floor(Math.random() * 199);
-                coords.y = Math.floor(Math.random() * 199);
-                if (!game.canNPCSpawn(coords.x, coords.y)) {
-                    continue;
-                }
-                npc_id = Math.floor(Math.random() * 8);
-                game.npcs.push({id: npc_id, x: coords.x, y: coords.y, d: 's'});// throwing them in at a slash for now
-                remaining--;
+    setTimeout(function() {
+        var remaining = 80;
+        var coords = {};
+        var npc_id;
+        while (remaining) {
+            coords.x = Math.floor(Math.random() * 199);
+            coords.y = Math.floor(Math.random() * 199);
+            if (!game.canNPCSpawn(coords.x, coords.y)) {
+                continue;
             }
-        }, 1000);
-    });
+            npc_id = Math.floor(Math.random() * 8);
+            game.npcs.push({id: npc_id, x: coords.x, y: coords.y, d: 's'});// throwing them in at a slash for now
+            remaining--;
+        }
+    }, 1000);
 
     logger.notice("Express", "Attempting to listen on: " + server_host + ':' + server_port);
 
