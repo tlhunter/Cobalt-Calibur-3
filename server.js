@@ -126,36 +126,18 @@ function initializeTimers() {
 map.connect(mongo_connection_string, function(err) {
     if (err) throw err;
 
-    setTimeout(function() {
-        var remaining = 80;
-        var coords = {};
-        var npc_id;
-        while (remaining) {
-            coords.x = Math.floor(Math.random() * 199);
-            coords.y = Math.floor(Math.random() * 199);
-            if (!map.canNPCSpawn(coords.x, coords.y)) {
-                continue;
-            }
-            npc_id = Math.floor(Math.random() * 8);
-            game.npcs.push({id: npc_id, x: coords.x, y: coords.y, d: 's'});// throwing them in at a slash for now
-            remaining--;
-        }
-    }, 1000);
-
     logger.notice("Express", "Attempting to listen on: " + server_host + ':' + server_port);
 
     server.listen(server_port, server_host);
     app.on('error', function (e) {
         if (e.code == 'EADDRINUSE') {
-            logger.error("Express", "Address in use, trying again...");
-            setTimeout(function () {
-                app.close();
-                app.listen(server_port, server_host);
-            }, 1000);
+            logger.error("Express", "Address in use. Quitting...");
+            process.exit();
         } else if (e.code == 'EACCES') {
             logger.error("Express", "You don't have permissions to bind to this address. Try running via sudo.");
         } else {
             logger.error("Express", e);
+            process.exit();
         }
     });
 
@@ -193,13 +175,31 @@ map.connect(mongo_connection_string, function(err) {
 
     map.loadMap(function(err) {
         if (err) throw err;
+
+        setImmediate(function() {
+            logger.info('NPC', "Spawning 80 bad guys");
+            var remaining = 80;
+            var coords = {};
+            var npc_id;
+            while (remaining) {
+                coords.x = Math.floor(Math.random() * 199);
+                coords.y = Math.floor(Math.random() * 199);
+                if (!map.canNPCSpawn(coords.x, coords.y)) {
+                    continue;
+                }
+                npc_id = Math.floor(Math.random() * 8);
+                game.npcs.push({id: npc_id, x: coords.x, y: coords.y, d: 's'});// throwing them in at a slash for now
+                remaining--;
+            }
+        });
+
         initializeTimers();
     });
 
     io.sockets.on('connection', function (socket) {
         logger.action("Player", "Connected");
         // Send the list of known players, one per packet
-        setTimeout(function() {
+        setImmediate(function() {
             socket.emit('chat', {
                 name: 'Server',
                 message: 'Socket Established',
@@ -229,7 +229,7 @@ map.connect(mongo_connection_string, function(err) {
                     npcs: game.npcs
                 });
             }
-        }, 100);
+        });
 
         // Receive chat, send chats to all users
         socket.on('chat', function (data) {
