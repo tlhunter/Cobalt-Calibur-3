@@ -83,19 +83,17 @@ app.get('/assets/*', function (req, res) {
 
 io.sockets.on('connection', function (socket) {
     logger.action("Player", "Connected");
-    // Send the list of known players, one per packet
-    setImmediate(function() {
-        socket.emit('chat', {
-            name: 'Server',
-            message: 'Socket Established',
-            priority: 'server'
-        });
 
-        players.sendData(socket);
-        daynight.sendData(socket);
-        corruption.sendData(socket);
-        npcs.sendData(socket);
+    socket.emit('chat', {
+        name: 'Server',
+        message: 'Socket Established',
+        priority: 'server'
     });
+
+    players.sendData(socket);
+    daynight.sendData(socket);
+    corruption.sendData(socket);
+    npcs.sendData(socket);
 
     players.handleSocketEvents(socket);
     map.handleSocketEvents(socket);
