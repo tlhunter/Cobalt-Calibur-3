@@ -26,6 +26,20 @@ var DayNight = function() {
         return current;
     };
 
+    /*
+     * Send corruption map to socket.
+     * If no socket is provided, send to all sockets.
+     */
+    self.sendData = function(socket) {
+        if (!socket) {
+            socket = io.sockets;
+        }
+
+        socket.emit('event time', {
+            time: current
+        });
+    };
+
     var loop = function() {
         current++;
 

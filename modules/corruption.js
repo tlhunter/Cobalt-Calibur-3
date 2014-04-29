@@ -21,6 +21,20 @@ var Corruption = function() {
         return self;
     };
 
+    /*
+     * Send corruption map to socket.
+     * If no socket is provided, send to all sockets.
+     */
+    self.sendData = function(socket) {
+        if (!socket) {
+            socket = io.sockets;
+        }
+
+        socket.emit('event corruption', {
+            map: self.data
+        });
+    };
+
     var loop = function() {
         self.data = [];
         var len_y = 200;
@@ -47,9 +61,7 @@ var Corruption = function() {
             }
         }
 
-        io.sockets.emit('event corruption', {
-            map: self.data
-        });
+        self.sendData();
 
         logger.debug("Event", "Corruption Spread");
     };

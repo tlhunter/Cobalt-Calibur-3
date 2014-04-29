@@ -10,12 +10,15 @@ var io          = require('socket.io').listen(server, {log: false});
 var sanitizer   = require('sanitizer');
 var _           = require('underscore');
 
+var players = [];
+
 var logger      = require('./modules/logger.js');
 var map         = require('./modules/map.js');
 var corruption  = require('./modules/corruption.js').setMap(map).setSocket(io);
 var daynight    = require('./modules/daynight.js').setMap(map).setSocket(io);
 var earthquake  = require('./modules/earthquake.js').setMap(map).setSocket(io);
 var terrain     = require('./modules/terrain.js').setMap(map);
+var npcs        = require('./modules/npcs.js').setMap(map).setSocket(io).setPlayers(players);
 
 // Web Server Configuration
 var server_port = parseInt(process.argv[2], 10) || 80; // most OS's will require sudo to listen on 80
@@ -23,104 +26,14 @@ var server_host = null;
 
 var mongo_connection_string = 'mongodb://127.0.0.1:27017/terraformia';
 
-// Global object containing game data
-var game = {
-    // collection of global events containing their handles and time values
-    events: {
-
-        npcmovement: {
-            handle: null,
-            interval: 2 * 1000,
-            payload: function() {
-
-                var len = game.npcs.length;
-                for(var i = 0; i < len; i++) {
-                    var npc = game.npcs[i];
-
-                    if (game.tryNPCChase(npc)) {
-                        // success -> heading towards a player
-                        continue;
-                    }
-
-                    var new_direction = Math.floor(Math.random() * 10);
-                    if (new_direction == 0 && npc.x < 199 && map.canNPCWalk(npc.x+1, npc.y)) {
-                        npc.x++;
-                        npc.d = 'e';
-                    } else if (new_direction == 1 && npc.x > 0 && map.canNPCWalk(npc.x-1, npc.y)) {
-                        npc.x--;
-                        npc.d = 'w';
-                    } else if (new_direction == 2 && npc.y < 199 && map.canNPCWalk(npc.x, npc.y+1)) {
-                        npc.y++;
-                        npc.d = 's';
-                    } else if (new_direction == 3 && npc.y > 0 && map.canNPCWalk(npc.x, npc.y-1)) {
-                        npc.y--;
-                        npc.d = 'n';
-                    }
-                }
-                io.sockets.emit('event npcmovement', {
-                    npcs: game.npcs
-                });
-            }
-        }
-    },
-
-    tryNPCChase: function(npc) {
-        var radius = 10;
-        var deltaX = 0;
-        var deltaY = 0;
-        var moved = false;
-        for (var i = 0; i < game.players.length; i++) {
-            deltaX = game.players[i].x - npc.x;
-            deltaY = game.players[i].y - npc.y;
-            moved = false;
-
-            if (deltaX >= 0 && deltaX <= radius && npc.x < 199 && map.canNPCWalk(npc.x+1, npc.y)) {
-                npc.x++;
-                npc.d = 'e';
-                moved = true;
-            } else if (deltaX <= 0 && deltaX >= -radius && npc.x > 0 && map.canNPCWalk(npc.x-1, npc.y)) {
-                npc.x--;
-                npc.d = 'w';
-                moved = true;
-            }
-
-            if (deltaY >= 0 && deltaY <= radius && npc.y < 199 && map.canNPCWalk(npc.x, npc.y+1)) {
-                npc.y++;
-                npc.d = 's';
-                moved = true;
-            } else if (deltaY <= 0 && deltaY >= -radius && npc.y > 0 && map.canNPCWalk(npc.x, npc.y-1)) {
-                npc.y--;
-                npc.d = 'n';
-                moved = true;
-            }
-
-            if (moved) {
-                return true;
-            }
-        }
-        return false;
-    },
-
-    // Array of known player locations
-    players: [],
-
-    // Array of NPC locations
-    npcs: [],
-};
 
 function initializeTimers() {
     // Initialize timers
     // TODO: Eventually move these all to separate modules
-    _.each(game.events, function(event) {
-        event.handle = setInterval(
-            event.payload,
-            event.interval
-        );
-    });
-
     corruption.execute();
     daynight.execute();
     earthquake.execute();
+    npcs.execute();
 }
 
 map.connect(mongo_connection_string, function(err) {
@@ -176,22 +89,7 @@ map.connect(mongo_connection_string, function(err) {
     map.loadMap(function(err) {
         if (err) throw err;
 
-        setImmediate(function() {
-            logger.info('NPC', "Spawning 80 bad guys");
-            var remaining = 80;
-            var coords = {};
-            var npc_id;
-            while (remaining) {
-                coords.x = Math.floor(Math.random() * 199);
-                coords.y = Math.floor(Math.random() * 199);
-                if (!map.canNPCSpawn(coords.x, coords.y)) {
-                    continue;
-                }
-                npc_id = Math.floor(Math.random() * 8);
-                game.npcs.push({id: npc_id, x: coords.x, y: coords.y, d: 's'});// throwing them in at a slash for now
-                remaining--;
-            }
-        });
+        npcs.spawn(80);
 
         initializeTimers();
     });
@@ -206,29 +104,17 @@ map.connect(mongo_connection_string, function(err) {
                 priority: 'server'
             });
 
-            _.each(game.players, function(player) {
+            _.each(players, function(player) {
                 socket.emit('character info',
                     player
                 );
             });
 
-            socket.emit('event time', {
-                time: daynight.getTime()
-            });
+            daynight.sendData(socket);
 
-            if (corruption.data.length) {
-                // Don't send corruption if we haven't figured it out yet
-                socket.emit('event corruption', {
-                    map: corruption.data
-                });
-            }
+            corruption.sendData(socket);
 
-            if (game.npcs.length) {
-                // Don't send NPCs if we don't have any
-                socket.emit('event npcmovement', {
-                    npcs: game.npcs
-                });
-            }
+            npcs.sendData(socket);
         });
 
         // Receive chat, send chats to all users
@@ -258,12 +144,12 @@ map.connect(mongo_connection_string, function(err) {
         socket.on('disconnect', function(data) {
             logger.action("Player", "Disconnected");
             var session_id = this.id;
-            var len = game.players.length;
+            var len = players.length;
             var player_name;
             for (var i=0; i<len; i++) {
-                if (game.players[i].session == session_id) {
-                    player_name = game.players[i].name;
-                    game.players.splice(i, 1);
+                if (players[i].session == session_id) {
+                    player_name = players[i].name;
+                    players.splice(i, 1);
                     break;
                 }
             }
@@ -286,12 +172,12 @@ map.connect(mongo_connection_string, function(err) {
                 }
             }
             socket.broadcast.emit('character info', data);
-            var len = game.players.length;
+            var len = players.length;
             var foundPlayer = false;
             for (var i=0; i<len; i++) {
-                if (game.players[i].session == data.session) {
+                if (players[i].session == data.session) {
                     _.extend(
-                        game.players[i],
+                        players[i],
                         data
                     );
                     foundPlayer = true;
@@ -299,7 +185,7 @@ map.connect(mongo_connection_string, function(err) {
                 }
             }
             if (!foundPlayer) {
-                game.players.push(data);
+                players.push(data);
             }
         });
 
