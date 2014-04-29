@@ -88,7 +88,7 @@ window.app = {
                     && avatar.y >= viewport.y && avatar.y <= viewport.y + viewport.HEIGHT_TILE;
             },
 
-            drawAvatar: function drawAvatar (redrawNametags, avatar) {
+            drawAvatar: function drawAvatar (avatar) {
                 var x = avatar.x - app.graphics.viewport.x,
                     y = avatar.y - app.graphics.viewport.y,
                     index = app.graphics.getAvatarFrame(avatar.d || avatar.direction, app.graphics.globalAnimationFrame),
@@ -96,7 +96,7 @@ window.app = {
                     avatar_name = avatar.name || app.graphics.tilesets.descriptors.monsters[avatar.id].name || "???",
                     avatar_id = ~~avatar.picture || avatar.id || 0;
 
-                if (redrawNametags) app.graphics.nametags.add(avatar_name, x, y, !isPlayer);
+                app.graphics.nametags.add(avatar_name, x, y, !isPlayer);
                 app.graphics.drawAvatar(x, y, index, avatar_id, isPlayer ? 'characters' : 'monsters');
             },
 
@@ -108,7 +108,7 @@ window.app = {
                     });
             },
 
-            render: function(redrawNametags) {
+            render: function() {
                 // immediately draw canvas as black
                 app.graphics.handle.fillStyle = app.environment.map.colors.black;
                 app.graphics.handle.fillRect(0, 0, app.graphics.viewport.WIDTH_PIXEL, app.graphics.viewport.HEIGHT_PIXEL);
@@ -117,7 +117,7 @@ window.app = {
                 var mapX = 0;
                 var mapY = 0;
                 var tile;
-                if (redrawNametags) app.graphics.nametags.hide();
+                app.graphics.nametags.hide();
 
                 for (j=0; j<app.graphics.viewport.HEIGHT_TILE; j++) {
                     for (i=0; i < app.graphics.viewport.WIDTH_TILE; i++) {
@@ -137,14 +137,14 @@ window.app = {
                 // Draw NPCs + other players
                 app.environment.map.getAvatars()
                     .filter(app.environment.map.isInViewport)
-                    .forEach(app.environment.map.drawAvatar.bind(null, redrawNametags));
+                    .forEach(app.environment.map.drawAvatar.bind(null));
 
                 // Draw this player
                 var index = app.graphics.getAvatarFrame(app.player.direction, app.graphics.selfAnimationFrame);
-                if (redrawNametags) app.graphics.nametags.add(app.player.name, app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE, app.graphics.viewport.PLAYER_OFFSET_TOP_TILE, false);
+                app.graphics.nametags.add(app.player.name, app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE, app.graphics.viewport.PLAYER_OFFSET_TOP_TILE, false);
                 app.graphics.drawAvatar(app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE, app.graphics.viewport.PLAYER_OFFSET_TOP_TILE, index, app.player.picture, 'characters');
 
-                if (redrawNametags) app.graphics.nametags.show();
+                app.graphics.nametags.show();
 
                 app.environment.daylight.draw();
             },
@@ -818,7 +818,6 @@ window.app = {
         },
 
         startAnimation: function() {
-            // Tried using requestAnimationFrame, but that is slow and choppy
             var currentFrame = 0;
             setInterval(function() {
                 currentFrame++;
@@ -828,7 +827,7 @@ window.app = {
                     app.graphics.globalAnimationFrame = !app.graphics.globalAnimationFrame;
                     app.player.killIfNpcNearby();
                 }
-                app.environment.map.render(currentFrame === 0);
+                app.environment.map.render();
             }, 150);
         },
 
