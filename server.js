@@ -104,11 +104,8 @@ map.connect(mongo_connection_string, function(err) {
             });
 
             players.sendData(socket);
-
             daynight.sendData(socket);
-
             corruption.sendData(socket);
-
             npcs.sendData(socket);
         });
 
@@ -116,17 +113,20 @@ map.connect(mongo_connection_string, function(err) {
         socket.on('chat', function (data) {
             var message = sanitizer.escape(data.message.substr(0, 100));
             var name = sanitizer.escape(data.name);
+
             socket.broadcast.emit('chat', {
                 session: this.id,
                 name: name,
                 message: message
             });
+
             logger.info("Chat", data.name + ": " + data.message);
         });
 
         socket.on('join', function(data) {
             var session_id = this.id;
             logger.action("Player", "Connected, Name: " + data.name);
+
             socket.broadcast.emit('chat', {
                 session: session_id,
                 name: data.name,
@@ -141,6 +141,7 @@ map.connect(mongo_connection_string, function(err) {
             var session_id = this.id;
             var len = players.data.length;
             var player_name;
+
             for (var i=0; i<len; i++) {
                 if (players.data[i].session == session_id) {
                     player_name = players.data[i].name;
@@ -148,6 +149,7 @@ map.connect(mongo_connection_string, function(err) {
                     break;
                 }
             }
+
             socket.broadcast.emit('leave', {
                 session: session_id,
                 name: player_name || null
@@ -157,18 +159,23 @@ map.connect(mongo_connection_string, function(err) {
         // Get an update from the client for their char's name and picture
         socket.on('character info', function(data) {
             data.session = this.id;
+
             if (data.name) {
                 data.name = sanitizer.escape(data.name.substr(0, 12));
             }
+
             if (data.picture) {
                 data.picture = parseInt(data.picture, 10);
                 if (isNaN(data.picture) || data.picture > 15) {
                     data.picture = 0;
                 }
             }
+
             socket.broadcast.emit('character info', data);
+
             var len = players.data.length;
             var foundPlayer = false;
+
             for (var i=0; i<len; i++) {
                 if (players.data[i].session == data.session) {
                     _.extend(
@@ -179,6 +186,7 @@ map.connect(mongo_connection_string, function(err) {
                     break;
                 }
             }
+
             if (!foundPlayer) {
                 players.data.push(data);
             }
