@@ -10,15 +10,14 @@ var io          = require('socket.io').listen(server, {log: false});
 var sanitizer   = require('sanitizer');
 var _           = require('underscore');
 
-var players = [];
-
-var logger      = require('./modules/logger.js');
-var map         = require('./modules/map.js');
-var corruption  = require('./modules/corruption.js').setMap(map).setSocket(io);
-var daynight    = require('./modules/daynight.js').setMap(map).setSocket(io);
-var earthquake  = require('./modules/earthquake.js').setMap(map).setSocket(io);
-var terrain     = require('./modules/terrain.js').setMap(map);
-var npcs        = require('./modules/npcs.js').setMap(map).setSocket(io).setPlayers(players);
+var players     = require('./lib/players.js').setSocket(io);
+var logger      = require('./lib/logger.js');
+var map         = require('./lib/map.js');
+var corruption  = require('./lib/corruption.js').setMap(map).setSocket(io);
+var daynight    = require('./lib/daynight.js').setMap(map).setSocket(io);
+var earthquake  = require('./lib/earthquake.js').setMap(map).setSocket(io);
+var terrain     = require('./lib/terrain.js').setMap(map);
+var npcs        = require('./lib/npcs.js').setMap(map).setSocket(io).setPlayers(players);
 
 // Web Server Configuration
 var server_port = parseInt(process.argv[2], 10) || 80; // most OS's will require sudo to listen on 80
@@ -104,11 +103,7 @@ map.connect(mongo_connection_string, function(err) {
                 priority: 'server'
             });
 
-            _.each(players, function(player) {
-                socket.emit('character info',
-                    player
-                );
-            });
+            players.sendData(socket);
 
             daynight.sendData(socket);
 
@@ -144,12 +139,12 @@ map.connect(mongo_connection_string, function(err) {
         socket.on('disconnect', function(data) {
             logger.action("Player", "Disconnected");
             var session_id = this.id;
-            var len = players.length;
+            var len = players.data.length;
             var player_name;
             for (var i=0; i<len; i++) {
-                if (players[i].session == session_id) {
-                    player_name = players[i].name;
-                    players.splice(i, 1);
+                if (players.data[i].session == session_id) {
+                    player_name = players.data[i].name;
+                    players.data.splice(i, 1);
                     break;
                 }
             }
@@ -172,12 +167,12 @@ map.connect(mongo_connection_string, function(err) {
                 }
             }
             socket.broadcast.emit('character info', data);
-            var len = players.length;
+            var len = players.data.length;
             var foundPlayer = false;
             for (var i=0; i<len; i++) {
-                if (players[i].session == data.session) {
+                if (players.data[i].session == data.session) {
                     _.extend(
-                        players[i],
+                        players.data[i],
                         data
                     );
                     foundPlayer = true;
@@ -185,7 +180,7 @@ map.connect(mongo_connection_string, function(err) {
                 }
             }
             if (!foundPlayer) {
-                players.push(data);
+                players.data.push(data);
             }
         });
 
