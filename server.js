@@ -2,7 +2,6 @@
 
 'use strict';
 
-var fs          = require('fs');
 var express 	= require("express");
 var app 		= express();
 var server		= require('http').createServer(app);
