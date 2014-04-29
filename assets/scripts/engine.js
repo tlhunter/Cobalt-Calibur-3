@@ -248,15 +248,18 @@ window.app = {
                 });
 
             var coords = app.player.coordinates;
+            var new_coords = {
+                x: coords.x + d[0],
+                y: coords.y + d[1]
+            };
 
-            if (!app.player.accessible(coords.x + d[0], coords.y + d[1])) {
+            if (!app.player.accessible(new_coords.x, new_coords.y)) {
                 app.audio.play('walk-fail');
             } else {
-                app.player.coordinates.x += d[0];
-                app.player.coordinates.y += d[1];
+                app.player.setLocation(new_coords.x, new_coords.y);
                 app.audio.play('walk');
 
-                if (app.environment.corruption.loaded && app.environment.corruption.data[coords.x][coords.y]) {
+                if (app.environment.corruption.loaded && app.environment.corruption.data[new_coords.x][new_coords.y]) {
                     if (Math.random() < 1/8) {
                         app.player.hurt("You were killed by corruption");
                         app.network.send.chat("*Killed by Corruption*");
