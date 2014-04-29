@@ -625,7 +625,7 @@ window.app = {
             app.player.direction = 's';
             app.player.coordinates = {x: 100, y: 100};
             app.player.name = 'Anon' + Math.floor(Math.random() * 8999 + 1000);
-            app.player.picture = Math.floor(Math.random() * 15) + 1;
+            app.player.picture = Math.floor(Math.random() * 8) + 1;
             app.chat.message('Client', 'Creating a character for the first time', 'client');
         },
 
@@ -1017,6 +1017,7 @@ window.app = {
                     app.chat.message('Help', '/gps: get coordinates', 'help');
                     app.chat.message('Help', '/clear: reset message area', 'help');
                     app.chat.message('Help', '/kill: commit suicide', 'help');
+                    app.chat.message('Help', '/reset: create new character', 'help');
                     return;
                 } else if (message.indexOf('/nick ') === 0) {
                     var playerName = message.substr(6);
@@ -1043,8 +1044,12 @@ window.app = {
                     return;
                 } else if (message === '/kill') {
                     app.player.kill('Committed Suicide');
-                        app.network.send.chat("*Committed Suicide*");
+                    app.network.send.chat("*Committed Suicide*");
                     return;
+                } else if (message === '/reset') {
+                    app.persistence.createNewPlayer();
+                    app.player.kill('Destroyed Himself');
+                    app.network.send.chat("*Committed Suicide*");
                 } else if (message === '/gps') {
                     app.chat.message("Client", "Coordinates: [" + (app.player.coordinates.x) + "," + (app.player.coordinates.y) + "]", 'client');
                     return;
