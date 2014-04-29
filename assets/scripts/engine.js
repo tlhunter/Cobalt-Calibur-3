@@ -269,7 +269,7 @@ window.app = {
         },
 
         inventory: {
-            data: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            data: [0, 0, 0, 0, 0, 0, 0, 0],
 
             update: function(index, amount) {
                 var data = app.player.inventory.data;
@@ -557,7 +557,8 @@ window.app = {
                 "50" : makeItemPlacement(2), // number "2"
                 "51" : makeItemPlacement(3), // number "3"
                 "52" : makeItemPlacement(4), // number "4"
-                "53" : makeItemPlacement(5)  // number "5"
+                "53" : makeItemPlacement(5), // number "5"
+                "54" : makeItemPlacement(6)  // number "6"
             },
 
             MOVEMENT = {
@@ -620,7 +621,7 @@ window.app = {
         },
 
         createNewPlayer: function() {
-            app.player.inventory.data = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+            app.player.inventory.data = [0, 0, 0, 0, 0, 0, 0, 0];
             app.player.direction = 's';
             app.player.coordinates = {x: 100, y: 100};
             app.player.name = 'Anon' + Math.floor(Math.random() * 8999 + 1000);
