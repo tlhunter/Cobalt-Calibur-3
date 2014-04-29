@@ -20,7 +20,8 @@ $data = array();
 for ($x = 0; $x < $width; $x++) {
     for ($y = 0; $y < $height; $y++) {
         $rgb = imagecolorat($im, $x, $y);
-        $data[$x][$y] = array($translation[$rgb], null);
+        $data[$x][$y] = $translation[$rgb];
     }
 }
+
 echo json_encode($data);

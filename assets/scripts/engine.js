@@ -74,14 +74,10 @@ window.app = {
 
             getTile: function(x, y) {
                 var tile = app.environment.map.data[x][y];
-                var data = {};
-                if (tile && typeof tile[0] != 'undefined') {
-                    data.tile = app.graphics.tilesets.descriptors.terrain[tile[0]];
-                }
-                if (tile && typeof tile[1] != 'undefined') {
-                    data.health = tile[1];
-                }
-                return data;
+
+                tile = app.graphics.tilesets.descriptors.terrain[tile];
+
+                return tile;
             },
 
             // used to filter all npc + other players to only those in view
@@ -127,7 +123,7 @@ window.app = {
                     for (i=0; i < app.graphics.viewport.WIDTH_TILE; i++) {
                         mapX = i + app.graphics.viewport.x;
                         mapY = j + app.graphics.viewport.y;
-                        tile = (app.environment.map.data[mapX] && app.environment.map.data[mapX][mapY]) ? app.environment.map.data[mapX][mapY] : null;
+                        tile = (mapX >= 0 && mapX < 200 && mapY >= 0 && mapY <= 200) ? app.environment.map.data[mapX][mapY] : null;
                         app.graphics.drawTile(i, j, tile);
 
                         // Draw Corruption
@@ -346,7 +342,7 @@ window.app = {
             if (x < 0 || y < 0 || x >= app.environment.map.WIDTH_TILE || y >= app.environment.map.HEIGHT_TILE) {
                 return false;
             }
-            if (app.environment.map.getTile(x, y).tile.block_player) {
+            if (app.environment.map.getTile(x, y).block_player) {
                 return false;
             }
             return true;
@@ -367,16 +363,15 @@ window.app = {
                 app.chat.message('Client', 'You cannot change the spawn location.', 'client');
                 return false;
             }
-            var mineable = tileData.tile.mineable;
+            var mineable = tileData.mineable;
             if (!mineable) {
                 app.audio.play('mine-fail');
                 return false;
             }
-            //var health = tileData.health;
-            var becomes = tileData.tile.becomes;
-            var provides = tileData.tile.provides;
+            var becomes = tileData.becomes;
+            var provides = tileData.provides;
             //console.log(tileData, becomes, provides);
-            app.environment.map.data[coords.x][coords.y][0] = becomes;
+            app.environment.map.data[coords.x][coords.y] = becomes;
             app.network.send.terraform(coords.x, coords.y, becomes);
             app.player.inventory.update(provides.id, provides.quantity);
             app.audio.play('mine');
@@ -391,7 +386,7 @@ window.app = {
                 app.chat.message('Client', 'You cannot change the spawn location.', 'client');
                 return false;
             }
-            if (!replaceTile.tile.replaceable) {
+            if (!replaceTile.replaceable) {
                 document.getElementById('sound-build-fail').play();
                 app.chat.message('Client', 'This object cannot be built over.', 'client');
                 return false;
@@ -400,7 +395,7 @@ window.app = {
             // provides is also the cost of manufacturing the tile
             if (app.player.inventory.update(item.provides.id, -item.provides.quantity)) {
                 app.audio.play('build');
-                app.environment.map.data[coords.x][coords.y][0] = terrainIndex;
+                app.environment.map.data[coords.x][coords.y] = terrainIndex;
                 app.network.send.terraform(coords.x, coords.y, terrainIndex);
                 return true;
             } else {
@@ -714,7 +709,7 @@ window.app = {
                 app.network.socket.emit('terraform', {
                     x: x,
                     y: y,
-                    tile: [tile, null]
+                    tile: tile
                 });
             },
             // Player dies
@@ -939,14 +934,14 @@ window.app = {
             var x_pixel = x * app.graphics.TILE_WIDTH_PIXEL;
             var y_pixel = y * app.graphics.TILE_HEIGHT_PIXEL;
 
-            if (tile == null || isNaN(tile[0])) {
+            if (typeof tile !== 'number') {
                 return;
             }
 
             app.graphics.handle.drawImage(
                 app.graphics.tilesets.terrain,
                 0,
-                tile[0] * app.graphics.TILE_HEIGHT_PIXEL,
+                tile * app.graphics.TILE_HEIGHT_PIXEL,
                 app.graphics.TILE_WIDTH_PIXEL,
                 app.graphics.TILE_HEIGHT_PIXEL,
                 x_pixel,
@@ -1062,7 +1057,7 @@ window.app = {
                         return;
                     }
                     var coords = app.player.getFacingTile().coordinates;
-                    app.environment.map.data[coords.x][coords.y][0] = tile;
+                    app.environment.map.data[coords.x][coords.y] = tile;
                     app.network.send.terraform(coords.x, coords.y, tile);
                     return;
                 }
