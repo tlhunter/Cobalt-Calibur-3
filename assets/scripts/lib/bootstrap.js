@@ -114,7 +114,7 @@ window.app = {
 
             // return properly sorted list of all other avatars
             getAvatars: function getAvatars () {
-                return app.npc.data.concat(app.players.data)
+                return npcs.getData().concat(app.players.data)
                     .sort(function (a, b) {
                         return a.x !== b.x ? 0 : a.y < b.y ? -1 : 1;
                     });
@@ -431,23 +431,6 @@ window.app = {
             }, 200);
         },
 
-        // Checks to see if an NPC is adjacent to the player, and if so, kills them
-        killIfNpcNearby: function() {
-            var coords = app.player.coordinates;
-            var len = app.npc.data.length;
-            for (var l = 0; l < len; l++) {
-                var npc = app.npc.data[l];
-                for (var i = -1; i <= 1; i++) {
-                    for (var j = -1; j <= 1; j++) {
-                        if (npc.x == coords.x+i && npc.y == coords.y+j) {
-                            app.player.hurt("Killed by " + app.graphics.tilesets.descriptors.monsters[npc.id].name);
-                            break;
-                        }
-                    }
-                }
-            }
-        },
-
         hurt: function(killMessage) {
             app.player.hearts--;
             if (app.player.hearts <= 0) {
@@ -593,15 +576,6 @@ window.app = {
             pressed = "";
 
         $(document).on("keydown keyup", keyvent);
-    },
-
-    // NPC stuff
-    npc: {
-        data: [],
-
-        update: function(data) {
-            app.npc.data = data;
-        }
     },
 
     // handles saving and loading data to local storage. One day this won't be needed at all.
@@ -788,7 +762,7 @@ window.app = {
             });
 
             socket.on('event npcmovement', function(data) {
-                app.npc.update(data.npcs);
+                npcs.update(data.npcs);
             });
 
             socket.on('event corruption', function(data) {
@@ -837,7 +811,10 @@ window.app = {
                     currentFrame = 0;
                     // redraw every 150 ms, but change animation every 450 ms
                     app.graphics.globalAnimationFrame = !app.graphics.globalAnimationFrame;
-                    app.player.killIfNpcNearby();
+                    var adjacent = npcs.adjacent(app.player.coordinates);
+                    if (adjacent !== false) {
+                        app.player.hurt("Killed by " + app.graphics.tilesets.descriptors.monsters[adjacent].name);
+                    }
                 }
                 app.environment.map.render();
             }, 150);
