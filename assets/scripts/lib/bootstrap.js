@@ -1,6 +1,19 @@
-// Copyright 2011 Thomas Hunter :3
 'use strict';
 
+var _ = require('underscore');
+var audio = require('./audio.js');
+var chat = require('./chat.js');
+var environment = require('./environment.js');
+var graphics = require('./graphics.js');
+var network = require('./network.js');
+var npcs = require('./npcs.js');
+var persistence = require('./persistence.js');
+var player = require('./player.js');
+var players = require('./players.js');
+
+console.log('bootstrap load');
+
+// TODO: All the code below (except for initialization stuff) needs to be broken out into the modules listed above
 $(function() {
 window.app = {
     // First we download a bunch of our assets
@@ -34,7 +47,6 @@ window.app = {
     initialize: function() {
         app.graphics.initialize();
         app.network.connectSocket();
-        app.audio.initialize();
         app.persistence.load() || app.persistence.createNewPlayer();
         app.graphics.viewport.update();
         app.player.regenerateHearts();
@@ -250,10 +262,10 @@ window.app = {
             };
 
             if (!app.player.accessible(new_coords.x, new_coords.y)) {
-                app.audio.play('walk-fail');
+                audio.play('walk-fail');
             } else {
                 app.player.setLocation(new_coords.x, new_coords.y);
-                app.audio.play('walk');
+                audio.play('walk');
 
                 if (app.environment.corruption.loaded && app.environment.corruption.data[new_coords.x][new_coords.y]) {
                     if (Math.random() < 1/8) {
@@ -359,13 +371,13 @@ window.app = {
             var tileData = app.player.getFacingTile();
             var coords = tileData.coordinates;
             if (!app.player.god && coords.x >= 96 && coords.x <= 104 && coords.y >= 96 && coords.y <= 104) {
-                app.audio.play('mine-fail');
+                audio.play('mine-fail');
                 app.chat.message('Client', 'You cannot change the spawn location.', 'client');
                 return false;
             }
             var mineable = tileData.mineable;
             if (!mineable) {
-                app.audio.play('mine-fail');
+                audio.play('mine-fail');
                 return false;
             }
             var becomes = tileData.becomes;
@@ -374,7 +386,7 @@ window.app = {
             app.environment.map.data[coords.x][coords.y] = becomes;
             app.network.send.terraform(coords.x, coords.y, becomes);
             app.player.inventory.update(provides.id, provides.quantity);
-            app.audio.play('mine');
+            audio.play('mine');
         },
 
         // Attempts to create and then place the specified tile
@@ -394,7 +406,7 @@ window.app = {
             var item = app.graphics.tilesets.descriptors.terrain[terrainIndex];
             // provides is also the cost of manufacturing the tile
             if (app.player.inventory.update(item.provides.id, -item.provides.quantity)) {
-                app.audio.play('build');
+                audio.play('build');
                 app.environment.map.data[coords.x][coords.y] = terrainIndex;
                 app.network.send.terraform(coords.x, coords.y, terrainIndex);
                 return true;
@@ -406,7 +418,7 @@ window.app = {
 
         // Sends the player back to spawn
         kill: function(message) {
-            app.audio.play('death');
+            audio.play('death');
             app.player.direction = 's';
             app.player.setLocation(100, 100);
             app.graphics.viewport.update();
@@ -740,7 +752,7 @@ window.app = {
 
             socket.on('chat', function (data) {
                 if (typeof data.priority == "undefined") {
-                    app.audio.play('chat');
+                    audio.play('chat');
                 }
                 app.chat.message(data.name, data.message, data.priority);
             });
@@ -772,7 +784,7 @@ window.app = {
                     app.environment.map.data = data;
                 });
                 app.chat.message('Server', "There has been an earthquake! New Rock and Ore has been added to the world.", 'server');
-                app.audio.play('earthquake');
+                audio.play('earthquake');
             });
 
             socket.on('event npcmovement', function(data) {
@@ -1072,64 +1084,8 @@ window.app = {
                 };
             });
         }
-    },
-
-    audio: {
-        data: {
-            'mine': null,
-            'mine-fail': null,
-            'build': null,
-            'build-fail': null,
-            'walk': null,
-            'walk-fail': null,
-            'death': null,
-            'earthquake': null,
-            'chat': null,
-        },
-
-        // Stores
-        volume: {
-            sound: 1.0,
-            music: 1.0
-        },
-
-        // Creates the audio elements
-        initialize: function() {
-            var self = app.audio;
-            _.each(self.data, function(data, key) {
-                app.audio.data[key] = document.getElementById('sound-' + key);
-            });
-        },
-
-        // Sets the volume for the type of audio
-        setVolume: function(type, vol) {
-            var self = app.audio;
-            if (_.has(self.volume, type)) {
-                vol = parseFloat(vol);
-                if (vol < 0) {
-                    vol = 0.0;
-                } else if (vol > 1) {
-                    vol = 1.0;
-                }
-                self.volume[type] = vol;
-                return true;
-            }
-            return false;
-        },
-
-        // Plays the specified sound
-        play: function(name) {
-            var self = app.audio;
-            var sound = null;
-            if (_.has(self.data, name)) {
-                sound = self.data[name];
-                sound.volume = self.volume.sound;
-                sound.play();
-                return true;
-            }
-            return false;
-        }
     }
+
 };
 app.downloadAssets();
 });

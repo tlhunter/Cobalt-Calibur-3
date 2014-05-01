@@ -51,6 +51,7 @@ gameplay much. There are occasional earthquakes, and they change the landscape. 
 ## Installation
 
 	npm install
+    browserify assets/scripts/lib/bootstrap.js -o assets/scripts/bundle.js
 
 ## Running Game Server
 
@@ -66,7 +67,7 @@ I personally run the app using Forever:
 
 ## Requirements
 
-MongoDB, Node.js 0.8+
+MongoDB, Node.js 0.8+, Browserify (building assets)
 
 ## Screenshot
 
