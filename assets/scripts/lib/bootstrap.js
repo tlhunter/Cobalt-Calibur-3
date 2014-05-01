@@ -47,7 +47,6 @@ window.app = {
     initialize: function() {
         app.graphics.initialize();
         app.network.connectSocket();
-        app.persistence.load() || app.persistence.createNewPlayer();
         app.graphics.viewport.update();
         app.player.regenerateHearts();
         app.player.inventory.render();
@@ -55,7 +54,6 @@ window.app = {
         app.network.bindEvents();
         app.network.send.join(app.player.name);
         app.initializeKeybindings();
-        app.persistence.startAutoSave();
         app.graphics.startAnimation();
         app.graphics.hearts.draw();
         app.chat.message('Help', 'Type /help for some help', 'help');
@@ -423,7 +421,7 @@ window.app = {
             app.player.setLocation(100, 100);
             app.graphics.viewport.update();
             app.chat.message('Client', message, 'client');
-            app.persistence.save();
+            persistence.save();
 
             setTimeout(function() {
                 app.player.hearts = 5;
@@ -576,62 +574,6 @@ window.app = {
             pressed = "";
 
         $(document).on("keydown keyup", keyvent);
-    },
-
-    // handles saving and loading data to local storage. One day this won't be needed at all.
-    persistence: {
-        save: function() {
-            localStorage.setItem('data', JSON.stringify({
-                inventory: app.player.inventory.data,
-                direction: app.player.direction,
-                location: app.player.coordinates,
-                name: app.player.name,
-                picture: app.player.picture,
-            }));
-        },
-
-        load: function() {
-            var persistentData = JSON.parse(localStorage.getItem('data'));
-            if (persistentData) {
-                app.player.inventory.data = persistentData.inventory;
-                app.player.direction = persistentData.direction;
-                app.player.coordinates = persistentData.location;
-                app.player.name = persistentData.name;
-                app.player.picture = persistentData.picture;
-                app.chat.message('Client', 'Loaded your saved character', 'client');
-                return true;
-            }
-            return false;
-        },
-
-        createNewPlayer: function() {
-            app.player.inventory.data = [0, 0, 0, 0, 0, 0, 0, 0];
-            app.player.direction = 's';
-            app.player.coordinates = {x: 100, y: 100};
-            app.player.name = 'Anon' + Math.floor(Math.random() * 8999 + 1000);
-            app.player.picture = Math.floor(Math.random() * 8) + 1;
-            app.chat.message('Client', 'Creating a character for the first time', 'client');
-        },
-
-        destroy: function() {
-            app.player = null;
-            localStorage.setItem('data', null);
-            $(window).unload(function() {
-                app.persistence.destroy();
-            });
-            location.reload(true);
-        },
-
-        // save every 3 seconds
-        startAutoSave: function() {
-            setInterval(function() {
-                app.persistence.save();
-            }, 3000);
-
-            $(window).unload(function() {
-                app.persistence.save();
-            });
-        }
     },
 
     players: {
@@ -1033,7 +975,7 @@ window.app = {
                     app.network.send.chat("*Committed Suicide*");
                     return;
                 } else if (message === '/reset') {
-                    app.persistence.createNewPlayer();
+                    persistence.createNewPlayer();
                     app.player.kill('Destroyed Himself');
                     app.network.send.chat("*Committed Suicide*");
                 } else if (message === '/gps') {
@@ -1064,5 +1006,8 @@ window.app = {
     }
 
 };
+
+persistence.setPlayer(app.player).setChat(app.chat).init();
+
 app.downloadAssets();
 });
