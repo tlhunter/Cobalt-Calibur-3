@@ -18,7 +18,8 @@ $(function() {
 window.app = {
     // First we download a bunch of our assets
     downloadAssets: function() {
-        app.chat.message('About', 'Cobalt Calibur, by Thomas Hunter (@tlhunter).', 'help');
+        chat.message('About', 'Cobalt Calibur, by Thomas Hunter (@tlhunter).', 'help');
+
         $.when(
             app.graphics.tilesets.download(
                 '/assets/tilesets/inventory-32x32.png',
@@ -50,14 +51,13 @@ window.app = {
         app.graphics.viewport.update();
         app.player.regenerateHearts();
         app.player.inventory.render();
-        app.chat.initialize();
         app.network.bindEvents();
         app.network.send.join(app.player.name);
         app.initializeKeybindings();
         app.graphics.startAnimation();
         app.graphics.hearts.draw();
-        app.chat.message('Help', 'Type /help for some help', 'help');
-        app.chat.message('Help', 'Use the WASD keys to move around', 'help');
+        chat.message('Help', 'Type /help for some help', 'help');
+        chat.message('Help', 'Use the WASD keys to move around', 'help');
 
         setTimeout(function() {
             app.network.send.move(app.player.coordinates, app.player.direction);
@@ -206,7 +206,7 @@ window.app = {
 
         downloadTiles: function() {
             return $.get('/assets/data.json').pipe(function(data) {
-                app.chat.message('Client', 'Tileset Descriptors done.', 'client');
+                chat.message('Client', 'Tileset Descriptors done.', 'client');
                 app.graphics.tilesets.descriptors = data;
                 return true;
             });
@@ -214,7 +214,7 @@ window.app = {
 
         downloadMap: function() {
             return $.get('/map').pipe(function(data) {
-                app.chat.message('Client', 'Map data done.', 'client');
+                chat.message('Client', 'Map data done.', 'client');
                 app.environment.map.data = data;
                 return true;
             });
@@ -370,7 +370,7 @@ window.app = {
             var coords = tileData.coordinates;
             if (!app.player.god && coords.x >= 96 && coords.x <= 104 && coords.y >= 96 && coords.y <= 104) {
                 audio.play('mine-fail');
-                app.chat.message('Client', 'You cannot change the spawn location.', 'client');
+                chat.message('Client', 'You cannot change the spawn location.', 'client');
                 return false;
             }
             var mineable = tileData.mineable;
@@ -393,12 +393,12 @@ window.app = {
             var coords = replaceTile.coordinates;
             if (!app.player.god && coords.x >= 96 && coords.x <= 104 && coords.y >= 96 && coords.y <= 104) {
                 document.getElementById('sound-build-fail').play();
-                app.chat.message('Client', 'You cannot change the spawn location.', 'client');
+                chat.message('Client', 'You cannot change the spawn location.', 'client');
                 return false;
             }
             if (!replaceTile.replaceable) {
                 document.getElementById('sound-build-fail').play();
-                app.chat.message('Client', 'This object cannot be built over.', 'client');
+                chat.message('Client', 'This object cannot be built over.', 'client');
                 return false;
             }
             var item = app.graphics.tilesets.descriptors.terrain[terrainIndex];
@@ -409,7 +409,7 @@ window.app = {
                 app.network.send.terraform(coords.x, coords.y, terrainIndex);
                 return true;
             } else {
-                app.chat.message('Client', "You don't have the inventory to build this.", 'client');
+                chat.message('Client', "You don't have the inventory to build this.", 'client');
                 return false;
             }
         },
@@ -420,7 +420,7 @@ window.app = {
             app.player.direction = 's';
             app.player.setLocation(100, 100);
             app.graphics.viewport.update();
-            app.chat.message('Client', message, 'client');
+            chat.message('Client', message, 'client');
             persistence.save();
 
             setTimeout(function() {
@@ -670,16 +670,16 @@ window.app = {
                 if (typeof data.priority == "undefined") {
                     audio.play('chat');
                 }
-                app.chat.message(data.name, data.message, data.priority);
+                chat.message(data.name, data.message, data.priority);
             });
 
             socket.on('disconnect', function(data) {
-                app.chat.message('Server', 'Disconnected', 'server');
+                chat.message('Server', 'Disconnected', 'server');
             });
 
             socket.on('leave', function(data) {
                 app.players.remove(data.session);
-                app.chat.message(data.name || 'unknown', "Player Disconnected", 'server');
+                chat.message(data.name || 'unknown', "Player Disconnected", 'server');
             });
 
             socket.on('terraform', function (data) {
@@ -699,7 +699,7 @@ window.app = {
                 $.get('/map', function(data) {
                     app.environment.map.data = data;
                 });
-                app.chat.message('Server', "There has been an earthquake! New Rock and Ore has been added to the world.", 'server');
+                chat.message('Server', "There has been an earthquake! New Rock and Ore has been added to the world.", 'server');
                 audio.play('earthquake');
             });
 
@@ -903,111 +903,12 @@ window.app = {
         }
     },
 
-    chat: {
-        $output: $('#messages'),
-        $input: $('#message-input'),
-
-        message: function(who, message, priority) {
-            // Hacky code... But it fixes some XSS issues. Encoded data is getting undencoded at some point
-            message = message.replace(/&/g, "&amp;").replace(/>/g, "&gt;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
-            who = who.replace(/&/g, "&amp;").replace(/>/g, "&gt;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
-            app.chat.$output
-                .append("<div class='message " + priority + "'><span class='username'>" + who + ": </span><span class='content'>" + message + "</span></div>")
-                .animate({scrollTop: this.$output[0].scrollHeight});
-        },
-
-        clear: function() {
-            app.chat.$output.empty();
-        },
-
-        clearInput: function() {
-            app.chat.$input.val('');
-        },
-
-        initialize: function() {
-            $('#message-box form').submit(function(event) {
-                event.preventDefault();
-                var message = app.chat.$input.val();
-                app.chat.clearInput();
-                if (message === '/clear') {
-                    app.chat.clear();
-                    return;
-                } else if (message === '/help') {
-                    app.chat.message('Help', '-{Keys}----------------------------', 'help');
-                    app.chat.message('Help', 'Use the WASD keys to move', 'help');
-                    app.chat.message('Help', 'Press F to mine the facing object', 'help');
-                    app.chat.message('Help', 'Press T or / to enter the chat box', 'help');
-                    app.chat.message('Help', 'Press Esc to leave the chat box', 'help');
-                    app.chat.message('Help', '-{Commands}------------------------', 'help');
-                    app.chat.message('Help', '/nick NAME: change your name', 'help');
-                    app.chat.message('Help', '/pic 1-8: change your avatar', 'help');
-                    app.chat.message('Help', '/who: get a list of players', 'help');
-                    app.chat.message('Help', '/gps: get coordinates', 'help');
-                    app.chat.message('Help', '/clear: reset message area', 'help');
-                    app.chat.message('Help', '/kill: commit suicide', 'help');
-                    app.chat.message('Help', '/reset: create new character', 'help');
-                    return;
-                } else if (message.indexOf('/nick ') === 0) {
-                    var playerName = message.substr(6);
-                    app.player.name = playerName;
-                    app.network.send.character(app.player.name, app.player.picture);
-                    return;
-                } else if (message.indexOf('/pic ') === 0) {
-                    var picIndex = parseInt(message.substr(5), 10);
-                    if (isNaN(picIndex)) {
-                        picIndex = 1;
-                    }
-                    if (picIndex > 8) {
-                        picIndex = 1;
-                    }
-                    app.player.picture = picIndex;
-                    app.network.send.character(app.player.name, app.player.picture);
-                    // change picture
-                    return;
-                } else if (message === '/who') {
-                    app.chat.message("Client", "Found " + app.players.data.length + " players", 'client');
-                    _.each(app.players.data, function(player) {
-                        app.chat.message("Client", player.name, 'client');
-                    });
-                    return;
-                } else if (message === '/kill') {
-                    app.player.kill('Committed Suicide');
-                    app.network.send.chat("*Committed Suicide*");
-                    return;
-                } else if (message === '/reset') {
-                    persistence.createNewPlayer();
-                    app.player.kill('Destroyed Himself');
-                    app.network.send.chat("*Committed Suicide*");
-                } else if (message === '/gps') {
-                    app.chat.message("Client", "Coordinates: [" + (app.player.coordinates.x) + "," + (app.player.coordinates.y) + "]", 'client');
-                    return;
-                } else if (message.indexOf('/tile ') === 0) {
-                    var tile = parseInt(message.substr(6), 10);
-                    if (isNaN(tile)) {
-                        return;
-                    }
-                    var coords = app.player.getFacingTile().coordinates;
-                    app.environment.map.data[coords.x][coords.y] = tile;
-                    app.network.send.terraform(coords.x, coords.y, tile);
-                    return;
-                }
-                app.chat.message(app.player.name, message, 'self');
-                app.network.send.chat(message);
-            });
-
-            // Pres Esc inside of text box, leave the text box
-            $(document).keyup(function(e) {
-                if ($(e.target).is(":input") && e.which == 27) {
-                    e.preventDefault();
-                    app.chat.$input.blur();
-                };
-            });
-        }
-    }
 
 };
 
-persistence.setPlayer(app.player).setChat(app.chat).init();
+// TODO: These should all be broken up into constructors
+chat.setPlayer(app.player).setPlayers(app.players).setEnvironment(environment).setNetwork(network);
+persistence.setPlayer(app.player).setChat(chat).init();
 
 app.downloadAssets();
 });
