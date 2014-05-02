@@ -901,13 +901,12 @@ window.app = {
                 app.graphics.hearts.$holder.html(Array(1+app.player.hearts).join('<div class="heart"></div>'));
             }
         }
-    },
-
+    }
 
 };
 
 // TODO: These should all be broken up into constructors
-chat.setPlayer(app.player).setPlayers(app.players).setEnvironment(environment).setNetwork(network);
+chat.setPlayer(app.player).setPlayers(app.players).setEnvironment(app.environment).setNetwork(app.network);
 persistence.setPlayer(app.player).setChat(chat).init();
 
 app.downloadAssets();

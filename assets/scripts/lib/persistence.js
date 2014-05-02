@@ -1,8 +1,10 @@
+'use strict';
+
 var Persistence = function() {
   var self = this;
   var player;
   var chat;
-  const LOCALSTORAGE_KEY = 'data';
+  var LOCALSTORAGE_KEY = 'data';
 
   // TODO: Make these two items part of the constructor
   self.setPlayer = function(new_player) {

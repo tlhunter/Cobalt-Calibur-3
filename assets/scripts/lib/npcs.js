@@ -1,3 +1,5 @@
+'use strict';
+
 var NPCs = function() {
   var self = this;
 
