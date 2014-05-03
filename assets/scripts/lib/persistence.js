@@ -47,6 +47,7 @@ var Persistence = function() {
     return false;
   };
 
+  // TODO: This code should be in player.js
   self.createNewPlayer = function() {
     player.inventory.data = [0, 0, 0, 0, 0, 0, 0, 0];
     player.direction = 's';

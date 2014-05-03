@@ -49,10 +49,8 @@ window.app = {
         app.graphics.initialize();
         app.network.connectSocket();
         app.graphics.viewport.update();
-        app.player.regenerateHearts();
-        app.player.inventory.render();
         app.network.bindEvents();
-        app.network.send.join(app.player.name);
+        app.network.send.join(player.name);
         app.initializeKeybindings();
         app.graphics.startAnimation();
         app.graphics.hearts.draw();
@@ -60,8 +58,8 @@ window.app = {
         chat.message('Help', 'Use the WASD keys to move around', 'help');
 
         setTimeout(function() {
-            app.network.send.move(app.player.coordinates, app.player.direction);
-            app.network.send.character(app.player.name, app.player.picture);
+            app.network.send.move(player.coordinates, player.direction);
+            app.network.send.character(player.name, player.picture);
         }, 500);
 
         $('#controls .button').tipsy({fade: false, gravity: 's', html: true});
@@ -150,9 +148,9 @@ window.app = {
                     .forEach(app.environment.map.drawAvatar.bind(null));
 
                 // Draw this player
-                var index = app.graphics.getAvatarFrame(app.player.direction, app.graphics.selfAnimationFrame);
-                app.graphics.nametags.add(app.player.name, app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE, app.graphics.viewport.PLAYER_OFFSET_TOP_TILE, false);
-                app.graphics.drawAvatar(app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE, app.graphics.viewport.PLAYER_OFFSET_TOP_TILE, index, app.player.picture, 'characters');
+                var index = app.graphics.getAvatarFrame(player.direction, app.graphics.selfAnimationFrame);
+                app.graphics.nametags.add(player.name, app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE, app.graphics.viewport.PLAYER_OFFSET_TOP_TILE, false);
+                app.graphics.drawAvatar(app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE, app.graphics.viewport.PLAYER_OFFSET_TOP_TILE, index, player.picture, 'characters');
 
                 app.graphics.nametags.show();
 
@@ -221,232 +219,6 @@ window.app = {
         },
     },
 
-    player: {
-        hearts: 5,
-        picture: 0,
-        name: '',
-        god: false,
-        coordinates: {
-            x: 100,
-            y: 100
-        },
-        direction: 's',
-        speed: 150,
-
-        // Attempts to move the character in the direction we specify
-        move: function(d) {
-            // if nothing is passed in or anything not acceptable is passed in do nothing
-            if (!d || /[^ensw]/i.test(d)) {
-                console.log("Invalid direction passed to move: " + d);
-                return false;
-            }
-
-            // face the player in the direction of the first valid direction passed in
-            app.player.setDirection(d.slice(0,1));
-
-            // convert d to an array of directions for consistent processing
-            // ensure that the pair is [x, y]
-            d = [(d.match(/[ew]/) || [])[0] || "", (d.match(/[ns]/) || [])[0] || ""]
-                // map to grid movement change values
-                .map(function (item) {
-                    // parse into integers
-                    return ~~({e: 1, n: -1, s: 1, w: -1}[item]);
-                });
-
-            var coords = app.player.coordinates;
-            var new_coords = {
-                x: coords.x + d[0],
-                y: coords.y + d[1]
-            };
-
-            if (!app.player.accessible(new_coords.x, new_coords.y)) {
-                audio.play('walk-fail');
-            } else {
-                app.player.setLocation(new_coords.x, new_coords.y);
-                audio.play('walk');
-
-                if (app.environment.corruption.loaded && app.environment.corruption.data[new_coords.x][new_coords.y]) {
-                    if (Math.random() < 1/8) {
-                        app.player.hurt("You were killed by corruption");
-                        app.network.send.chat("*Killed by Corruption*");
-                    }
-                }
-
-                app.graphics.selfAnimationFrame = !app.graphics.selfAnimationFrame;
-                app.graphics.viewport.update();
-            }
-        },
-
-        inventory: {
-            data: [0, 0, 0, 0, 0, 0, 0, 0],
-
-            update: function(index, amount) {
-                var data = app.player.inventory.data;
-                if (amount < 0) {
-                    if (data[index] >= -amount) {
-                        data[index] += amount;
-                        $('#inventory-'+index+' span').stop().css({fontSize: '8px'}).animate({ fontSize : '15px' }).html(data[index]);
-                        return true;
-                    }
-                    return false;
-                } else {
-                    data[index] += amount;
-                    $('#inventory-'+index+' span').stop().css({fontSize: '22px'}).animate({ fontSize : '15px' }).html(data[index]);
-                    return true;
-                }
-            },
-
-            render: function() {
-                var len = app.player.inventory.data.length;
-                for (var i = 0; i < len; i++) {
-                    $('#inventory-'+i+' span').html(app.player.inventory.data[i]);
-                }
-            },
-        },
-
-        // Forces an XY location
-        setLocation: function(x, y) {
-            app.player.coordinates = {x: x, y: y};
-            app.graphics.viewport.update();
-            app.player.broadcastLocation();
-        },
-
-        // Sets the direction we are facing
-        setDirection: function(d) {
-            app.player.direction = d;
-            app.player.broadcastLocation();
-        },
-
-        // Gets information about the tile we are facing
-        getFacingTile: function() {
-            var coords = app.player.coordinates;
-            var data = {};
-            switch(app.player.direction) {
-                case 'n':
-                    data.coordinates = {x: coords.x, y: coords.y - 1};
-                    break;
-                case 'e':
-                    data.coordinates = {x: coords.x + 1, y: coords.y};
-                    break;
-                case 's':
-                    data.coordinates = {x: coords.x, y: coords.y + 1};
-                    break;
-                case 'w':
-                    data.coordinates = {x: coords.x - 1, y: coords.y};
-                    break;
-                default:
-                    console.log("Invalid Direction", app.player.direction);
-                    break;
-            }
-
-            _.extend(
-                data,
-                app.environment.map.getTile(data.coordinates.x, data.coordinates.y)
-            );
-
-            return data;
-        },
-
-        // Whether or not the tile can be walked on
-        accessible: function(x, y) {
-            if (x < 0 || y < 0 || x >= app.environment.map.WIDTH_TILE || y >= app.environment.map.HEIGHT_TILE) {
-                return false;
-            }
-            if (app.environment.map.getTile(x, y).block_player) {
-                return false;
-            }
-            return true;
-        },
-
-        // Sends the players location and direction to the server
-        broadcastLocation: function() {
-            app.network.send.move(app.player.coordinates, app.player.direction);
-            app.environment.map.render(true);
-        },
-
-        // Mines the facing tile, adjusts inventory
-        mineFacingTile: function() {
-            var tileData = app.player.getFacingTile();
-            var coords = tileData.coordinates;
-            if (!app.player.god && coords.x >= 96 && coords.x <= 104 && coords.y >= 96 && coords.y <= 104) {
-                audio.play('mine-fail');
-                chat.message('Client', 'You cannot change the spawn location.', 'client');
-                return false;
-            }
-            var mineable = tileData.mineable;
-            if (!mineable) {
-                audio.play('mine-fail');
-                return false;
-            }
-            var becomes = tileData.becomes;
-            var provides = tileData.provides;
-            //console.log(tileData, becomes, provides);
-            app.environment.map.data[coords.x][coords.y] = becomes;
-            app.network.send.terraform(coords.x, coords.y, becomes);
-            app.player.inventory.update(provides.id, provides.quantity);
-            audio.play('mine');
-        },
-
-        // Attempts to create and then place the specified tile
-        placeItem: function(terrainIndex) {
-            var replaceTile = app.player.getFacingTile();
-            var coords = replaceTile.coordinates;
-            if (!app.player.god && coords.x >= 96 && coords.x <= 104 && coords.y >= 96 && coords.y <= 104) {
-                document.getElementById('sound-build-fail').play();
-                chat.message('Client', 'You cannot change the spawn location.', 'client');
-                return false;
-            }
-            if (!replaceTile.replaceable) {
-                document.getElementById('sound-build-fail').play();
-                chat.message('Client', 'This object cannot be built over.', 'client');
-                return false;
-            }
-            var item = app.graphics.tilesets.descriptors.terrain[terrainIndex];
-            // provides is also the cost of manufacturing the tile
-            if (app.player.inventory.update(item.provides.id, -item.provides.quantity)) {
-                audio.play('build');
-                app.environment.map.data[coords.x][coords.y] = terrainIndex;
-                app.network.send.terraform(coords.x, coords.y, terrainIndex);
-                return true;
-            } else {
-                chat.message('Client', "You don't have the inventory to build this.", 'client');
-                return false;
-            }
-        },
-
-        // Sends the player back to spawn
-        kill: function(message) {
-            audio.play('death');
-            app.player.direction = 's';
-            app.player.setLocation(100, 100);
-            app.graphics.viewport.update();
-            chat.message('Client', message, 'client');
-            persistence.save();
-
-            setTimeout(function() {
-                app.player.hearts = 5;
-                app.graphics.hearts.draw();
-            }, 200);
-        },
-
-        hurt: function(killMessage) {
-            app.player.hearts--;
-            if (app.player.hearts <= 0) {
-                app.player.kill(killMessage);
-                return;
-            }
-            app.graphics.hearts.draw();
-        },
-
-        regenerateHearts: function () {
-            if (app.player.hearts < 5) {
-                app.player.hearts++;
-                app.graphics.hearts.draw();
-            }
-            setTimeout(app.player.regenerateHearts, 30 * 1000);
-        }
-    },
-
     initializeKeybindings: function () {
 
         function changeDirection (direction, remove) {
@@ -501,7 +273,7 @@ window.app = {
                         } else if (pressed.length && !pending) {
                             // immediately when the user presses a direction 
                             // turn the player to face that direction
-                            app.player.setDirection(direction);
+                            player.setDirection(direction);
                             // if the user is only tapping the direction to 
                             // face that direction the keyup event will cancel
                             // the hold, other wise the user is intending to
@@ -516,17 +288,17 @@ window.app = {
         // factory for placing items for static execution during gameplay
         function makeItemPlacement (num) {
             return function () {
-                app.player.placeItem(8 + num);
+                player.placeItem(8 + num);
             };
         }
 
         // movementCycle is started by key press and continues calling itself
         // while movement keys are held by the user to keep the player moving
         function movementCycle () {
-            app.player.move(pressed);
+            player.move(pressed);
             // when player can be different classes and have a different movement rate
             // the timeout variable should be a part of the player class and inserted below
-            pending = setTimeout(movementCycle, app.player.speed || 200);
+            pending = setTimeout(movementCycle, player.speed || 200);
         }
 
         // "escape" key functionality - reset everything
@@ -538,7 +310,7 @@ window.app = {
         }
 
         var CONTROL = {                      // letter "f"
-                "70" : app.player.mineFacingTile.bind(app.player),
+                "70" : player.mineFacingTile.bind(player),
                 "84" : focusCLI,             // letter "t"
                 "191": focusCLIslash,             // forward-slash "/"
 
@@ -585,7 +357,7 @@ window.app = {
             // Player types a message to be sent, probably don't need name value anymore
             chat: function(message) {
                 app.network.socket.emit('chat', {
-                    name: app.player.name,
+                    name: player.name,
                     message: message,
                     priority: 0
                 });
@@ -719,9 +491,9 @@ window.app = {
                     currentFrame = 0;
                     // redraw every 150 ms, but change animation every 450 ms
                     app.graphics.globalAnimationFrame = !app.graphics.globalAnimationFrame;
-                    var adjacent = npcs.adjacent(app.player.coordinates);
+                    var adjacent = npcs.adjacent(player.coordinates);
                     if (adjacent !== false) {
-                        app.player.hurt("Killed by " + app.graphics.tilesets.descriptors.monsters[adjacent].name);
+                        player.hurt("Killed by " + app.graphics.tilesets.descriptors.monsters[adjacent].name);
                     }
                 }
                 app.environment.map.render();
@@ -730,8 +502,8 @@ window.app = {
 
         viewport: {
             update: function() {
-                app.graphics.viewport.x = app.player.coordinates.x - app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE;
-                app.graphics.viewport.y = app.player.coordinates.y - app.graphics.viewport.PLAYER_OFFSET_TOP_TILE;
+                app.graphics.viewport.x = player.coordinates.x - app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE;
+                app.graphics.viewport.y = player.coordinates.y - app.graphics.viewport.PLAYER_OFFSET_TOP_TILE;
             },
 
             WIDTH_PIXEL: null,
@@ -864,7 +636,7 @@ window.app = {
             $holder: $('#hearts .holder'),
 
             draw: function() {
-                app.graphics.hearts.$holder.html(Array(1+app.player.hearts).join('<div class="heart"></div>'));
+                app.graphics.hearts.$holder.html(Array(1+player.life).join('<div class="heart"></div>'));
             }
         }
     }
@@ -872,8 +644,9 @@ window.app = {
 };
 
 // TODO: These should all be broken up into constructors
-chat.setPlayer(app.player).setPlayers(players).setEnvironment(app.environment).setNetwork(app.network);
-persistence.setPlayer(app.player).setChat(chat).init();
+chat.setPlayer(player).setPlayers(players).setEnvironment(app.environment).setNetwork(app.network);
+persistence.setPlayer(player).setChat(chat).init();
+player.setEnvironment(app.environment).setGraphics(app.graphics).setAudio(audio).setNetwork(app.network);
 
 app.downloadAssets();
 });
