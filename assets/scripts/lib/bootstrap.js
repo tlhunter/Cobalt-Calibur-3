@@ -112,7 +112,7 @@ window.app = {
 
             // return properly sorted list of all other avatars
             getAvatars: function getAvatars () {
-                return npcs.getData().concat(app.players.data)
+                return npcs.getData().concat(players.data)
                     .sort(function (a, b) {
                         return a.x !== b.x ? 0 : a.y < b.y ? -1 : 1;
                     });
@@ -576,40 +576,6 @@ window.app = {
         $(document).on("keydown keyup", keyvent);
     },
 
-    players: {
-        data: [],
-
-        // Updates a player location, adding if it's a new entry
-        update: function(data) {
-            var found = false;
-            var len = app.players.data.length;
-            for (var i=0; i<len; i++) {
-                var player = app.players.data[i];
-                if (player.session == data.session) {
-                    _.extend(
-                        player,
-                        data
-                    );
-                    found = true;
-                }
-            }
-            if (!found) {
-                app.players.data.push(data);
-            }
-        },
-
-        remove: function(session) {
-            var len = app.players.data.length;
-            for (var i=0; i<len; i++) {
-                var player = app.players.data[i];
-                if (player.session == session) {
-                    app.players.data.splice(i, 1);
-                    break;
-                }
-            }
-        }
-    },
-
     network: {
         socket: null,
         connectSocket: function() {
@@ -678,7 +644,7 @@ window.app = {
             });
 
             socket.on('leave', function(data) {
-                app.players.remove(data.session);
+                players.remove(data.session);
                 chat.message(data.name || 'unknown', "Player Disconnected", 'server');
             });
 
@@ -688,7 +654,7 @@ window.app = {
 
             socket.on('character info', function(data) {
                 if (socket.socket.sessionid == data.dession) return;
-                app.players.update(data);
+                players.update(data);
             });
 
             socket.on('event time', function(data) {
@@ -906,7 +872,7 @@ window.app = {
 };
 
 // TODO: These should all be broken up into constructors
-chat.setPlayer(app.player).setPlayers(app.players).setEnvironment(app.environment).setNetwork(app.network);
+chat.setPlayer(app.player).setPlayers(players).setEnvironment(app.environment).setNetwork(app.network);
 persistence.setPlayer(app.player).setChat(chat).init();
 
 app.downloadAssets();
