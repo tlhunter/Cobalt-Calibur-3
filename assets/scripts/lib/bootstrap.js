@@ -37,8 +37,8 @@ window.app = {
                 '/assets/tilesets/terrain-32x32.png',
                 app.graphics.tilesets.terrain
             ),
-            app.environment.downloadTiles(),
-            app.environment.downloadMap()
+            environment.downloadTiles(),
+            environment.downloadMap()
         ).done(function() {
             app.initialize();
         });
@@ -63,160 +63,6 @@ window.app = {
         }, 500);
 
         $('#controls .button').tipsy({fade: false, gravity: 's', html: true});
-    },
-
-    environment: {
-        map: {
-            WIDTH_TILE: 200,
-            HEIGHT_TILE: 200,
-
-            colors: {
-                black: "rgb(0,0,0)",
-                corruption: [
-                    "rgba(15,0,61,0.5)",
-                    "rgba(36,14,88,0.7)",
-                    "rgba(47,24,99,0.6)"
-                ]
-            },
-            data: [],
-
-            getTile: function(x, y) {
-                var tile = app.environment.map.data[x][y];
-
-                tile = app.graphics.tilesets.descriptors.terrain[tile];
-
-                return tile;
-            },
-
-            // used to filter all npc + other players to only those in view
-            isInViewport: function isInViewport (avatar) {
-                var viewport = app.graphics.viewport;
-                // this math could be cleaned up!
-                return avatar.x >= viewport.x && avatar.x <= viewport.x + viewport.WIDTH_TILE
-                    && avatar.y >= viewport.y && avatar.y <= viewport.y + viewport.HEIGHT_TILE;
-            },
-
-            drawAvatar: function drawAvatar (avatar) {
-                var x = avatar.x - app.graphics.viewport.x,
-                    y = avatar.y - app.graphics.viewport.y,
-                    index = app.graphics.getAvatarFrame(avatar.d || avatar.direction, app.graphics.globalAnimationFrame),
-                    isPlayer = "name" in avatar,
-                    avatar_name = avatar.name || app.graphics.tilesets.descriptors.monsters[avatar.id].name || "???",
-                    avatar_id = ~~avatar.picture || avatar.id || 0;
-
-                app.graphics.nametags.add(avatar_name, x, y, !isPlayer);
-                app.graphics.drawAvatar(x, y, index, avatar_id, isPlayer ? 'characters' : 'monsters');
-            },
-
-            // return properly sorted list of all other avatars
-            getAvatars: function getAvatars () {
-                return npcs.getData().concat(players.data)
-                    .sort(function (a, b) {
-                        return a.x !== b.x ? 0 : a.y < b.y ? -1 : 1;
-                    });
-            },
-
-            render: function() {
-                // immediately draw canvas as black
-                app.graphics.handle.fillStyle = app.environment.map.colors.black;
-                app.graphics.handle.fillRect(0, 0, app.graphics.viewport.WIDTH_PIXEL, app.graphics.viewport.HEIGHT_PIXEL);
-
-                var i, j;
-                var mapX = 0;
-                var mapY = 0;
-                var tile;
-                app.graphics.nametags.hide();
-
-                for (j=0; j<app.graphics.viewport.HEIGHT_TILE; j++) {
-                    for (i=0; i < app.graphics.viewport.WIDTH_TILE; i++) {
-                        mapX = i + app.graphics.viewport.x;
-                        mapY = j + app.graphics.viewport.y;
-                        tile = (mapX >= 0 && mapX < 200 && mapY >= 0 && mapY <= 200) ? app.environment.map.data[mapX][mapY] : null;
-                        app.graphics.drawTile(i, j, tile);
-
-                        // Draw Corruption
-                        if (app.environment.corruption.loaded && mapX >= 0 && mapX < app.environment.map.WIDTH_TILE && mapY >= 0 && mapY < app.environment.map.HEIGHT_TILE && app.environment.corruption.data[mapX][mapY] === 1) {
-                            app.graphics.handle.fillStyle = app.environment.map.colors.corruption[Math.floor(Math.random() * app.environment.map.colors.corruption.length)];
-                            app.graphics.drawCorruption(i, j);
-                        }
-                    }
-                }
-
-                // Draw NPCs + other players
-                app.environment.map.getAvatars()
-                    .filter(app.environment.map.isInViewport)
-                    .forEach(app.environment.map.drawAvatar.bind(null));
-
-                // Draw this player
-                var index = app.graphics.getAvatarFrame(player.direction, app.graphics.selfAnimationFrame);
-                app.graphics.nametags.add(player.name, app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE, app.graphics.viewport.PLAYER_OFFSET_TOP_TILE, false);
-                app.graphics.drawAvatar(app.graphics.viewport.PLAYER_OFFSET_LEFT_TILE, app.graphics.viewport.PLAYER_OFFSET_TOP_TILE, index, player.picture, 'characters');
-
-                app.graphics.nametags.show();
-
-                app.environment.daylight.draw();
-            },
-        },
-
-        corruption: {
-            data: [],
-            loaded: false,
-
-            update: function(data) {
-                app.environment.corruption.loaded = true;
-                app.environment.corruption.data = data;
-            }
-        },
-
-        daylight: {
-            time: 8, // integer representing hour of day
-
-            setTime: function(time) {
-                app.environment.daylight.time = time;
-                $('#clock').html(time + ':00');
-            },
-
-            draw: function() {
-                var color = null;
-                var time = app.environment.daylight.time;
-                if (time < 5) { // night
-                    color = "rgba(0, 0, 0, 0.65)";
-                } else if (time < 7) { // dusk
-                    color = "rgba(0, 13, 54, 0.5)";
-                } else if (time < 8) { // dusk
-                    color = "rgba(0, 13, 54, 0.25)";
-                } else if (time < 17) { // day
-                    color = null;
-                } else if (time < 18) { //dawn
-                    color = "rgba(54,22,0, 0.25)";
-                } else if (time < 20) { //dawn
-                    color = "rgba(54,22,0, 0.5)";
-                } else {
-                    color = "rgba(0, 0, 0, 0.65)";
-                }
-
-                if (color) {
-                    app.graphics.handle.fillStyle = color;
-                    app.graphics.handle.fillRect(0, 0, app.graphics.viewport.WIDTH_PIXEL, app.graphics.viewport.HEIGHT_PIXEL);
-                }
-            }
-        },
-
-        downloadTiles: function() {
-            return $.get('/assets/data.json').pipe(function(data) {
-                chat.message('Client', 'Tileset Descriptors done.', 'client');
-                app.graphics.tilesets.descriptors = data;
-                return true;
-            });
-        },
-
-        downloadMap: function() {
-            return $.get('/map').pipe(function(data) {
-                chat.message('Client', 'Map data done.', 'client');
-                app.environment.map.data = data;
-                return true;
-            });
-        },
     },
 
     initializeKeybindings: function () {
@@ -421,7 +267,7 @@ window.app = {
             });
 
             socket.on('terraform', function (data) {
-                app.environment.map.data[data.x][data.y] = data.tile;
+                environment.map[data.x][data.y] = data.tile;
             });
 
             socket.on('character info', function(data) {
@@ -430,12 +276,12 @@ window.app = {
             });
 
             socket.on('event time', function(data) {
-                app.environment.daylight.setTime(data.time);
+                environment.daylight.setTime(data.time);
             });
 
             socket.on('event earthquake', function(data) {
                 $.get('/map', function(data) {
-                    app.environment.map.data = data;
+                    environment.data = data;
                 });
                 chat.message('Server', "There has been an earthquake! New Rock and Ore has been added to the world.", 'server');
                 audio.play('earthquake');
@@ -446,12 +292,12 @@ window.app = {
             });
 
             socket.on('event corruption', function(data) {
-                app.environment.corruption.update(data.map);
+                environment.corruption = data.map;
             });
 
             socket.on('event bigterraform', function(data) {
                 $.get('/map', function(data) {
-                    app.environment.map.data = data;
+                    environment.map = data;
                 });
             });
         }
@@ -496,7 +342,7 @@ window.app = {
                         player.hurt("Killed by " + app.graphics.tilesets.descriptors.monsters[adjacent].name);
                     }
                 }
-                app.environment.map.render();
+                environment.render();
             }, 150);
         },
 
@@ -644,9 +490,10 @@ window.app = {
 };
 
 // TODO: These should all be broken up into constructors
-chat.setPlayer(player).setPlayers(players).setEnvironment(app.environment).setNetwork(app.network);
+chat.setPlayer(player).setPlayers(players).setEnvironment(environment).setNetwork(app.network);
 persistence.setPlayer(player).setChat(chat).init();
-player.setEnvironment(app.environment).setGraphics(app.graphics).setAudio(audio).setNetwork(app.network);
+player.setEnvironment(environment).setGraphics(app.graphics).setAudio(audio).setNetwork(app.network).setChat(chat).setPersistence(persistence);
+environment.setGraphics(app.graphics).setChat(chat).setNPCs(npcs).setPlayers(players).setPlayer(player);
 
 app.downloadAssets();
 });

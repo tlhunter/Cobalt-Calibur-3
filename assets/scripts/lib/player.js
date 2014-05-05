@@ -16,7 +16,7 @@ var Player = function() {
   self.direction = 's';
   var speed = 150;
 
-  var environment, network, graphics, audio;
+  var environment, network, graphics, audio, chat, persistence;
 
   self.setEnvironment = function(new_environment) {
     environment = new_environment;
@@ -38,6 +38,18 @@ var Player = function() {
 
   self.setAudio = function(new_audio) {
     audio = new_audio;
+
+    return self;
+  };
+
+  self.setChat = function(new_chat) {
+    chat = new_chat;
+
+    return self;
+  };
+
+  self.setPersistence = function(new_persistence) {
+    persistence = new_persistence;
 
     return self;
   };
@@ -73,7 +85,7 @@ var Player = function() {
       self.setLocation(new_coords.x, new_coords.y);
       audio.play('walk');
 
-      if (environment.corruption.loaded && environment.corruption.data[new_coords.x][new_coords.y]) {
+      if (environment.corruption && environment.corruption[new_coords.x][new_coords.y]) {
         if (Math.random() < 1/8) {
           self.hurt("You were killed by corruption");
           network.send.chat("*Killed by Corruption*");
@@ -173,7 +185,7 @@ var Player = function() {
 
     _.extend(
       data,
-      environment.map.getTile(data.coordinates.x, data.coordinates.y)
+      environment.getTile(data.coordinates.x, data.coordinates.y)
     );
 
     return data;
@@ -182,11 +194,11 @@ var Player = function() {
   // Whether or not the tile can be walked on
   // TODO: Move this to environment.js
   self.isAccessible = function(x, y) {
-    if (x < 0 || y < 0 || x >= environment.map.WIDTH_TILE || y >= environment.map.HEIGHT_TILE) {
+    if (x < 0 || y < 0 || x >= environment.WIDTH || y >= environment.HEIGHT) {
       return false;
     }
 
-    if (environment.map.getTile(x, y).block_player) {
+    if (environment.getTile(x, y).block_player) {
       return false;
     }
 
@@ -196,7 +208,7 @@ var Player = function() {
   // Sends the players location and direction to the server
   self.broadcastLocation = function() {
     network.send.move(self.coordinates, self.direction);
-    environment.map.render(true);
+    environment.render(true);
   };
 
   // Mines the facing tile, adjusts inventory
@@ -220,7 +232,7 @@ var Player = function() {
     var becomes = tileData.becomes;
     var provides = tileData.provides;
 
-    environment.map.data[coords.x][coords.y] = becomes;
+    environment.map[coords.x][coords.y] = becomes;
     network.send.terraform(coords.x, coords.y, becomes);
     self.inventory.update(provides.id, provides.quantity);
     audio.play('mine');
@@ -250,7 +262,7 @@ var Player = function() {
     // provides is also the cost of manufacturing the tile
     if (self.inventory.update(item.provides.id, -item.provides.quantity)) {
       audio.play('build');
-      environment.map.data[coords.x][coords.y] = terrainIndex;
+      environment.map[coords.x][coords.y] = terrainIndex;
       network.send.terraform(coords.x, coords.y, terrainIndex);
 
       return true;
