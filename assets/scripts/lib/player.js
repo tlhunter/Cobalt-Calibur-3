@@ -88,7 +88,7 @@ var Player = function() {
       if (environment.corruption && environment.corruption[new_coords.x][new_coords.y]) {
         if (Math.random() < 1/8) {
           self.hurt("You were killed by corruption");
-          network.send.chat("*Killed by Corruption*");
+          network.sendChat("*Killed by Corruption*");
         }
       }
 
@@ -207,7 +207,7 @@ var Player = function() {
 
   // Sends the players location and direction to the server
   self.broadcastLocation = function() {
-    network.send.move(self.coordinates, self.direction);
+    network.sendMove(self.coordinates, self.direction);
     environment.render(true);
   };
 
@@ -233,7 +233,7 @@ var Player = function() {
     var provides = tileData.provides;
 
     environment.map[coords.x][coords.y] = becomes;
-    network.send.terraform(coords.x, coords.y, becomes);
+    network.sendTerraform(coords.x, coords.y, becomes);
     self.inventory.update(provides.id, provides.quantity);
     audio.play('mine');
   };
@@ -263,7 +263,7 @@ var Player = function() {
     if (self.inventory.update(item.provides.id, -item.provides.quantity)) {
       audio.play('build');
       environment.map[coords.x][coords.y] = terrainIndex;
-      network.send.terraform(coords.x, coords.y, terrainIndex);
+      network.sendTerraform(coords.x, coords.y, terrainIndex);
 
       return true;
     } else {

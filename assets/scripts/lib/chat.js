@@ -89,7 +89,7 @@ var Chat = function() {
       } else if (message.indexOf('/nick ') === 0) {
         var playerName = message.substr(6);
         player.name = playerName;
-        network.send.character(player.name, player.picture);
+        network.sendCharacter(player.name, player.picture);
         return;
       } else if (message.indexOf('/pic ') === 0) {
         var picIndex = parseInt(message.substr(5), 10);
@@ -100,7 +100,7 @@ var Chat = function() {
           picIndex = 1;
         }
         player.picture = picIndex;
-        network.send.character(player.name, player.picture);
+        network.sendCharacter(player.name, player.picture);
         // change picture
         return;
       } else if (message === '/who') {
@@ -111,12 +111,12 @@ var Chat = function() {
         return;
       } else if (message === '/kill') {
         player.kill('Committed Suicide');
-        network.send.chat("*Committed Suicide*");
+        network.sendChat("*Committed Suicide*");
         return;
       } else if (message === '/reset') {
         persistence.createNewPlayer();
         player.kill('Destroyed Himself');
-        network.send.chat("*Committed Suicide*");
+        network.sendChat("*Committed Suicide*");
       } else if (message === '/gps') {
         self.message("Client", "Coordinates: [" + (player.coordinates.x) + "," + (player.coordinates.y) + "]", 'client');
         return;
@@ -127,12 +127,12 @@ var Chat = function() {
         }
         var coords = player.getFacingTile().coordinates;
         environment.map.data[coords.x][coords.y] = tile;
-        network.send.terraform(coords.x, coords.y, tile);
+        network.sendTerraform(coords.x, coords.y, tile);
         return;
       }
 
       self.message(player.name, message, 'self');
-      network.send.chat(message);
+      network.sendChat(message);
     });
 
     // Pres Esc inside of text box, leave the text box

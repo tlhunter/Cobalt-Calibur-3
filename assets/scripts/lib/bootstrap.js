@@ -47,10 +47,10 @@ window.app = {
     // Once the assets are done downloading we initialize the rest of the app
     initialize: function() {
         app.graphics.initialize();
-        app.network.connectSocket();
+        //app.network.connectSocket();
         app.graphics.viewport.update();
-        app.network.bindEvents();
-        app.network.send.join(player.name);
+        //app.network.bindEvents();
+        network.sendJoin(player.name);
         app.initializeKeybindings();
         app.graphics.startAnimation();
         app.graphics.hearts.draw();
@@ -58,8 +58,8 @@ window.app = {
         chat.message('Help', 'Use the WASD keys to move around', 'help');
 
         setTimeout(function() {
-            app.network.send.move(player.coordinates, player.direction);
-            app.network.send.character(player.name, player.picture);
+            network.sendMove(player.coordinates, player.direction);
+            network.sendCharacter(player.name, player.picture);
         }, 500);
 
         $('#controls .button').tipsy({fade: false, gravity: 's', html: true});
@@ -192,115 +192,6 @@ window.app = {
             pressed = "";
 
         $(document).on("keydown keyup", keyvent);
-    },
-
-    network: {
-        socket: null,
-        connectSocket: function() {
-            app.network.socket = io.connect(window.document.location.protocol + "//" + window.document.location.host);
-        },
-        send: {
-            // Player types a message to be sent, probably don't need name value anymore
-            chat: function(message) {
-                app.network.socket.emit('chat', {
-                    name: player.name,
-                    message: message,
-                    priority: 0
-                });
-            },
-            // Player moves to a new location
-            move: function(coords, direction) {
-                app.network.socket.emit('character info', {
-                    x: coords.x,
-                    y: coords.y,
-                    direction: direction
-                });
-            },
-            // Player builds a tile or mines a tile
-            terraform: function(x, y, tile) {
-                app.network.socket.emit('terraform', {
-                    x: x,
-                    y: y,
-                    tile: tile
-                });
-            },
-            // Player dies
-            death: function(name, method) {
-                app.network.socket.emit('chat', {
-                    name: name,
-                    message: message,
-                    priority: 'server'
-                });
-            },
-            // Player changes either their name or their picture
-            character: function(name, picture) {
-                app.network.socket.emit('character info', {
-                    name: name,
-                    picture: picture
-                });
-            },
-
-            join: function(name) {
-                app.network.socket.emit('join', {
-                    name: name
-                });
-            }
-        },
-
-        bindEvents: function() {
-            var socket = app.network.socket;
-
-            socket.on('chat', function (data) {
-                if (typeof data.priority == "undefined") {
-                    audio.play('chat');
-                }
-                chat.message(data.name, data.message, data.priority);
-            });
-
-            socket.on('disconnect', function(data) {
-                chat.message('Server', 'Disconnected', 'server');
-            });
-
-            socket.on('leave', function(data) {
-                players.remove(data.session);
-                chat.message(data.name || 'unknown', "Player Disconnected", 'server');
-            });
-
-            socket.on('terraform', function (data) {
-                environment.map[data.x][data.y] = data.tile;
-            });
-
-            socket.on('character info', function(data) {
-                if (socket.socket.sessionid == data.dession) return;
-                players.update(data);
-            });
-
-            socket.on('event time', function(data) {
-                environment.daylight.setTime(data.time);
-            });
-
-            socket.on('event earthquake', function(data) {
-                $.get('/map', function(data) {
-                    environment.data = data;
-                });
-                chat.message('Server', "There has been an earthquake! New Rock and Ore has been added to the world.", 'server');
-                audio.play('earthquake');
-            });
-
-            socket.on('event npcmovement', function(data) {
-                npcs.update(data.npcs);
-            });
-
-            socket.on('event corruption', function(data) {
-                environment.corruption = data.map;
-            });
-
-            socket.on('event bigterraform', function(data) {
-                $.get('/map', function(data) {
-                    environment.map = data;
-                });
-            });
-        }
     },
 
     // Functions and data regarding the map
@@ -490,10 +381,11 @@ window.app = {
 };
 
 // TODO: These should all be broken up into constructors
-chat.setPlayer(player).setPlayers(players).setEnvironment(environment).setNetwork(app.network);
+chat.setPlayer(player).setPlayers(players).setEnvironment(environment).setNetwork(network);
 persistence.setPlayer(player).setChat(chat).init();
-player.setEnvironment(environment).setGraphics(app.graphics).setAudio(audio).setNetwork(app.network).setChat(chat).setPersistence(persistence);
+player.setEnvironment(environment).setGraphics(app.graphics).setAudio(audio).setNetwork(network).setChat(chat).setPersistence(persistence);
 environment.setGraphics(app.graphics).setChat(chat).setNPCs(npcs).setPlayers(players).setPlayer(player);
+network.setPlayer(player).setAudio(audio).setNPCs(npcs).setEnvironment(environment).setPlayers(players).setChat(chat);
 
 app.downloadAssets();
 });
