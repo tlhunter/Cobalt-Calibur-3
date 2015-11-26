@@ -2,47 +2,33 @@
 
 'use strict';
 
-var express 	= require("express");
-var app 		= express();
-var server		= require('http').createServer(app);
+var express     = require("express");
+var app         = express();
+var server      = require('http').createServer(app);
 var io          = require('socket.io').listen(server, {log: false});
 var _           = require('underscore');
 
-var players     = require('./lib/players.js').setSocket(io);
 var logger      = require('./lib/logger.js');
-var map         = require('./lib/map.js').setHttp(app);
-var corruption  = require('./lib/corruption.js').setMap(map).setSocket(io);
-var daynight    = require('./lib/daynight.js').setMap(map).setSocket(io);
-var earthquake  = require('./lib/earthquake.js').setMap(map).setSocket(io);
-var terrain     = require('./lib/terrain.js').setMap(map);
-var npcs        = require('./lib/npcs.js').setMap(map).setSocket(io).setPlayers(players);
+var world       = require('./lib/world.js').setHttp(app).setSocket(io);
+var players     = require('./lib/players.js').setSocket(io);
 
 // Web Server Configuration
 var server_port = parseInt(process.argv[2], 10) || 80; // most OS's will require sudo to listen on 80
-var server_host = null;
+var server_host = 'localhost';
 
 var mongo_connection_string = 'mongodb://127.0.0.1:27017/terraformia';
 
-
-map.connect(mongo_connection_string, function(err) {
+world.connect(mongo_connection_string, function(err) {
     if (err) {
         logger.error(err);
         throw err;
     }
-
-    map.loadMap(function(err) {
+    world.loadMaps(function (err) {
         if (err) {
             logger.error(err);
             throw err;
         }
-
-        npcs.spawn(80);
-        corruption.execute();
-        daynight.execute();
-        earthquake.execute();
-        npcs.execute();
     });
-
 });
 
 // HTTP
@@ -82,18 +68,6 @@ app.get('/assets/*', function (req, res) {
 
 io.sockets.on('connection', function (socket) {
     logger.action("Player", "Connected");
-
-    socket.emit('chat', {
-        name: 'Server',
-        message: 'Socket Established',
-        priority: 'server'
-    });
-
-    players.sendData(socket);
-    daynight.sendData(socket);
-    corruption.sendData(socket);
-    npcs.sendData(socket);
-
     players.handleSocketEvents(socket);
-    map.handleSocketEvents(socket);
+    world.handleSocketEvents(socket);
 });
