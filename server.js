@@ -10,7 +10,6 @@ var _           = require('underscore');
 
 var logger      = require('./lib/logger.js');
 var world       = require('./lib/world.js').setHttp(app).setSocket(io);
-var players     = require('./lib/players.js').setSocket(io);
 
 // Web Server Configuration
 var server_port = parseInt(process.argv[2], 10) || 80; // most OS's will require sudo to listen on 80
@@ -28,6 +27,9 @@ world.connect(mongo_connection_string, function(err) {
             logger.error(err);
             throw err;
         }
+        setTimeout(function() {
+            world.processInitialEvents();
+        },1000);
     });
 });
 
@@ -68,6 +70,6 @@ app.get('/assets/*', function (req, res) {
 
 io.sockets.on('connection', function (socket) {
     logger.action("Player", "Connected");
-    players.handleSocketEvents(socket);
     world.handleSocketEvents(socket);
+    world.handlePlayerSocketEvents(socket);
 });
