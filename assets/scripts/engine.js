@@ -23,8 +23,7 @@ window.app = {
                 '/assets/tilesets/terrain-32x32.png',
                 app.graphics.tilesets.terrain
             ),
-            app.environment.downloadTiles(),
-            app.environment.downloadMap()
+            app.environment.downloadTiles()
         ).done(function() {
             app.initialize();
         });
@@ -36,25 +35,29 @@ window.app = {
         app.network.connectSocket();
         app.audio.initialize();
         app.persistence.load() || app.persistence.createNewPlayer();
-        app.graphics.viewport.update();
-        app.player.regenerateHearts();
-        app.player.inventory.render();
-        app.chat.initialize();
-        app.network.bindEvents();
-        app.network.send.join(app.player.name);
-        app.initializeKeybindings();
-        app.persistence.startAutoSave();
-        app.graphics.startAnimation();
-        app.graphics.hearts.draw();
-        app.chat.message('Help', 'Type /help for some help', 'help');
-        app.chat.message('Help', 'Use the WASD keys to move around', 'help');
+        $.when(
+            app.environment.downloadMap(app.player.levelName)
+        ).done(function() {
+            app.graphics.viewport.update();
+            app.player.regenerateHearts();
+            app.player.inventory.render();
+            app.chat.initialize();
+            app.network.bindEvents();
+            app.network.send.join(app.player.name, app.player.levelName);
+            app.initializeKeybindings();
+            app.persistence.startAutoSave();
+            app.graphics.startAnimation();
+            app.graphics.hearts.draw();
+            app.chat.message('Help', 'Type /help for some help', 'help');
+            app.chat.message('Help', 'Use the WASD keys to move around', 'help');
 
-        setTimeout(function() {
-            app.network.send.move(app.player.coordinates, app.player.direction);
-            app.network.send.character(app.player.name, app.player.picture);
-        }, 500);
+            setTimeout(function() {
+                app.network.send.move(app.player.coordinates, app.player.direction);
+                app.network.send.character(app.player.name, app.player.picture);
+            }, 500);
 
-        $('#controls .button').tipsy({fade: false, gravity: 's', html: true});
+            $('#controls .button').tipsy({fade: false, gravity: 's', html: true});
+        });
     },
 
     environment: {
@@ -202,10 +205,10 @@ window.app = {
             });
         },
 
-        downloadMap: function() {
-            return $.get('/map').pipe(function(data) {
-                app.chat.message('Client', 'Map data done.', 'client');
-                app.environment.map.data = data;
+        downloadMap: function(levelName) {
+            return $.get('/map/' + levelName).pipe(function(data) {
+                app.chat.message('Client', 'Map data done (' + levelName + ').', 'client');
+                app.environment.map.data = data.data;
                 return true;
             });
         },
@@ -222,6 +225,7 @@ window.app = {
         },
         direction: 's',
         speed: 150,
+
 
         // Attempts to move the character in the direction we specify
         move: function(d) {
@@ -601,6 +605,7 @@ window.app = {
                 location: app.player.coordinates,
                 name: app.player.name,
                 picture: app.player.picture,
+                levelName: app.player.levelName
             }));
         },
 
@@ -612,6 +617,7 @@ window.app = {
                 app.player.coordinates = persistentData.location;
                 app.player.name = persistentData.name;
                 app.player.picture = persistentData.picture;
+                app.player.levelName = persistentData.levelName;
                 app.chat.message('Client', 'Loaded your saved character', 'client');
                 return true;
             }
@@ -624,6 +630,7 @@ window.app = {
             app.player.coordinates = {x: 100, y: 100};
             app.player.name = 'Anon' + Math.floor(Math.random() * 8999 + 1000);
             app.player.picture = Math.floor(Math.random() * 8) + 1;
+            app.player.levelName = '1';
             app.chat.message('Client', 'Creating a character for the first time', 'client');
         },
 
@@ -693,7 +700,8 @@ window.app = {
                 app.network.socket.emit('chat', {
                     name: app.player.name,
                     message: message,
-                    priority: 0
+                    priority: 0,
+                    levelName: app.player.levelName
                 });
             },
             // Player moves to a new location
@@ -701,7 +709,8 @@ window.app = {
                 app.network.socket.emit('character info', {
                     x: coords.x,
                     y: coords.y,
-                    direction: direction
+                    direction: direction,
+                    levelName: app.player.levelName
                 });
             },
             // Player builds a tile or mines a tile
@@ -709,7 +718,8 @@ window.app = {
                 app.network.socket.emit('terraform', {
                     x: x,
                     y: y,
-                    tile: tile
+                    tile: tile,
+                    levelName: app.player.levelName
                 });
             },
             // Player dies
@@ -717,20 +727,31 @@ window.app = {
                 app.network.socket.emit('chat', {
                     name: name,
                     message: message,
-                    priority: 'server'
+                    priority: 'server',
+                    levelName: app.player.levelName
                 });
             },
             // Player changes either their name or their picture
             character: function(name, picture) {
                 app.network.socket.emit('character info', {
                     name: name,
-                    picture: picture
+                    picture: picture,
+                    levelName: app.player.levelName
                 });
             },
 
-            join: function(name) {
+            // Enter/leave room
+            join: function(name, levelName) {
                 app.network.socket.emit('join', {
-                    name: name
+                    name: name,
+                    levelName: levelName,
+                    data: app.player
+                });
+            },
+            unjoin: function(name, levelName) {
+                app.network.socket.emit('unjoin', {
+                    name: name,
+                    levelName: levelName
                 });
             }
         },
@@ -746,12 +767,7 @@ window.app = {
             });
 
             socket.on('disconnect', function(data) {
-                app.chat.message('Server', 'Disconnected', 'server');
-            });
-
-            socket.on('leave', function(data) {
                 app.players.remove(data.session);
-                app.chat.message(data.name || 'unknown', "Player Disconnected", 'server');
             });
 
             socket.on('terraform', function (data) {
@@ -759,7 +775,7 @@ window.app = {
             });
 
             socket.on('character info', function(data) {
-                if (socket.socket.sessionid == data.dession) return;
+                if (socket.socket.sessionid == data.session) return;
                 app.players.update(data);
             });
 
@@ -994,6 +1010,7 @@ window.app = {
         },
 
         initialize: function() {
+            $(document).on('keydown keyup', '#message-input', function(e) { e.stopPropagation(); });
             $('#message-box form').submit(function(event) {
                 event.preventDefault();
                 var message = app.chat.$input.val();
