@@ -226,7 +226,6 @@ window.app = {
         direction: 's',
         speed: 150,
 
-
         // Attempts to move the character in the direction we specify
         move: function(d) {
             // if nothing is passed in or anything not acceptable is passed in do nothing
@@ -1010,7 +1009,6 @@ window.app = {
         },
 
         initialize: function() {
-            $(document).on('keydown keyup', '#message-input', function(e) { e.stopPropagation(); });
             $('#message-box form').submit(function(event) {
                 event.preventDefault();
                 var message = app.chat.$input.val();
