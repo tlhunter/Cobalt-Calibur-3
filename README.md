@@ -74,13 +74,9 @@ You'll want to specify the port number as the first argument to the script:
 $ ./server.js 8000
 ```
 
-I personally run the app using Forever:
+You can also run it using Docker:
 
-```sh
-$ sudo npm install -g forever
-$ forever start server.js 8000
 ```
-
-## License
-
-Dual BSD/GPL
+$ docker build -t cobalt-calibur .
+$ docker run -p 8000:8000 -d cobalt-calibur
+```
