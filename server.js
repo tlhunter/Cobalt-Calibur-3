@@ -2,11 +2,10 @@
 
 'use strict';
 
-var express 	= require("express");
-var app 		= express();
-var server		= require('http').createServer(app);
+var express     = require("express");
+var app         = express();
+var server      = require('http').createServer(app);
 var io          = require('socket.io').listen(server, {log: false});
-var _           = require('underscore');
 
 var players     = require('./lib/players.js').setSocket(io);
 var logger      = require('./lib/logger.js');
@@ -19,35 +18,24 @@ var npcs        = require('./lib/npcs.js').setMap(map).setSocket(io).setPlayers(
 
 // Web Server Configuration
 var server_port = parseInt(process.argv[2], 10) || 80; // most OS's will require sudo to listen on 80
-var server_host = process.argv[3] || null;
+var server_host = process.argv[3];
 
-var mongo_connection_string = 'mongodb://127.0.0.1:27017/terraformia';
-
-
-map.connect(mongo_connection_string, function(err) {
+map.loadMap(function(err) {
     if (err) {
         logger.error(err);
         throw err;
     }
 
-    map.loadMap(function(err) {
-        if (err) {
-            logger.error(err);
-            throw err;
-        }
-
-        npcs.spawn(80);
-        corruption.execute();
-        daynight.execute();
-        earthquake.execute();
-        npcs.execute();
-    });
-
+    npcs.spawn(80);
+    corruption.execute();
+    daynight.execute();
+    earthquake.execute();
+    npcs.execute();
 });
 
 // HTTP
 
-logger.notice("Express", "Attempting to listen on: " + server_host + ':' + server_port);
+logger.notice("Express", "Attempting to listen on: " + (server_host||'0.0.0.0') + ':' + server_port);
 
 server.listen(server_port, server_host);
 
@@ -65,17 +53,17 @@ app.on('error', function (e) {
 
 // User requests root, return HTML
 app.get('/', function (req, res) {
-    res.sendfile(__dirname + '/index.html');
+    res.sendFile(__dirname + '/index.html');
 });
 
 app.get('/favicon.ico', function (req, res) {
-    res.sendfile(__dirname + '/favicon.ico');
+    res.sendFile(__dirname + '/favicon.ico');
 });
 
 // User requests a file in the assets folder, read it and return it
 app.get('/assets/*', function (req, res) {
     // is this secure? in PHP land it would be pretty bad
-    res.sendfile(__dirname + '/assets/' + req.params[0]);
+    res.sendFile(__dirname + '/assets/' + req.params[0]);
 });
 
 // SOCKETS

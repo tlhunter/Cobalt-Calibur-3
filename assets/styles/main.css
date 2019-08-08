@@ -10,6 +10,10 @@ body {
     padding: 0;
     color: #fff;
 }
+html,
+body {
+    height: 100%;
+}
 #page {
     text-align: center;
     margin: 0 auto;

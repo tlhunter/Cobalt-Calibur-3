@@ -1,4 +1,4 @@
-// Copyright 2011 Thomas Hunter :3
+// Copyright 2011 Thomas Hunter II
 'use strict';
 
 $(function() {
